@@ -1,0 +1,125 @@
+def drawTriangle(self, x1,y1,z1,u1,v1,  x2,y2,z2,u2,v2,  x3,y3,z3,u3,v3):
+		set4(tempVert1, x1,y1,z1,1)
+		set4(tempVert2, x2,y2,z2,1)
+		set4(tempVert3, x3,y3,z3,1)
+
+		multMatVec(self.completeMat, tempVert1, tempVert1)
+		multMatVec(self.completeMat, tempVert2, tempVert2)
+		multMatVec(self.completeMat, tempVert3, tempVert3)
+		
+		#printVec(tempVert1)
+		#printVec(tempVert2)
+		#printVec(tempVert3)
+		
+		
+		w1 = tempVert1[3]		
+		x1 = tempVert1[0]/w1
+		y1 = tempVert1[1]/w1
+		z1 = tempVert1[2] #/w1
+
+		w2 = tempVert2[3]				
+		x2 = tempVert2[0]/w2
+		y2 = tempVert2[1]/w2
+		z2 = tempVert2[2] #/w2
+		
+		w3 = tempVert3[3]
+		x3 = tempVert3[0]/w3
+		y3 = tempVert3[1]/w3
+		z3 = tempVert3[2] #/w3
+		
+		if z1 < self.near or z2 < self.near or z3 < self.near or z1 > self.far or z2 > self.far or z3 > self.far:
+			return
+			
+		miX = (x1 if x1 < x3 else x3) if x1 < x2 else (x2 if x2 < x3 else x3)
+		miY = (y1 if y1 < y3 else y3) if y1 < y2 else (y2 if y2 < y3 else y3)
+		maX = (x1 if x1 > x3 else x3) if x1 > x2 else (x2 if x2 > x3 else x3)
+		maY = (y1 if y1 > y3 else y3) if y1 > y2 else (y2 if y2 > y3 else y3)		
+
+		miX = int(0 if miX < 0 else miX)
+		miY = int(0 if miY < 0 else miY)
+		maX = int(maX if maX < self.resolutionWidth else self.resolutionWidth)
+		maY = int(maY if maY < self.resolutionHeight else self.resolutionHeight)
+
+		x21 = x2-x1
+		y21 = y2-y1
+		z21 = z2-z1
+		
+		x31 = x3-x1
+		y31 = y3-y1
+		z31 = z3-z1
+		
+		a = y21*z31 - y31*z21
+		b = -x21*z31 + x31*z21
+		c = x21*y31 - x31*y21
+		
+		#http://stackoverflow.com/questions/17164376/inferring-u-v-for-a-point-in-a-triangle-from-vertex-u-vs
+		
+		
+		uvX = a
+		uvY = b
+		uvZ = c
+		vuX = -uvX
+		vuY = -uvY
+		vuZ = -uvZ
+			
+		
+		area = .5*(-y2*x3 + y1*(-x2+x3) + x1*(y2-y3) + x2*y3)
+		
+		if area == 0:
+			return
+		
+		for y in range(miY,maY):
+			for x in range(miX,maX):
+				s = 1/(2*area)*(y1*x3 - x1*y3 + y31*x - x31*y)
+				t = 1/(2*area)*(x1*y2 - y1*x2 - y21*x + x21*y)
+				
+				if 0 <= s and s <= 1 and 0 <= t and t <= 1 and s+t <= 1:
+					x01 = x-x1
+					y01 = y-y1
+					
+					depth = -(z1 + (a*x01 + b*y01)/-c)
+					z01 = -depth-z1
+					
+					vwX = y31*z01 - z31*y01
+					vwY = z31*x01 - x31*z01
+					vwZ = x31*y01 - y31*x01
+					
+					#if vwX*vuX + vwY*vuY + vwZ*vuZ < 0:
+					#	continue
+
+					uwX = y21*z01 - z21*y01
+					uwY = z21*x01 - x21*z01
+					uwZ = x21*y01 - y21*x01
+					
+					#if uwX*uvX + uwY*uvY + uwZ*uvZ < 0:
+					#	continue;
+
+					denom = math.sqrt(uvX*uvX + uvY*uvY + uvZ*uvZ);
+					b2 = math.sqrt(vwX*vwX + vwY*vwY + vwZ*vwZ) / denom;
+					b3 = math.sqrt(uwX*uwX + uwY*uwY + uwZ*uwZ) / denom;
+					b1 = 1 - b2 - b3
+
+					#if not (b2 <= 1 and b3 <= 1 and b2+b3 <= 1):
+					#	continue
+					
+					u = b1*u1 + b2*u2 + b3*u3;
+					v = b1*v1 + b2*v2 + b3*v3
+					
+					#print("(" + str(u) + ", " + str(v) + ")")
+					
+					u = int(self.texW * u )
+					v = int(self.texH * v )
+					
+					if u >= 0 and u < self.texW and v >= 0 and v < self.texH:
+						col = self.tex.get_at((u, v))
+						self.R = col[0]
+						self.G = col[1]
+						self.B = col[2]
+					else:
+						self.R = 0
+						self.G = 255
+						self.B = 0						
+										
+					#maybe??
+					depth *= -1
+					self.fastXYtoRGBD(x,y, self.R,self.G,self.B, depth)
