@@ -1,11 +1,13 @@
 // http://www.tutorialspoint.com/python/python_further_extensions.htm
 
 #include <Python.h>
-#include <arrayobject.h>
+#include <numpy/arrayobject.h>
 #include <math.h>
 #include <stdio.h>
 #include <time.h>
+#include <string.h>
 #include <stdlib.h>
+#include "hashmap.h"
 
 #define MAT_MODEL		0
 #define MAT_VIEW		1
@@ -41,7 +43,7 @@ static double
 					 0,1,0,0,	
 					 0,0,1,0, 
 					 0,0,0,1},
-	projMat[16] = 		{1,0,0,0, 
+	projMat[16] = 	{1,0,0,0, 
 					 0,1,0,0,
 					 0,0,1,0, 
 					 0,0,0,1},
@@ -50,11 +52,9 @@ static double
 					 0,0,1,0, 
 					 0,0,0,1},
 	completeMat[16] = 	{1,0,0,0, 
-					 0,1,0,0, 
-					 0,0,1,0,
-					 0,0,0,1};
-
-
+						 0,1,0,0, 
+						 0,0,1,0,
+						 0,0,0,1};
 static int 
 	doFog = 0,
 	doDepthTest = 1,
@@ -82,6 +82,8 @@ static double contain(double mi, double x, double ma) {
 }
 
 
+
+
 /******************************* RGBA INT FUNCTIONS ************************************/
 
 static int convertRGBA2Int(int r, int g, int b, int a) {
@@ -99,12 +101,46 @@ static void convertInt2RGBA(int argb, int *r, int *g, int *b, int *a) {
 }
 
 
+
+/*********************************** OBJ LOADING ************************************/
+
+typedef struct mtl {
+	double ns;
+	double* ka;
+	double* kd;
+	double* ks;
+	double ni;
+	double d;
+} mtl;
+
+typedef struct obj {
+	int vNum;
+	double* vertices;
+	int uvNum;
+	double* uvs;	
+	int nNum;
+	double* normals;
+	int fNum;
+	int* faces;
 	
-/************************** LINEAR ALGEBRA FUNCTIONS ************************************/
+	mtl **mtls;
+} obj;
+
+static obj **modelArray;
+int modelNum = 0;
+
+static obj* getObj(int id) {
+	return modelArray[id];
+}
+
+
+	
+/***************************** LINEAR ALGEBRA FUNCTIONS **********************************/
 
 static double cosd(double deg) {return cos(deg * D2R);}
 static double sind(double deg) {return sin(deg * D2R);}
 static double tand(double deg) {return tan(deg * D2R);}
+
 
 
 /*static double* set3(double *vec4, double x, double y, double z) {
@@ -732,6 +768,13 @@ static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  dou
 							if(u >= 0 && u < textureWidth && v >= 0 && v < textureHeight) {
 								dRGBA = texture[textureWidth*v + u];
 								convertInt2RGBA(dRGBA, &dR,&dG,&dB,&dA);
+								
+								dR = (int) (dR/255. * R);
+								dG = (int) (dG/255. * G);
+								dB = (int) (dB/255. * B);
+								dA = (int) (dA/255. * A);
+								
+								dRGBA = convertRGBA2Int(dR,dG,dB,dA);
 							}
 							
 							if(!doFog)
@@ -802,7 +845,7 @@ static PyObject* pyGetXY(PyObject *self, PyObject *args) {
 }
 
 
-static void drawPolygon(double x, double y, double r, int n, double angle) {
+static void drawPolygon(double x, double y, double r, int n) {
 	int i;
 	double d, xi,yi, xf,yf;
 	
@@ -810,13 +853,13 @@ static void drawPolygon(double x, double y, double r, int n, double angle) {
 		xi = xf;
 		yi = yf;
 		
-		d = angle + i*360./(n-1);
+		d = i*360./(n-1);
 		xf = x + r*cosd(d);
 		yf = y - r*sind(d);
 
 		if(i > 0)
 			drawTriangle(xi,yi,1,0,0, xf,yf,1,0,0, x,y,1,0,0);
-	}	
+	}
 }
 
 static void draw3dFloor(double x1, double y1, double x2, double y2, double z) {
@@ -844,30 +887,200 @@ static PyObject* pyDraw3dWall(PyObject *self, PyObject *args) {
 }
 
 					
-static void compileArrays() {
+static void compileMats() {
 	setMatIdentity(completeMat);
 	multMatMat(completeMat, projMat,	completeMat);
 	multMatMat(completeMat, viewMat,	completeMat);
 	multMatMat(completeMat, modelMat,	completeMat);
 }
-static PyObject* pyCompileArrays(PyObject *self) {
-	compileArrays();
+static PyObject* pyCompileMats(PyObject *self) {
+	compileMats();
     Py_RETURN_NONE;
-}	
+}
+
+
+static int createObj() {
+	int id = modelNum++;
+	
+	obj** oldModelArray = modelArray;
+	modelArray = (obj**) malloc(modelNum * sizeof(obj*));
+	
+	int i;
+	for(i = 0; i < modelNum-1; i++)
+		modelArray[i] = oldModelArray[i];
+	
+	modelArray[id] = (obj*) malloc(sizeof(obj));
+	
+	if(id > 0)
+		free(oldModelArray);
+	
+	return id;
+}
+
+static mtl** loadMtl(char* filename) {
+	
+}
+
+static void loadObj(char* filename, int id) {	
+	obj* o = modelArray[id];
+	
+	FILE *fp;
+	char lines[200][200], line[200], *type, *substr, c, cc[2];
+	size_t len = 0;
+	ssize_t read;
+	int l = 0, lNum = 0;
+	
+	if((fp = fopen(filename, "r")) == NULL)
+		return;
+	
+	cc[1] = '\0';
+	
+	lines[0][0] = '\0';
+	
+	// Load file into string array
+	while(!feof(fp)) {
+		cc[0] = fgetc(fp);
+		
+		if(cc[0] != '\n')
+			strcat(lines[lNum], cc);
+		else
+			lines[++lNum][0] = '\0';
+	}
+	lNum--;
+	
+	fclose(fp);
+
+	int i, vNum = 0, vnNum = 0, vtNum = 0, fNum = 0;
+	// Loop through File Once to Get # of each
+	for(l = 0; l < lNum; l++) {
+		strcpy(line, lines[l]);	
+
+		type = strtok(line, " ");
+		
+		if(!strcmp(type,"v"))
+			vNum++;
+		else if(!strcmp(type, "f") || !strcmp(type, "usemtl"))
+			fNum++;
+	}
+
+	int
+		ii, f = 0, v = 0,
+		*faces = (int*) malloc(9 * fNum * sizeof(int));
+	double
+		*vertices = (double*) malloc(3 * vNum * sizeof(double));
+	
+	mtl* m;
+	
+	// Loop through File Second Time
+	for(l = 0; l < lNum; l++) {
+		strcpy(line, lines[l]);	
+		type = strtok(line, " ");
+				
+		if(!strcmp(type,"v")) {
+			for(i = 0; i < 3; i++) {
+				substr = strtok(NULL , " ");
+				vertices[3*v + i] = atof(substr);
+			}
+			v++;
+		}
+		else if(!strcmp(type, "usemtl")) {
+			m = 
+		}
+		else if(!strcmp(type, "f")) {
+			for(ii = 0; ii < 3; ii++) {
+				for(i = 0; i < 3; i++) {
+					substr = strtok(NULL , (i<2)?"/":" ");
+					faces[9*f + 3*ii + i] = atoi(substr);
+				}
+			}
+			f++;
+		}
+	}
+		
+	
+	o->vNum = vNum;
+	o->fNum = fNum;
+	o->faces = faces;
+	o->vertices = vertices;
+	o->mtls = mtls;
+}
+static PyObject* pyLoadObj(PyObject *self, PyObject *args) {
+	char* filename;
+	
+	if(!PyArg_ParseTuple(args, "s", &filename))
+      return NULL;
+
+	int id = createObj();
+	loadObj(filename, id);
+	return Py_BuildValue("i", id);
+}
+
+
+
+static void drawObj(obj* o) {	
+	int
+		*faces = o->faces,
+		f,
+		v1, v2, v3,
+		fNum = o->fNum;
+	double
+		*vertices = o->vertices;
+	mtl *currentMtl;
+	
+	int 
+		tRGBA = RGBA,
+		tR = R,
+		tG = G,
+		tB = B,
+		tA = A;
+		
+	// Loop through Faces
+	for(f = 0; f < fNum; f++) {	
+		// Get vertices
+		v1 = o->faces[9*f];
+		v2 = o->faces[9*f+3];
+		v3 = o->faces[9*f+6];
+		
+		if(v1 == -1) {
+			currentMtl = o->mtls[v2];
+			R = (int) (255 * currentMtl->kd[0]);
+			G = (int) (255 * currentMtl->kd[1]);
+			B = (int) (255 * currentMtl->kd[2]);
+		}
+		else {	
+			// Draw triangle btwn vertices
+			drawTriangle(
+				vertices[3*v1],vertices[3*v1+1],vertices[3*v1+2],0,0,
+				vertices[3*v2],vertices[3*v2+1],vertices[3*v2+2],0,0,
+				vertices[3*v3],vertices[3*v3+1],vertices[3*v3+2],0,0);
+		}
+	}
+	
+	RGBA = tRGBA;
+	R = tR;
+	G = tG;
+	B = tB;
+	A = tA;		
+}
+static PyObject* pyDrawObj(PyObject *self, PyObject *args) {
+	int id;
+	if(!PyArg_ParseTuple(args, "i", &id))
+      return NULL;
+  
+	drawObj(getObj(id));
+	Py_RETURN_NONE;
+}
+
+	
 
 static double timer;
 static PyObject* pyTest(PyObject *self, PyObject *args) {
 	PyArrayObject *arrayin;
 	
-	printf("Test Parsing...\n");
 	if(!PyArg_ParseTuple(args, "O!", &PyArray_Type,&arrayin)) {
 		printf("FAILED TO PARSE!\n");
 	    return NULL;
-	}
-  
-	printf("GOT!\n");
-	//printf("GOT ARRAY! Size: %d x %d\n", pixs->dimensions[0],pixs->dimensions[1]);
-    
+	}    
 	//init(resW,resH,n,f,doFog, (int*) (pixs->data));
 	Py_RETURN_NONE;
 
@@ -891,7 +1104,7 @@ static PyObject* pyTest(PyObject *self, PyObject *args) {
 		
 ////////////////////////////////////////////////////////////////////////////////////////
 
-static PyMethodDef canv3d_funcs[27] = {
+static PyMethodDef canv3d_funcs[29] = {
 	{"setMatIdentity", (PyCFunction) pySetMatIdentity, METH_VARARGS, NULL },
 	{"setMatTranslation", (PyCFunction) pySetMatTranslation, METH_VARARGS, NULL },
 	{"addMatTranslation", (PyCFunction) pyAddMatTranslation, METH_VARARGS, NULL },
@@ -908,13 +1121,16 @@ static PyMethodDef canv3d_funcs[27] = {
 	{"addMatPerspective", (PyCFunction) pyAddMatPerspective, METH_VARARGS, NULL },
 	{"setMatLook", (PyCFunction) pySetMatLook, METH_VARARGS, NULL },
 
+	{"loadObj", (PyCFunction) pyLoadObj, METH_VARARGS, NULL},
+	{"drawObj", (PyCFunction) pyDrawObj, METH_VARARGS, NULL},
+
 	{"init", (PyCFunction) pyInit, METH_VARARGS, NULL },
 	{"setTexture", (PyCFunction) pySetTexture, METH_VARARGS, NULL },
 	{"drawTriangle", (PyCFunction) pyDrawTriangle, METH_VARARGS, NULL },
 	{"drawQuad", (PyCFunction) pyDrawQuad, METH_VARARGS, NULL },
 	{"draw3dWall", (PyCFunction) pyDraw3dWall, METH_VARARGS, NULL },
 	{"draw3dFloor", (PyCFunction) pyDraw3dFloor, METH_VARARGS, NULL },
-	{"compileArrays", (PyCFunction) pyCompileArrays, METH_NOARGS, NULL },
+	{"compileMats", (PyCFunction) pyCompileMats, METH_NOARGS, NULL },
 	{"clear", (PyCFunction) pyClear, METH_NOARGS, NULL },
 	{"clearStatic", (PyCFunction) pyClearStatic, METH_NOARGS, NULL },
 	{"setRGB", (PyCFunction) pySetRGB, METH_VARARGS, NULL },

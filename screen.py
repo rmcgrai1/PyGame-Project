@@ -26,7 +26,7 @@ class Screen(object):
 		
 		self.drawResolution = self.drawWidth,self.drawHeight = outW,outH
 
-		self.tex = pygame.image.load("img/test.bmp").convert_alpha()
+		self.tex = pygame.image.load("img/photo.jpg").convert_alpha()
 		self.texW = self.tex.get_width()
 		self.texH = self.tex.get_height()
 
@@ -38,6 +38,8 @@ class Screen(object):
 		canv3d.init(resW, resH, .1, 300, 1, self.pixels);
 		
 		canv3d.setTexture(pygame.surfarray.pixels2d(self.tex), self.texW, self.texH);
+		
+		self.starship = canv3d.loadObj("starship.obj");
 		
 	def tick(self, input):
 		pass
@@ -73,19 +75,20 @@ class Screen(object):
 
 		t = 50
 		s = 30
-		canv3d.compileArrays()
+		canv3d.compileMats()
 
 
 		canv3d.draw3dWall(-t,-t,t, -t,t, -s)
 		
 		
+		canv3d.drawObj(self.starship);
 		
 		canv3d.addMatTranslation(MAT_M, 0,0,150)		
 		#addMatRotationX(MAT_M, epoch()*40)
 		#addMatRotationY(MAT_M, epoch()*50)
 		canv3d.addMatRotationZ(MAT_M, epoch()*50)
 		
-		canv3d.compileArrays()
+		canv3d.compileMats()
 		
 		canv3d.setRGB(0,0,255);
 		canv3d.draw3dWall(-s,-s,-s, s,-s,s)
