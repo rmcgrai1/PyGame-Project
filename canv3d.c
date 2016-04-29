@@ -11,9 +11,9 @@
 
 #include "linalg.h"
 
-#define MAT_MODEL		0
-#define MAT_VIEW		1
-#define MAT_PROJECTION 	2
+#define MAT_MODELVIEW		0
+#define MAT_PROJECTION		1
+#define MAT_TRANSFORM 	        2
 
 static double
 	near = .1,
@@ -23,7 +23,7 @@ static double
 	tempVert1[4] = 	{0,0,0,1},
 	tempVert2[4] = 	{0,0,0,1},
 	tempVert3[4] = 	{0,0,0,1},
-	viewMat[16] = 	{1,0,0,0, 
+	modelviewMat[16] = 	        {1,0,0,0, 
 					 0,1,0,0,	
 					 0,0,1,0, 
 					 0,0,0,1},
@@ -31,7 +31,7 @@ static double
 					 0,1,0,0,
 					 0,0,1,0, 
 					 0,0,0,1},
-	modelMat[16] = 	{1,0,0,0,
+	transMat[16] = 	{1,0,0,0,
 					 0,1,0,0, 
 					 0,0,1,0, 
 					 0,0,0,1},
@@ -139,9 +139,9 @@ double calculateLength(double* vec4) {
 
 static double* getMat(int matType) {
 	switch(matType) {
-		case MAT_MODEL:			return modelMat;
-		case MAT_VIEW:			return viewMat;
-		case MAT_PROJECTION:	return projMat;
+		case MAT_MODELVIEW:			return modelviewMat;
+		case MAT_PROJECTION:			return projMat;
+	        case MAT_TRANSFORM:	                return transMat;
 		default:				return NULL;
 	}
 }
@@ -718,6 +718,22 @@ static PyObject* pySetMatCamera(PyObject *self, PyObject *args) {
   Py_RETURN_NONE;
 }
 
+static double* setMatCameraPosition(double *mat)
+{
+  setMatIdentity(mat);
+  setMatTranslation(mat, gCameraEye[0], gCameraEye[1], gCameraEye[2]);
+  return mat;
+}
+
+static PyObject* pySetMatCameraPosition(PyObject *self, PyObject *args) {
+  int matType;
+  if(!PyArg_ParseTuple(args, "i", &matType))
+    return NULL;
+  
+  setMatCameraPosition(getMat(matType));
+  Py_RETURN_NONE;
+}
+
 static void init(int resW, int resH, double n, double f, int dFog, int* pixs) {
 	RESOLUTION_WIDTH = resW;
 	RESOLUTION_HEIGHT = resH;
@@ -1077,8 +1093,8 @@ static PyObject* pyDraw3dWall(PyObject *self, PyObject *args) {
 static void compileMats() {
 	setMatIdentity(completeMat);
 	multMatMat(completeMat, projMat,	completeMat);
-	multMatMat(completeMat, viewMat,	completeMat);
-	multMatMat(completeMat, modelMat,	completeMat);
+	multMatMat(completeMat, modelviewMat,	completeMat);
+	multMatMat(completeMat, transMat,	completeMat);
 }
 static PyObject* pyCompileMats(PyObject *self) {
 	compileMats();
@@ -1291,7 +1307,7 @@ static PyObject* pyTest(PyObject *self, PyObject *args) {
 		
 ////////////////////////////////////////////////////////////////////////////////////////
 
-static PyMethodDef canv3d_funcs[31] = {
+static PyMethodDef canv3d_funcs[32] = {
 	{"setMatIdentity", (PyCFunction) pySetMatIdentity, METH_VARARGS, NULL },
 	{"setMatTranslation", (PyCFunction) pySetMatTranslation, METH_VARARGS, NULL },
 	{"addMatTranslation", (PyCFunction) pyAddMatTranslation, METH_VARARGS, NULL },
@@ -1327,6 +1343,7 @@ static PyMethodDef canv3d_funcs[31] = {
 	{"cameraTurn", (PyCFunction) pyCameraTurn, METH_VARARGS, NULL},
 	{"cameraForwards", (PyCFunction) pyCameraForwards, METH_VARARGS, NULL},
 	{"setMatCamera", (PyCFunction) pySetMatCamera, METH_VARARGS, NULL},
+	{"setMatCameraPosition", (PyCFunction) pySetMatCameraPosition, METH_VARARGS, NULL},
     {NULL}
 };
 
