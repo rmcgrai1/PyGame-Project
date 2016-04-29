@@ -35,7 +35,6 @@ class Screen(object):
 		self.rect = self._img.get_rect()
 		
 		self.pixels = pygame.surfarray.pixels2d(self._img);
-<<<<<<< HEAD
 		canv3d.init(resW, resH, .1, 300, 0, self.pixels);
 			
 		self.skS = 512
@@ -54,10 +53,7 @@ class Screen(object):
 		self.upP = pygame.surfarray.pixels2d(self.up)
 		
 		self.starship = canv3d.loadObj("starship.obj");
-		
-=======
-		canv3d.init(resW, resH, .1, 300, 1, self.pixels);
-		
+				
 		canv3d.setTexture(pygame.surfarray.pixels2d(self.tex), self.texW, self.texH);
                 
                 self.radians = 0;
@@ -71,17 +67,18 @@ class Screen(object):
    #             canv3d.cameraTurn(0, 0);
  
 
->>>>>>> origin/master
 	def tick(self, input):
 		self.mouse_dx = input["mouse_dx"];
-                self.mouse_dy = input["mouse_dy"];
-                self.speed += input["key_vdir"]/60.0;
+		self.mouse_dy = input["mouse_dy"];
+		self.speed += input["key_vdir"]/60.0;
 					
 	def finalize(self):
+
 		canv3d.clear();
 		canv3d.cameraTurn(-self.mouse_dx/6.0, self.mouse_dy/6.0);
-                canv3d.cameraForwards(self.speed);
-                canv3d.setMatCamera(MAT_M);
+		canv3d.cameraForwards(self.speed);
+		canv3d.setMatCamera(MAT_M);
+
 		#canv3d.setMatIdentity(MAT_M)
 		canv3d.setMatIdentity(MAT_V)
                 #self.radians += (2 * math.pi)/(60*5);
