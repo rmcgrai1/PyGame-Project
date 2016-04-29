@@ -35,9 +35,22 @@ class Screen(object):
 		self.rect = self._img.get_rect()
 		
 		self.pixels = pygame.surfarray.pixels2d(self._img);
-		canv3d.init(resW, resH, .1, 300, 1, self.pixels);
+		canv3d.init(resW, resH, .1, 300, 0, self.pixels);
+			
+		self.skS = 512
+		self.rt = pygame.image.load("img/orbital-element_rt.jpg").convert_alpha()
+		self.rtP = pygame.surfarray.pixels2d(self.rt)
 		
-		canv3d.setTexture(pygame.surfarray.pixels2d(self.tex), self.texW, self.texH);
+		self.bk = pygame.image.load("img/orbital-element_bk.jpg").convert_alpha()
+		self.bkP = pygame.surfarray.pixels2d(self.bk)
+		self.dn = pygame.image.load("img/orbital-element_dn.jpg").convert_alpha()
+		self.dnP = pygame.surfarray.pixels2d(self.dn)
+		self.ft = pygame.image.load("img/orbital-element_ft.jpg").convert_alpha()
+		self.ftP = pygame.surfarray.pixels2d(self.ft)
+		self.lf = pygame.image.load("img/orbital-element_lf.jpg").convert_alpha()
+		self.lfP = pygame.surfarray.pixels2d(self.lf)
+		self.up = pygame.image.load("img/orbital-element_up.jpg").convert_alpha()
+		self.upP = pygame.surfarray.pixels2d(self.up)
 		
 		self.starship = canv3d.loadObj("starship.obj");
 		
@@ -73,15 +86,51 @@ class Screen(object):
 		canv3d.addMatScale(MAT_P, 1,1,-1)
 		canv3d.addMatPerspective(MAT_P, 1) #45
 
+
+		sk = 300/sqrt(2)
+		
+		canv3d.setMatIdentity(MAT_M)
+				
+				
+		canv3d.addMatTranslation(MAT_M, pl.y,pl.z,pl.x)
+
+		canv3d.compileMats()
+		
+		canv3d.setRGB(255,255,255)
+
+
+		canv3d.setTexture(self.upP, self.skS,self.skS);		
+		canv3d.draw3dFloor(-sk,sk,sk,-sk, sk)
+
+		canv3d.setTexture(self.ftP, self.skS,self.skS);		
+		canv3d.draw3dWall(sk,-sk,sk, sk,sk, -sk)
+
+		canv3d.setTexture(self.lfP, self.skS,self.skS);		
+		#canv3d.draw3dWall(-sk,-sk,sk, sk,sk, -sk)
+
+		canv3d.setTexture(self.ftP, self.skS,self.skS);		
+		#canv3d.draw3dWall(-sk,-sk,sk, sk,sk, -sk)
+
+		canv3d.setTexture(self.bkP, self.skS,self.skS);		
+		canv3d.draw3dWall(-sk,sk,sk, -sk,-sk, -sk)
+
+		canv3d.setTexture(self.dnP, self.skS,self.skS);
+		canv3d.draw3dFloor(-sk,-sk,sk,sk, -sk)
+
+
+
+		canv3d.setMatIdentity(MAT_M)
+
+
 		t = 50
 		s = 30
 		canv3d.compileMats()
 
-
+		canv3d.setTexture(pygame.surfarray.pixels2d(self.tex), self.texW, self.texH);
 		canv3d.draw3dWall(-t,-t,t, -t,t, -s)
 		
 		
-		canv3d.drawObj(self.starship);
+		#canv3d.drawObj(self.starship);
 		
 		canv3d.addMatTranslation(MAT_M, 0,0,150)		
 		#addMatRotationX(MAT_M, epoch()*40)
