@@ -1,7 +1,7 @@
 // http://www.tutorialspoint.com/python/python_further_extensions.htm
 
 #include <Python.h>
-#include <arrayobject.h>
+#include <numpy/arrayobject.h>
 #include <math.h>
 #include <stdio.h>
 #include <time.h>
@@ -49,10 +49,15 @@ static double
 					 0,1,0,0, 
 					 0,0,1,0, 
 					 0,0,0,1},
-	completeMat[16] = 	{1,0,0,0, 
+        completeMat[16] = 	{1,0,0,0, 
 					 0,1,0,0, 
 					 0,0,1,0,
-					 0,0,0,1};
+				         0,0,0,1},
+  globalUpDownAxis[3] = {1, 0, 0 },
+  globalLeftRightAxis[3] = {0, 1, 0},
+  gCameraEye[3] = {0, 0, 0},
+  gCameraAt[3] = {0, 0, -1},
+  gCameraUp[3] = {0, 1, 0};
 
 
 static int 
@@ -123,6 +128,8 @@ static double* set4(double *vec4, double x, double y, double z, double w) {
 	
 	return vec4;
 }
+
+
 
 static double* set16(double* mat, 	double a1,double a2,double a3,double a4,	double b1,double b2,double b3,double b4,	double c1,double c2,double c3,double c4,	double d1,double d2,double d3,double d4) {
 	//printf("> set16()\n");
@@ -427,8 +434,6 @@ static PyObject* pyAddMatRotationZ(PyObject *self, PyObject *args) {
 }
 
 	
-
-	
 static double* setMatPerspective(double *mat, double fov) {
 	// http://stackoverflow.com/questions/6060169/is-this-a-correct-perspective-fov-matrix
 	
@@ -495,8 +500,120 @@ static PyObject* pyAddMatPerspective(PyObject *self, PyObject *args) {
 	Py_RETURN_NONE;
 }
 
+
+double magnitude(double* vec, int length)
+{
+  int i;
+  double sumTotal = 0;
+  for (i = 0; i < length; i++)
+    {
+      sumTotal += vec[i] * vec[i];
+    }
+  return sqrt(sumTotal);
+}
+
+double * normalizeModify(double* vec, int length)
+{
+  double mag = magnitude(vec, length);
+  int i;
+  for (i = 0; i < length; i++)
+    {
+      vec[i] = vec[i] / mag;
+    }
+  return vec;
+}
+
+double * normalizeCopy(double* vecSource, double* vecDest, int length)
+{
+  double mag = magnitude(vecSource, length);
+  int i;
+  for (i = 0; i < length; i++)
+    {
+      vecDest[i] = vecSource[i] / mag;
+    }
+  return vecDest;
+}
+
+ double* subtractVecCopy(double *vec1, double *vec2, double* vecDest, int length)
+ {
+   int i;
+   for (i = 0; i < length; i++)
+     {
+       vecDest[i] = vec1[i] - vec2[i];
+     }
+   return vecDest;
+ }
+
+double* crossVec3Copy(double *u, double *v, double* vecDest)
+{
+  vecDest[0] = (u[1]*v[2]) - (u[2]*v[1]);
+  vecDest[1] = (u[2]*v[0]) - (u[0]*v[2]);
+  vecDest[2] = (u[0]*v[1]) - (u[1]*v[0]);
+  return vecDest;
+}
+
+//dot product
+double dot(double *u, double *v, int length)
+{
+  int i;
+  double sumTotal = 0;
+  for (i = 0; i < length; i++)
+    {
+      sumTotal += (u[i] * v[i]);
+    }
+  return sumTotal;
+}
 	
 static double* setMatLook(double *mat, double x,double y,double z, double nx,double ny,double nz, double upx,double upy,double upz) {
+
+  
+  int i;
+  
+  double eye[3];
+  double at[3];
+  double up[3];
+  double n[3];
+  double u[3];
+  double v[3];
+  double temp[3];
+  int eyeAtEqual = 0;
+  
+  eye[0] = x; eye[1] = y; eye[2] = z;
+  at[0] = nx; at[1] = ny; at[2] = nz;
+  up[0] = upx; up[1] = upy; up[2] = upz;
+
+  for (i = 0; i < 3; i++)
+    {
+      if (eye[i] != at[i])
+	{
+	  eyeAtEqual = 0;
+	}
+    }
+     
+  if (eyeAtEqual) return setMatIdentity(mat);
+  //printf("(%lf, %lf)\n", at[0], at[2]);
+
+  subtractVecCopy(eye, at, temp, 3);
+  normalizeCopy(temp, n, 3);
+  crossVec3Copy(up, n, temp);
+  normalizeCopy(temp, u, 3);
+  crossVec3Copy(n, u, temp);
+  normalizeCopy(temp, v, 3);
+
+  mat[0] = u[0]; mat[1] = u[1]; mat[2] = u[2];
+  mat[3] = -dot(u, eye, 3);
+
+  mat[4] = v[0]; mat[5] = v[1]; mat[6] = v[2];
+  mat[7] = -dot(v, eye, 3);
+
+  mat[8] = n[0]; mat[9] = n[1]; mat[10] = n[2];
+  mat[11] = -dot(n, eye, 3);
+
+  mat[12] = mat[13] = mat[14] = 0;
+  mat[15] = 1;
+  return mat;
+  /*
+  
 	double 
 		sx = ny*upz - upy*nz,
 		sy = -nx*upz + upx*nz,
@@ -516,23 +633,187 @@ static double* setMatLook(double *mat, double x,double y,double z, double nx,dou
 		sz,upz,-nz,0,
 		0,0,0,1);
 	return transpose(mat);
+  
 	/*return set16(mat, 
 		sx,sy,sz,0,
 		upx,upy,upz,0,
 		-nx,-ny,-nz,0,
 		0,0,0,1);*/
 }
+
 static PyObject* pySetMatLook(PyObject *self, PyObject *args) {
 	int matType;
 	double x,y,z, nx,ny,nz, upx,upy,upz;
-	if(!PyArg_ParseTuple(args, "idddd", &matType, &x,&y,&z, &nx,&ny,&nz, &upx,&upy,&upz))
+	if(!PyArg_ParseTuple(args, "iddddddddd", &matType, &x,&y,&z, &nx,&ny,&nz, &upx,&upy,&upz))
       return NULL;
   
 	setMatLook(getMat(matType), x,y,z, nx,ny,nz, upx,upy,upz);		
 	Py_RETURN_NONE;
 }
-	
 
+//axis is an array of length 3
+//angle is in degrees
+static double* rotateAboutAxis(double *mat, double angle, const double* axis)
+{
+  double x, y, z, c, omc, s;
+  double normAxis[3];
+  normAxis[0] = axis[0];
+  normAxis[1] = axis[1];
+  normAxis[2] = axis[2];
+
+  normalizeModify(normAxis, 3);
+
+  c = cosd( angle );
+  omc = 1.0 - c;
+  s = sind( angle );
+
+  x = normAxis[0];
+  y = normAxis[1];
+  z = normAxis[2];
+   
+  mat[0] = x*x*omc + c; 
+  mat[1] =   x*y*omc - z*s;
+  mat[2] = x*z*omc + y*s;
+  mat[3] = 0;
+  
+  mat[4] = x*y*omc + z*s;
+  mat[5] = y*y*omc + c;
+  mat[6] = y*z*omc - x*s;
+  mat[7] = 0;
+  
+  mat[8] = x*z*omc - y*s;
+  mat[9] = y*z*omc + x*s;
+  mat[10] = z*z*omc + c;
+  mat[11] = 0;
+  
+  mat[12] = mat[13] = mat[14] = 0;
+  mat[15] = 1;
+    
+    /*
+    var result = mat4(
+        vec4( x*x*omc + c,   x*y*omc - z*s, x*z*omc + y*s, 0.0 ),
+        vec4( x*y*omc + z*s, y*y*omc + c,   y*z*omc - x*s, 0.0 ),
+        vec4( x*z*omc - y*s, y*z*omc + x*s, z*z*omc + c,   0.0 ),
+        vec4()
+    );
+    */
+    return mat;
+}
+
+double* mat4MultVec3(double *m, double *v, double* destVec) {
+  double v0, v1, v2;
+    v0 = v[0] * m[0] + v[1] * m[1] + v[2] * m[2] + m[3];
+    v1 = v[0] * m[4] + v[1] * m[5] + v[2] * m[6] + m[7];
+    v2 = v[0] * m[8] + v[1] * m[9] + v[2] * m[10] + m[11];
+
+    //the below is required in case v == destVec
+    destVec[0] = v0;
+    destVec[1] = v1;
+    destVec[2] = v2;
+    return destVec;
+}
+
+//deltaX and deltaY are in degrees
+static void cameraTurn(double deltaX, double deltaY)
+{
+  double upDownRotate[16];
+  double leftRightRotate[16];
+  double eyeTrans[16];
+  double eyeNegTrans[16];
+  double toTransform[16];
+
+  int i;
+  setMatTranslation(eyeTrans, gCameraEye[0], gCameraEye[1], gCameraEye[2]);
+  setMatTranslation(eyeNegTrans, -gCameraEye[0], -gCameraEye[1], -gCameraEye[2]);
+  
+  rotateAboutAxis(upDownRotate, deltaY, globalUpDownAxis);
+  
+  setMatIdentity(toTransform);
+  multMatMat(toTransform, eyeTrans, toTransform);
+  multMatMat(toTransform, upDownRotate, toTransform);
+  multMatMat(toTransform, eyeNegTrans, toTransform);
+  mat4MultVec3(toTransform, gCameraAt, gCameraAt);
+  //mat4MultVec3(toTransform, gCameraUp, gCameraUp);
+  mat4MultVec3(upDownRotate, globalLeftRightAxis, globalLeftRightAxis);
+  
+  //printf("ud: (%.1lf,%.1lf,%.1lf), ca: (%.1lf,%.1lf,%.1lf) cu: (%.1lf,%.1lf,%.1lf)\n", globalUpDownAxis[0], globalUpDownAxis[1], globalUpDownAxis[2], gCameraAt[0], gCameraAt[1], gCameraAt[2], gCameraUp[0], gCameraUp[1], gCameraUp[2]);
+
+  rotateAboutAxis(leftRightRotate, deltaX, globalLeftRightAxis);
+  setMatIdentity(toTransform);
+  multMatMat(toTransform, eyeTrans, toTransform);
+  multMatMat(toTransform, leftRightRotate, toTransform);
+  multMatMat(toTransform, eyeNegTrans, toTransform);
+  mat4MultVec3(toTransform, gCameraAt, gCameraAt);
+  //mat4MultVec3(toTransform, gCameraUp, gCameraUp);
+  mat4MultVec3(leftRightRotate, globalUpDownAxis, globalUpDownAxis);
+
+  for (i = 0; i < 3; i++)
+    {
+      gCameraUp[i] = globalLeftRightAxis[i];
+    }
+  
+  //printMat(getMat(MAT_VIEW));
+
+  //return getMat(MAT_MODEL);
+}
+
+
+static PyObject* pyCameraTurn(PyObject *self, PyObject *args) {
+  double mouse_dx, mouse_dy;
+  if(!PyArg_ParseTuple(args, "dd", &mouse_dx, &mouse_dy))
+    return NULL;
+  
+  cameraTurn(mouse_dx, mouse_dy);
+  Py_RETURN_NONE;
+}
+
+//distance is in...pixels?
+static void cameraForwards(double distance)
+{
+  double dirToMove[3];
+  double distToMove[3];
+  double dirToMoveMag;
+  int i;
+  for (i = 0; i < 3; i++)
+    {
+      dirToMove[i] = gCameraAt[i] - gCameraEye[i];
+    }
+  dirToMoveMag = magnitude(dirToMove, 3);
+  
+  distToMove[0] = distance * dirToMove[0] / dirToMoveMag;
+  distToMove[1] = distance * dirToMove[1] / dirToMoveMag;
+  distToMove[2] = distance * dirToMove[2] / dirToMoveMag;
+
+  for (i = 0; i < 3; i++)
+    {
+      gCameraEye[i] = gCameraEye[i] + distToMove[i];
+      gCameraAt[i] = gCameraAt[i] + distToMove[i];
+    }
+}
+
+static PyObject* pyCameraForwards(PyObject *self, PyObject *args) {
+  double distance;
+  if(!PyArg_ParseTuple(args, "d", &distance))
+    return NULL;
+  
+  cameraForwards(distance);
+  Py_RETURN_NONE;
+}
+
+static double* setMatCamera(double* mat)
+{
+  setMatLook(mat, gCameraEye[0], gCameraEye[1], gCameraEye[2], gCameraAt[0], gCameraAt[1], gCameraAt[2], gCameraUp[0], gCameraUp[1], gCameraUp[2]);
+  return mat;
+}
+
+static PyObject* pySetMatCamera(PyObject *self, PyObject *args) {
+  int matType;
+  if(!PyArg_ParseTuple(args, "i", &matType))
+    return NULL;
+  
+  setMatCamera(getMat(matType));
+  Py_RETURN_NONE;
+}
 
 static void init(int resW, int resH, double n, double f, int dFog, int* pixs) {
 	RESOLUTION_WIDTH = resW;
@@ -891,7 +1172,7 @@ static PyObject* pyTest(PyObject *self, PyObject *args) {
 		
 ////////////////////////////////////////////////////////////////////////////////////////
 
-static PyMethodDef canv3d_funcs[27] = {
+static PyMethodDef canv3d_funcs[30] = {
 	{"setMatIdentity", (PyCFunction) pySetMatIdentity, METH_VARARGS, NULL },
 	{"setMatTranslation", (PyCFunction) pySetMatTranslation, METH_VARARGS, NULL },
 	{"addMatTranslation", (PyCFunction) pyAddMatTranslation, METH_VARARGS, NULL },
@@ -921,7 +1202,9 @@ static PyMethodDef canv3d_funcs[27] = {
 	{"getXY", (PyCFunction) pyGetXY, METH_VARARGS, NULL },
 
 	{"test", (PyCFunction) pyTest, METH_VARARGS, NULL },
-
+	{"cameraTurn", (PyCFunction) pyCameraTurn, METH_VARARGS, NULL},
+	{"cameraForwards", (PyCFunction) pyCameraForwards, METH_VARARGS, NULL},
+	{"setMatCamera", (PyCFunction) pySetMatCamera, METH_VARARGS, NULL},
     {NULL}
 };
 

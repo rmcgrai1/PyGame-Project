@@ -38,15 +38,37 @@ class Screen(object):
 		canv3d.init(resW, resH, .1, 300, 1, self.pixels);
 		
 		canv3d.setTexture(pygame.surfarray.pixels2d(self.tex), self.texW, self.texH);
-		
+                
+                self.radians = 0;
+		self.mouse_dx = 0;
+                self.mouse_dy = 0;
+                self.speed = 0;
+        
+#                canv3d.cameraTurn(32,23);
+ #               canv3d.cameraTurn(-52,-77)
+  #              canv3d.cameraTurn(0, 49);
+   #             canv3d.cameraTurn(0, 0);
+ 
+
 	def tick(self, input):
-		pass
+		self.mouse_dx = input["mouse_dx"];
+                self.mouse_dy = input["mouse_dy"];
+                self.speed += input["key_vdir"]/60.0;
 					
 	def finalize(self):
 		canv3d.clear();
-		
-		canv3d.setMatIdentity(MAT_M)
+		canv3d.cameraTurn(-self.mouse_dx/6.0, self.mouse_dy/6.0);
+                canv3d.cameraForwards(self.speed);
+                canv3d.setMatCamera(MAT_M);
+		#canv3d.setMatIdentity(MAT_M)
 		canv3d.setMatIdentity(MAT_V)
+                #self.radians += (2 * math.pi)/(60*5);
+                #        print math.cos(self.radians);
+             #   canv3d.setMatLook(MAT_V, 
+              #            0,0,0,
+               #           math.cos(self.radians), math.sin(self.radians), 0,
+                #          0, 1, 0
+                #);
 		canv3d.setMatIdentity(MAT_P)
 		
 		pl = self.gs.player
@@ -60,9 +82,9 @@ class Screen(object):
 		
 		# CAMERA ROTATION
 		#canv3d.addMatRotationX(MAT_V, 90)
-		canv3d.addMatRotationY(MAT_V, -pl.dir)
+		##canv3d.addMatRotationY(MAT_V, -pl.dir)
 		#canv3d.addMatRotationZ(MAT_V, -90)
-		canv3d.addMatTranslation(MAT_V, -pl.y,-pl.z,-pl.x)
+		##canv3d.addMatTranslation(MAT_V, -pl.y,-pl.z,-pl.x)
 		#canv3d.addMatRotationZ(MAT_V, 90)
 		
 		

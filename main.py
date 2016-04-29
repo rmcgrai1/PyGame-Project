@@ -68,17 +68,32 @@ class GameSpace:
 		#self.oscreen = self.instanceAppend(OScreen(self, 80,60, 640, 480)) #80,60
 		self.screen = self.instanceAppend(Screen(self, 320,240, 640, 480)) #80,60
 
+                mouse_center_x = self.width/2;
+                mouse_center_y = self.height/2;
+                pygame.mouse.set_visible(False);
+                pygame.event.set_grab(True);
+                #pygame.mouse.set_pos(mouse_center_x, mouse_center_y);
+
 		#3. Game loop
 		while True:
 			#4. Tick regulation
 			self.clock.tick(60);
 
 			#5. User input reading
-			
-			(mx, my) = pygame.mouse.get_pos()
-			mDown = pygame.mouse.get_pressed()[0]
-			
+#                        (mdx, mdy) = pygame.mouse.get_rel();
+                  #      if ((mx < 0) || (mx > self.width)):
+                        pygame.mouse.set_pos(mouse_center_x, mouse_center_y);
+                        #pygame.mouse.get_rel();
+ #                       mdx, mdy = mdx/10000.0, mdy/10000.0;
+  #                      print mdx, mdy;
+                        mDown = pygame.mouse.get_pressed()[0]
+			mdx, mdy = 0, 0
+
+
 			for event in pygame.event.get():
+                                if (event.type == pygame.MOUSEMOTION):
+                                        mdx, mdy = event.rel;
+                                        #print mdx, mdy;
 				if event.type == QUIT:
 					pygame.mixer.quit()
 					sys.exit()
@@ -91,6 +106,9 @@ class GameSpace:
 						keyVDir -= 1
 					elif(event.key == pygame.K_s):
 						keyVDir += 1
+                                        elif(event.key == pygame.K_ESCAPE):
+                                                pygame.mixer.quit();
+                                                sys.exit();
 				elif event.type == KEYUP:
 					if(event.key == pygame.K_a):
 						keyHDir += 1
@@ -106,9 +124,8 @@ class GameSpace:
 			#6. Tick updating and polling
 
 			input = {
-				"mouse_down": mDown,
-				"mouse_x": mx,
-				"mouse_y": my,
+				"mouse_down": mDown,                                                            "mouse_dy": mdy,
+                                "mouse_dx": mdx,
 				"key_hdir": keyHDir,
 				"key_vdir": keyVDir
 			}
