@@ -34,8 +34,10 @@ class Screen(object):
 		self._img = pygame.Surface( (self.resolutionWidth,self.resolutionHeight) ).convert_alpha()
 		self.rect = self._img.get_rect()
 		
+		self.far = 5000
+		
 		self.pixels = pygame.surfarray.pixels2d(self._img);
-		canv3d.init(resW, resH, .1, 300, 0, self.pixels);
+		canv3d.init(resW, resH, .1, self.far, 0, self.pixels);
 			
 		self.skS = 512
 		self.rt = pygame.image.load("img/orbital-element_rt.jpg").convert_alpha()
@@ -74,23 +76,9 @@ class Screen(object):
                 #Camera Setting
 		canv3d.cameraTurn(-self.mouse_dx/6.0, self.mouse_dy/6.0);
 		canv3d.cameraForwards(self.speed);
-<<<<<<< HEAD
-		#canv3d.setMatCamera(MAT_M);
-
-		#canv3d.setMatIdentity(MAT_M)
-		canv3d.setMatIdentity(MAT_V)
-                #self.radians += (2 * math.pi)/(60*5);
-                #        print math.cos(self.radians);
-             #   canv3d.setMatLook(MAT_V, 
-              #            0,0,0,
-               #           math.cos(self.radians), math.sin(self.radians), 0,
-                #          0, 1, 0
-                #);
-=======
 		canv3d.setMatCamera(MAT_MV);
 
                 #Initialize Perspective and Transform
->>>>>>> origin/master
 		canv3d.setMatIdentity(MAT_P)
 		canv3d.setMatIdentity(MAT_T)
 		
@@ -98,22 +86,7 @@ class Screen(object):
 		
 		frX = pl.x
 		frY = pl.y
-<<<<<<< HEAD
-		frZ = pl.z
-		
-		#setMatLook(MAT_V, frX,frY,frZ, toX,toY,toZ, 0,0,1)
-		#addMatRotationZ(MAT_V, 90)
-		
-		# CAMERA ROTATION
-		#canv3d.addMatRotationX(MAT_V, 90)
-		canv3d.addMatRotationY(MAT_V, -pl.dir)
-		#canv3d.addMatRotationZ(MAT_V, -90)
-		canv3d.addMatTranslation(MAT_V, -pl.y,-pl.z,-pl.x)
-		#canv3d.addMatRotationZ(MAT_V, 90)
-		
-=======
 		frZ = pl.z		
->>>>>>> origin/master
 		
 		# PROJECTION
 		canv3d.addMatTranslation(MAT_P, self.resolutionWidth/2, self.resolutionHeight/2,0)
@@ -121,10 +94,10 @@ class Screen(object):
 		canv3d.addMatPerspective(MAT_P, 1) #45
 
 
-		sk = 300/2
+		sk = self.far/2
 		
-                #Skybox
-                canv3d.setMatCameraPosition(MAT_T)
+		#Skybox
+		canv3d.setMatCameraPosition(MAT_T)
 		canv3d.compileMats()
 
 		canv3d.setRGB(255,255,255)
@@ -148,18 +121,25 @@ class Screen(object):
 		canv3d.setTexture(self.dnP, self.skS,self.skS);
 		canv3d.draw3dFloor(-sk,-sk,sk,sk, -sk)
 
+		
+		canv3d.setMatIdentity(MAT_T)
+		canv3d.addMatTranslation(MAT_T, 0,0,-100)
+		canv3d.addMatRotationY(MAT_T, 50*epoch())
+		canv3d.addMatScale(MAT_T, 50,50,50)
+		canv3d.compileMats()
+		canv3d.drawObj(self.starship)
+
 
 
 		t = 50
 		s = 30
-                canv3d.setMatIdentity(MAT_T)
+		canv3d.setMatIdentity(MAT_T)
 		canv3d.compileMats()
 
 		canv3d.setTexture(pygame.surfarray.pixels2d(self.tex), self.texW, self.texH);
 		canv3d.draw3dWall(-t,-t,-t, -t,t,t)
 		
 		
-		#canv3d.drawObj(self.starship);
 		
 		canv3d.addMatTranslation(MAT_T, 0,0,150)		
 		canv3d.addMatRotationZ(MAT_T, epoch()*50)

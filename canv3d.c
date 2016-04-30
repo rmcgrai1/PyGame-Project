@@ -13,7 +13,7 @@
 
 #define MAT_MODELVIEW		0
 #define MAT_PROJECTION		1
-#define MAT_TRANSFORM 	        2
+#define MAT_TRANSFORM 	    2
 
 static double
 	near = .1,
@@ -103,6 +103,8 @@ static void convertInt2RGBA(int argb, int *r, int *g, int *b, int *a) {
 /*********************************** OBJ LOADING ************************************/
 
 typedef struct mtl {
+	char* name;
+	
 	double ns;
 	double* ka;
 	double* kd;
@@ -689,20 +691,33 @@ static PyObject* pyCameraForwards(PyObject *self, PyObject *args) {
   Py_RETURN_NONE;
 }
 
-static double* setMatCamera(double* mat)
-{
-  setMatLook(mat, gCameraEye[0], gCameraEye[1], gCameraEye[2], gCameraAt[0], gCameraAt[1], gCameraAt[2], gCameraUp[0], gCameraUp[1], gCameraUp[2]);
-  return mat;
+static double* setMatCamera(double* mat) {
+	setMatLook(mat, gCameraEye[0], gCameraEye[1], gCameraEye[2], gCameraAt[0], gCameraAt[1], gCameraAt[2], gCameraUp[0], gCameraUp[1], gCameraUp[2]);
+	return mat;
+}
+static PyObject* pySetMatCamera(PyObject *self, PyObject *args) {
+	int matType;
+	if(!PyArg_ParseTuple(args, "i", &matType))
+		return NULL;
+
+	setMatCamera(getMat(matType));
+	Py_RETURN_NONE;
 }
 
-static PyObject* pySetMatCamera(PyObject *self, PyObject *args) {
-  int matType;
-  if(!PyArg_ParseTuple(args, "i", &matType))
-    return NULL;
-  
-  setMatCamera(getMat(matType));
-  Py_RETURN_NONE;
+
+static PyObject* pyAddMatCamera(PyObject *self, PyObject *args) {
+	int matType;
+	if(!PyArg_ParseTuple(args, "i", &matType))
+		return NULL;
+	
+	double* mat = getMat(matType);
+
+	setMatCamera(tempMatAdd);
+	multMatMat(mat,tempMatAdd, mat);
+	
+	Py_RETURN_NONE;
 }
+
 
 static double* setMatCameraPosition(double *mat)
 {
@@ -1250,17 +1265,13 @@ static int createObj() {
 }
 
 static mtl** loadMtl(char* filename) {
-	
-}
-
-static void loadObj(char* filename, int id) {	
-	obj* o = modelArray[id];
-	
+	mtl **mtls, *m;
+		
 	FILE *fp;
 	char lines[200][200], line[200], *type, *substr, c, cc[2];
 	size_t len = 0;
 	ssize_t read;
-	int l = 0, lNum = 0;
+	int mNum = 0;
 	
 	if((fp = fopen(filename, "r")) == NULL)
 		return;
@@ -1291,8 +1302,12 @@ static void loadObj(char* filename, int id) {
 		
 		if(!strcmp(type,"v"))
 			vNum++;
-		else if(!strcmp(type, "f") || !strcmp(type, "usemtl"))
+		else if(!strcmp(type, "f"))
 			fNum++;
+		else if(!strcmp(type, "usemtl")) {
+			fNum++;
+			mNum++;
+		}
 	}
 
 	int
@@ -1300,8 +1315,7 @@ static void loadObj(char* filename, int id) {
 		*faces = (int*) malloc(9 * fNum * sizeof(int));
 	double
 		*vertices = (double*) malloc(3 * vNum * sizeof(double));
-	
-	mtl* m;
+
 	
 	// Loop through File Second Time
 	for(l = 0; l < lNum; l++) {
@@ -1310,19 +1324,110 @@ static void loadObj(char* filename, int id) {
 				
 		if(!strcmp(type,"v")) {
 			for(i = 0; i < 3; i++) {
-				substr = strtok(NULL , " ");
+				substr = strtok(NULL, " ");
 				vertices[3*v + i] = atof(substr);
 			}
 			v++;
 		}
-		else if(!strcmp(type, "usemtl")) {
-			//m = 
+		else if(!strcmp(type,"mtllib")) {
+			mtls = loadMtl(strtok(NULL, " "));
+		}
+		else if(!strcmp(type,"usemtl")) {
+			faces[9*f] = -1;
+			f++;
 		}
 		else if(!strcmp(type, "f")) {
 			for(ii = 0; ii < 3; ii++) {
 				for(i = 0; i < 3; i++) {
 					substr = strtok(NULL , (i<2)?"/":" ");
-					faces[9*f + 3*ii + i] = atoi(substr);
+					faces[9*f + 3*ii + i] = atoi(substr)-1;
+				}
+			}
+			f++;
+		}
+	}
+	
+	return mtls;
+}
+
+static void loadObj(char* filename, int id) {	
+	obj* o = modelArray[id];
+	
+	FILE *fp;
+	char lines[200][200], line[200], *type, *substr, c, cc[2];
+	size_t len = 0;
+	ssize_t read;
+	int l = 0, lNum = 0, mNum = 0;
+	
+	if((fp = fopen(filename, "r")) == NULL)
+		return;
+	
+	cc[1] = '\0';
+	
+	lines[0][0] = '\0';
+	
+	// Load file into string array
+	while(!feof(fp)) {
+		cc[0] = fgetc(fp);
+		
+		if(cc[0] != '\n')
+			strcat(lines[lNum], cc);
+		else
+			lines[++lNum][0] = '\0';
+	}
+	lNum--;
+	
+	fclose(fp);
+
+	int i, vNum = 0, vnNum = 0, vtNum = 0, fNum = 0;
+	// Loop through File Once to Get # of each
+	for(l = 0; l < lNum; l++) {
+		strcpy(line, lines[l]);	
+
+		type = strtok(line, " ");
+		
+		if(!strcmp(type,"v"))
+			vNum++;
+		else if(!strcmp(type, "f"))
+			fNum++;
+		else if(!strcmp(type, "usemtl")) {
+			fNum++;
+			mNum++;
+		}
+	}
+
+	int
+		ii, f = 0, v = 0,
+		*faces = (int*) malloc(9 * fNum * sizeof(int));
+	double
+		*vertices = (double*) malloc(3 * vNum * sizeof(double));
+	
+	mtl **mtls, *m;
+	
+	// Loop through File Second Time
+	for(l = 0; l < lNum; l++) {
+		strcpy(line, lines[l]);	
+		type = strtok(line, " ");
+				
+		if(!strcmp(type,"v")) {
+			for(i = 0; i < 3; i++) {
+				substr = strtok(NULL, " ");
+				vertices[3*v + i] = atof(substr);
+			}
+			v++;
+		}
+		else if(!strcmp(type,"mtllib")) {
+			mtls = loadMtl(strtok(NULL, " "));
+		}
+		else if(!strcmp(type,"usemtl")) {
+			faces[9*f] = -1;
+			f++;
+		}
+		else if(!strcmp(type, "f")) {
+			for(ii = 0; ii < 3; ii++) {
+				for(i = 0; i < 3; i++) {
+					substr = strtok(NULL , (i<2)?"/":" ");
+					faces[9*f + 3*ii + i] = atoi(substr)-1;
 				}
 			}
 			f++;
@@ -1334,7 +1439,7 @@ static void loadObj(char* filename, int id) {
 	o->fNum = fNum;
 	o->faces = faces;
 	o->vertices = vertices;
-	//o->mtls = mtls;
+	o->mtls = mtls;
 }
 static PyObject* pyLoadObj(PyObject *self, PyObject *args) {
 	char* filename;
@@ -1354,7 +1459,8 @@ static void drawObj(obj* o) {
 		*faces = o->faces,
 		f,
 		v1, v2, v3,
-		fNum = o->fNum;
+		fNum = o->fNum,
+		vNum = o->vNum;
 	double
 		*vertices = o->vertices;
 	mtl *currentMtl;
@@ -1365,21 +1471,21 @@ static void drawObj(obj* o) {
 		tG = G,
 		tB = B,
 		tA = A;
-		
+				
 	// Loop through Faces
 	for(f = 0; f < fNum; f++) {	
 		// Get vertices
 		v1 = o->faces[9*f];
 		v2 = o->faces[9*f+3];
-		v3 = o->faces[9*f+6];
+		v3 = o->faces[9*f+6];		
 		
 		if(v1 == -1) {
-			currentMtl = o->mtls[v2];
+			/*currentMtl = o->mtls[v2];
 			R = (int) (255 * currentMtl->kd[0]);
 			G = (int) (255 * currentMtl->kd[1]);
-			B = (int) (255 * currentMtl->kd[2]);
+			B = (int) (255 * currentMtl->kd[2]);*/
 		}
-		else {	
+		else {
 			// Draw triangle btwn vertices
 			drawTriangle0(
 				vertices[3*v1],vertices[3*v1+1],vertices[3*v1+2],0,0,
@@ -1436,7 +1542,7 @@ static PyObject* pyTest(PyObject *self, PyObject *args) {
 		
 ////////////////////////////////////////////////////////////////////////////////////////
 
-static PyMethodDef canv3d_funcs[32] = {
+static PyMethodDef canv3d_funcs[33] = {
 	{"setMatIdentity", (PyCFunction) pySetMatIdentity, METH_VARARGS, NULL },
 	{"setMatTranslation", (PyCFunction) pySetMatTranslation, METH_VARARGS, NULL },
 	{"addMatTranslation", (PyCFunction) pyAddMatTranslation, METH_VARARGS, NULL },
@@ -1472,6 +1578,7 @@ static PyMethodDef canv3d_funcs[32] = {
 	{"cameraTurn", (PyCFunction) pyCameraTurn, METH_VARARGS, NULL},
 	{"cameraForwards", (PyCFunction) pyCameraForwards, METH_VARARGS, NULL},
 	{"setMatCamera", (PyCFunction) pySetMatCamera, METH_VARARGS, NULL},
+	{"addMatCamera", (PyCFunction) pyAddMatCamera, METH_VARARGS, NULL},
 	{"setMatCameraPosition", (PyCFunction) pySetMatCameraPosition, METH_VARARGS, NULL},
     {NULL}
 };
