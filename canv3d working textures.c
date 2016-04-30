@@ -862,7 +862,7 @@ static void clipQuad(double x1,double y1,double z1,double u1,double v1,double w1
 
 static void clip(double x1,double y1,double z1,double u1,double v1,double w1,  double x2,double y2,double z2,double u2,double v2,double w2,  double x3,double y3,double z3,double u3,double v3,double w3) {
 
-	//printf("clip: %lf %lf %lf\n", w1, w2, w3);
+	//printf("clip: a%lf %lf %lf\n", w1, w2, w3);
 
 	int w1N = w1 < pseudoNear,
 		w2N = w2 < pseudoNear,

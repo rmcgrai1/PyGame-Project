@@ -1,9 +1,15 @@
+static void printVec(double* vec4);
+static void printMat(double* mat);
 static double* set4(double *vec4, double x, double y, double z, double w);
 static double* set16(double* mat, 	double a1,double a2,double a3,double a4,	double b1,double b2,double b3,double b4,	double c1,double c2,double c3,double c4,	double d1,double d2,double d3,double d4);
 static double* copyVec(double* srcVec, double* dstVec);
 static double* copyMat(double *srcMat, double *dstMat);
 static double* multMatMat(double* mat1, double* mat2, double* dstMat);
 static double* multMatVec(double* mat, double* vec, double* dstVec);
+static double* setMatIdentity(double *mat);
+
+
+
 
 static double
 	D2R = M_PI / 180,
@@ -24,6 +30,18 @@ static double
 					 0,1,0,0, 
 					 0,0,1,0,
 					 0,0,0,1};
+					 
+
+static void printVec(double* vec4) {
+	printf("<%lf,%lf,%lf,%lf>\n", vec4[0],vec4[1],vec4[2],vec4[3]);
+}
+
+static void printMat(double* mat) {
+	printf("|%lf,%lf,%lf,%lf|\n", mat[0],mat[1],mat[2],mat[3]);
+	printf("|%lf,%lf,%lf,%lf|\n", mat[4],mat[5],mat[6],mat[7]);
+	printf("|%lf,%lf,%lf,%lf|\n", mat[8],mat[9],mat[10],mat[11]);
+	printf("|%lf,%lf,%lf,%lf|\n", mat[12],mat[13],mat[14],mat[15]);
+}
 
 static double* set4(double *vec4, double x, double y, double z, double w) {
 	vec4[0] = x;
@@ -122,7 +140,8 @@ static double* multMatMat(double* mat1, double* mat2, double* dstMat) {
 }
 	
 static double* multMatVec(double* mat, double* vec, double* dstVec) {
-	int x, y, cell;
+	int x, y;
+	double cell;
 	for(y = 0; y < 4; y++) {
 		cell = 0;
 		for(x = 0; x < 4; x++)
@@ -131,4 +150,37 @@ static double* multMatVec(double* mat, double* vec, double* dstVec) {
 	}
 
 	return copyVec(tempVec, dstVec);
+}
+
+
+
+static double* setMatIdentity(double *mat) {
+	return set16(mat,  
+		1,0,0,0,  
+		0,1,0,0,
+		0,0,1,0,
+		0,0,0,1);
+}
+
+
+static double mdot(double x1, double y1, double z1, double x2, double y2, double z2) {
+	return x1*x2 + y1*y2 + z1*z2;
+}
+
+static void mcross(double x1, double y1, double z1, double x2, double y2, double z2, double *x3, double *y3, double *z3) {
+	*x3 = y1*z2 - y2*z1;
+	*y3 = -x1*z2 + x2*z1;
+	*z3 = x1*y2 - x2*y1;
+}
+
+static void mnormalize(double* x, double* y, double* z) {
+	double
+		xx = *x,
+		yy = *y,
+		zz = *z,
+		len = sqrt(xx*xx + yy*yy + zz*zz);
+		
+	*x /= len;
+	*y /= len;
+	*z /= len;
 }

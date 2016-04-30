@@ -77,7 +77,7 @@ class Screen(object):
 		canv3d.clear();
 		canv3d.cameraTurn(-self.mouse_dx/6.0, self.mouse_dy/6.0);
 		canv3d.cameraForwards(self.speed);
-		canv3d.setMatCamera(MAT_M);
+		#canv3d.setMatCamera(MAT_M);
 
 		#canv3d.setMatIdentity(MAT_M)
 		canv3d.setMatIdentity(MAT_V)
@@ -101,19 +101,19 @@ class Screen(object):
 		
 		# CAMERA ROTATION
 		#canv3d.addMatRotationX(MAT_V, 90)
-		##canv3d.addMatRotationY(MAT_V, -pl.dir)
+		canv3d.addMatRotationY(MAT_V, -pl.dir)
 		#canv3d.addMatRotationZ(MAT_V, -90)
-		##canv3d.addMatTranslation(MAT_V, -pl.y,-pl.z,-pl.x)
+		canv3d.addMatTranslation(MAT_V, -pl.y,-pl.z,-pl.x)
 		#canv3d.addMatRotationZ(MAT_V, 90)
 		
 		
 		# PROJECTION
 		canv3d.addMatTranslation(MAT_P, self.resolutionWidth/2, self.resolutionHeight/2,0)
-		canv3d.addMatScale(MAT_P, 1,1,-1)
+		canv3d.addMatScale(MAT_P, .5,.5,-1)
 		canv3d.addMatPerspective(MAT_P, 1) #45
 
 
-		sk = 300/sqrt(2)
+		sk = 300/2
 		
 		canv3d.setMatIdentity(MAT_M)
 				
@@ -132,10 +132,10 @@ class Screen(object):
 		canv3d.draw3dWall(sk,-sk,sk, sk,sk, -sk)
 
 		canv3d.setTexture(self.lfP, self.skS,self.skS);		
-		#canv3d.draw3dWall(-sk,-sk,sk, sk,sk, -sk)
+		canv3d.draw3dWall(sk,sk,sk, -sk,sk, -sk)
 
-		canv3d.setTexture(self.ftP, self.skS,self.skS);		
-		#canv3d.draw3dWall(-sk,-sk,sk, sk,sk, -sk)
+		canv3d.setTexture(self.rtP, self.skS,self.skS);		
+		canv3d.draw3dWall(-sk,-sk,sk, sk,-sk, -sk)
 
 		canv3d.setTexture(self.bkP, self.skS,self.skS);		
 		canv3d.draw3dWall(-sk,sk,sk, -sk,-sk, -sk)
@@ -153,7 +153,7 @@ class Screen(object):
 		canv3d.compileMats()
 
 		canv3d.setTexture(pygame.surfarray.pixels2d(self.tex), self.texW, self.texH);
-		canv3d.draw3dWall(-t,-t,t, -t,t, -s)
+		canv3d.draw3dWall(-t,-t,-t, -t,t,t)
 		
 		
 		#canv3d.drawObj(self.starship);
