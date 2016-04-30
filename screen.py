@@ -13,9 +13,9 @@ import numpy
 from numpy	import *
 
 
-MAT_M = 0
-MAT_V = 1
-MAT_P = 2
+MAT_MV = 0
+MAT_P = 1
+MAT_T = 2
 
 class Screen(object):
 	def __init__(self, gs, resW, resH, outW, outH):
@@ -61,11 +61,6 @@ class Screen(object):
                 self.mouse_dy = 0;
                 self.speed = 0;
         
-#                canv3d.cameraTurn(32,23);
- #               canv3d.cameraTurn(-52,-77)
-  #              canv3d.cameraTurn(0, 49);
-   #             canv3d.cameraTurn(0, 0);
- 
 
 	def tick(self, input):
 		self.mouse_dx = input["mouse_dx"];
@@ -75,8 +70,11 @@ class Screen(object):
 	def finalize(self):
 
 		canv3d.clear();
+
+                #Camera Setting
 		canv3d.cameraTurn(-self.mouse_dx/6.0, self.mouse_dy/6.0);
 		canv3d.cameraForwards(self.speed);
+<<<<<<< HEAD
 		#canv3d.setMatCamera(MAT_M);
 
 		#canv3d.setMatIdentity(MAT_M)
@@ -88,12 +86,19 @@ class Screen(object):
                #           math.cos(self.radians), math.sin(self.radians), 0,
                 #          0, 1, 0
                 #);
+=======
+		canv3d.setMatCamera(MAT_MV);
+
+                #Initialize Perspective and Transform
+>>>>>>> origin/master
 		canv3d.setMatIdentity(MAT_P)
+		canv3d.setMatIdentity(MAT_T)
 		
 		pl = self.gs.player
 		
 		frX = pl.x
 		frY = pl.y
+<<<<<<< HEAD
 		frZ = pl.z
 		
 		#setMatLook(MAT_V, frX,frY,frZ, toX,toY,toZ, 0,0,1)
@@ -106,6 +111,9 @@ class Screen(object):
 		canv3d.addMatTranslation(MAT_V, -pl.y,-pl.z,-pl.x)
 		#canv3d.addMatRotationZ(MAT_V, 90)
 		
+=======
+		frZ = pl.z		
+>>>>>>> origin/master
 		
 		# PROJECTION
 		canv3d.addMatTranslation(MAT_P, self.resolutionWidth/2, self.resolutionHeight/2,0)
@@ -115,15 +123,12 @@ class Screen(object):
 
 		sk = 300/2
 		
-		canv3d.setMatIdentity(MAT_M)
-				
-				
-		canv3d.addMatTranslation(MAT_M, pl.y,pl.z,pl.x)
-
+                #Skybox
+                canv3d.setMatCameraPosition(MAT_T)
 		canv3d.compileMats()
-		
-		canv3d.setRGB(255,255,255)
 
+		canv3d.setRGB(255,255,255)
+                
 
 		canv3d.setTexture(self.upP, self.skS,self.skS);		
 		canv3d.draw3dFloor(-sk,sk,sk,-sk, sk)
@@ -137,7 +142,7 @@ class Screen(object):
 		canv3d.setTexture(self.rtP, self.skS,self.skS);		
 		canv3d.draw3dWall(-sk,-sk,sk, sk,-sk, -sk)
 
-		canv3d.setTexture(self.bkP, self.skS,self.skS);		
+ 		canv3d.setTexture(self.bkP, self.skS,self.skS);		
 		canv3d.draw3dWall(-sk,sk,sk, -sk,-sk, -sk)
 
 		canv3d.setTexture(self.dnP, self.skS,self.skS);
@@ -145,11 +150,9 @@ class Screen(object):
 
 
 
-		canv3d.setMatIdentity(MAT_M)
-
-
 		t = 50
 		s = 30
+                canv3d.setMatIdentity(MAT_T)
 		canv3d.compileMats()
 
 		canv3d.setTexture(pygame.surfarray.pixels2d(self.tex), self.texW, self.texH);
@@ -158,10 +161,8 @@ class Screen(object):
 		
 		#canv3d.drawObj(self.starship);
 		
-		canv3d.addMatTranslation(MAT_M, 0,0,150)		
-		#addMatRotationX(MAT_M, epoch()*40)
-		#addMatRotationY(MAT_M, epoch()*50)
-		canv3d.addMatRotationZ(MAT_M, epoch()*50)
+		canv3d.addMatTranslation(MAT_T, 0,0,150)		
+		canv3d.addMatRotationZ(MAT_T, epoch()*50)
 		
 		canv3d.compileMats()
 		
@@ -175,10 +176,6 @@ class Screen(object):
 		canv3d.draw3dFloor(-s,-s,s,s, -s)				
 		canv3d.draw3dFloor(-s,-s,s,s, s)
 		
-		#canv3d.test();
-		
-		#canv3d.clearStatic();
-
 		
 		# WHERE THE MAGIC HAPPENS
 		self.img = pygame.transform.scale(self._img, self.drawResolution) #smoothscale
