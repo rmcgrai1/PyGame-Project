@@ -54,8 +54,9 @@ class Screen(object):
 		self.up = pygame.image.load("img/orbital-element_up.jpg").convert_alpha()
 		self.upP = pygame.surfarray.pixels2d(self.up)
 		
-		self.starship = canv3d.loadObj("starship.obj");
-				
+		#self.starship = canv3d.loadObj("starship.obj");
+		self.starship = canv3d.loadObj("Arwing.obj");
+
 		canv3d.setTexture(pygame.surfarray.pixels2d(self.tex), self.texW, self.texH);
                 
                 self.radians = 0;

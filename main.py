@@ -66,7 +66,7 @@ class GameSpace:
 		
 		self.player = self.instanceAppend(Player(self, 0,0,0))
 		#self.oscreen = self.instanceAppend(OScreen(self, 80,60, 640, 480)) #80,60
-		self.screen = self.instanceAppend(Screen(self, 320,240, 640, 480)) #80,60
+		self.screen = self.instanceAppend(Screen(self, 240,180, 640, 480)) #80,60
 
                 mouse_center_x = self.width/2;
                 mouse_center_y = self.height/2;

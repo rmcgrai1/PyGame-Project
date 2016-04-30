@@ -661,14 +661,12 @@ static PyObject* pyCameraTurn(PyObject *self, PyObject *args) {
 }
 
 //distance is in...pixels?
-static void cameraForwards(double distance)
-{
-  double dirToMove[3];
-  double distToMove[3];
-  double dirToMoveMag;
-  int i;
-  for (i = 0; i < 3; i++)
-    {
+static void cameraForwards(double distance) {
+	double dirToMove[3];
+	double distToMove[3];
+	double dirToMoveMag;
+	int i;
+	for (i = 0; i < 3; i++) {
       dirToMove[i] = gCameraAt[i] - gCameraEye[i];
     }
   dirToMoveMag = magnitude(dirToMove, 3);
@@ -895,6 +893,8 @@ static void clipQuad(double x1,double y1,double z1,double u1,double v1,double w1
 }
 
 static void clip(double x1,double y1,double z1,double u1,double v1,double w1,  double x2,double y2,double z2,double u2,double v2,double w2,  double x3,double y3,double z3,double u3,double v3,double w3) {
+	//TODO: FIX CLIPPING ERROR
+
 
 	//printf("clip: %lf %lf %lf\n", w1, w2, w3);
 
@@ -1273,13 +1273,10 @@ static mtl** loadMtl(char* filename) {
   mtl **mtls = NULL; // *m;
 		
 	FILE *fp;
-	char lines[200][200], line[200], *type, *substr, cc[2]; //c;
-	//size_t len = 0;
-	//ssize_t read;
-	int mNum = 0;
-
-	int l = 0; //JACOB ADDED
-	int lNum = 0;
+	char lines[200][200], line[200], *type, *substr, c, cc[2];
+	size_t len = 0;
+	ssize_t read;
+	int l = 0, lLen = 0, lNum = 0, mNum = 0;
 	
 	if((fp = fopen(filename, "r")) == NULL)
 	  return NULL;
@@ -1292,37 +1289,37 @@ static mtl** loadMtl(char* filename) {
 	while(!feof(fp)) {
 		cc[0] = fgetc(fp);
 		
-		if(cc[0] != '\n')
-			strcat(lines[lNum], cc);
-		else
+		if(cc[0] == '\r') {}
+		else if(cc[0] == '\n') {
 			lines[++lNum][0] = '\0';
+			lLen = 0;
+		}
+		else if(lLen > 0) {
+			strcat(lines[lNum], cc);
+			lLen++;
+		}
 	}
-	lNum--;
 	
 	fclose(fp);
 
-	int i, vNum = 0, fNum = 0; //vnNum = 0, vtNum = 0;
+
+	int i;
 	// Loop through File Once to Get # of each
 	for(l = 0; l < lNum; l++) {
 		strcpy(line, lines[l]);	
 
+		printf("%s\n", line);
+		
 		type = strtok(line, " ");
 		
-		if(!strcmp(type,"v"))
-			vNum++;
-		else if(!strcmp(type, "f"))
-			fNum++;
-		else if(!strcmp(type, "usemtl")) {
-			fNum++;
+		if(!strcmp(type, "newmtl"))
 			mNum++;
-		}
 	}
 
-	int
-		ii, f = 0, v = 0,
-		*faces = (int*) malloc(9 * fNum * sizeof(int));
+	int mi = 0;
 	double
-		*vertices = (double*) malloc(3 * vNum * sizeof(double));
+		*kd;
+	mtls = (mtl**) malloc(mNum * sizeof(mtl*));
 
 	
 	// Loop through File Second Time
@@ -1330,28 +1327,25 @@ static mtl** loadMtl(char* filename) {
 		strcpy(line, lines[l]);	
 		type = strtok(line, " ");
 				
-		if(!strcmp(type,"v")) {
+		if(!strcmp(type,"newmtl")) {
+			substr = strtok(NULL, " ");
+			printf("Adding material: %s\n", substr);
+			printf("%s\n", substr);
+			
+			m = mtls[mi++] = (mtl*) malloc(sizeof(mtl));
+			
+			m->name = malloc(strlen(substr+1) * sizeof(char));
+			strcpy(m->name, substr);
+
+			m->kd = kd = (double*) malloc(3 * sizeof(double));
+		}
+		else if(!strcmp(type,"Kd")) {
 			for(i = 0; i < 3; i++) {
-				substr = strtok(NULL, " ");
-				vertices[3*v + i] = atof(substr);
+				substr = strtok(NULL, " ");				
+				kd[i] = atof(substr);
+				
+				printf("kd: %lf\n", kd[i]);
 			}
-			v++;
-		}
-		else if(!strcmp(type,"mtllib")) {
-			mtls = loadMtl(strtok(NULL, " "));
-		}
-		else if(!strcmp(type,"usemtl")) {
-			faces[9*f] = -1;
-			f++;
-		}
-		else if(!strcmp(type, "f")) {
-			for(ii = 0; ii < 3; ii++) {
-				for(i = 0; i < 3; i++) {
-					substr = strtok(NULL , (i<2)?"/":" ");
-					faces[9*f + 3*ii + i] = atoi(substr)-1;
-				}
-			}
-			f++;
 		}
 	}
 	
@@ -1362,13 +1356,17 @@ static void loadObj(char* filename, int id) {
 	obj* o = modelArray[id];
 	
 	FILE *fp;
-	char lines[200][200], line[200], *type, *substr, cc[2]; //c;
-	//size_t len = 0;
-	//ssize_t read;
-	int l = 0, lNum = 0, mNum = 0;
+	char lines[400][200], line[200], *type, *substr, c, cc[2];
+	size_t len = 0;
+	ssize_t read;
+	int l = 0, lNum = 0, mNum = 0, lLen;
 	
-	if((fp = fopen(filename, "r")) == NULL)
+	printf("Loading \"%s\"...\n", filename);
+
+	if((fp = fopen(filename, "r")) == NULL) {
+		printf("File does not exist!\n");
 		return;
+	}
 	
 	cc[1] = '\0';
 	
@@ -1377,20 +1375,27 @@ static void loadObj(char* filename, int id) {
 	// Load file into string array
 	while(!feof(fp)) {
 		cc[0] = fgetc(fp);
+		printf("%s", cc);
 		
-		if(cc[0] != '\n')
-			strcat(lines[lNum], cc);
-		else
+		if(cc[0] == '\r') {}
+		else if(cc[0] == '\n') {
 			lines[++lNum][0] = '\0';
+			lLen = 0;
+		}
+		else if(lLen > 0) {
+			strcat(lines[lNum], cc);
+			lLen++;
+		}
 	}
-	lNum--;
-	
 	fclose(fp);
+	
+	printf("Done reading!\n");
 
 	int i, vNum = 0, fNum = 0; //vnNum = 0, vtNum = 0;
 	// Loop through File Once to Get # of each
 	for(l = 0; l < lNum; l++) {
 		strcpy(line, lines[l]);	
+		printf("%s\n", line);
 
 		type = strtok(line, " ");
 		
@@ -1429,6 +1434,19 @@ static void loadObj(char* filename, int id) {
 		}
 		else if(!strcmp(type,"usemtl")) {
 			faces[9*f] = -1;
+			
+			ii = -1;
+			substr = strtok(NULL, " ");
+			for(i = 0; i < mNum; i++) {
+				printf("%s\n", mtls[i]->name);
+				if(!strcmp(substr,mtls[i]->name)) {
+					ii = i;
+					break;
+				}
+			}
+			printf("Setting material: %d\n", ii);
+			faces[9*f + 3] = ii;
+			
 			f++;
 		}
 		else if(!strcmp(type, "f")) {
@@ -1441,6 +1459,8 @@ static void loadObj(char* filename, int id) {
 			f++;
 		}
 	}
+	
+	printf("DONE!\n");
 		
 	
 	o->vNum = vNum;
@@ -1488,10 +1508,12 @@ static void drawObj(obj* o) {
 		v3 = o->faces[9*f+6];		
 		
 		if(v1 == -1) {
-			/*currentMtl = o->mtls[v2];
-			R = (int) (255 * currentMtl->kd[0]);
-			G = (int) (255 * currentMtl->kd[1]);
-			B = (int) (255 * currentMtl->kd[2]);*/
+			if(v2 != -1) {				
+				currentMtl = o->mtls[v2];
+				R = (int) (255 * currentMtl->kd[0]);
+				G = (int) (255 * currentMtl->kd[1]);
+				B = (int) (255 * currentMtl->kd[2]);
+			}
 		}
 		else {
 			// Draw triangle btwn vertices
