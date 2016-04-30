@@ -3,11 +3,13 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #include <math.h>
+#include "math2.h"
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
 #include "hashmap.h"
+#include "CImg.h"
 
 #include "linalg.h"
 
@@ -69,17 +71,6 @@ static void setRGB(int r, int g, int b);
 
 
 
-/************************** VARIOUS MATH FUNCTIONS ************************************/
-
-static double epoch() {
-	return time(NULL);
-}	
-	
-static double contain(double mi, double x, double ma) {
-	return (x < mi) ? mi : ((x > ma) ? ma : x);
-}
-
-
 
 
 /******************************* RGBA INT FUNCTIONS ************************************/
@@ -99,47 +90,7 @@ static void convertInt2RGBA(int argb, int *r, int *g, int *b, int *a) {
 }
 
 
-
-/*********************************** OBJ LOADING ************************************/
-
-typedef struct mtl {
-	char* name;
 	
-	double ns;
-	double* ka;
-	double* kd;
-	double* ks;
-	double ni;
-	double d;
-} mtl;
-
-typedef struct obj {
-	int vNum;
-	double* vertices;
-	int uvNum;
-	double* uvs;	
-	int nNum;
-	double* normals;
-	int fNum;
-	int* faces;
-	
-	mtl **mtls;
-} obj;
-
-static obj **modelArray;
-int modelNum = 0;
-
-static obj* getObj(int id) {
-	return modelArray[id];
-}
-
-
-	
-/***************************** LINEAR ALGEBRA FUNCTIONS **********************************/
-
-static double cosd(double deg) {return cos(deg * D2R);}
-static double sind(double deg) {return sin(deg * D2R);}
-static double tand(double deg) {return tan(deg * D2R);}
 
 
 double calculateLength(double* vec4) {
@@ -165,11 +116,6 @@ static PyObject* pySetMatIdentity(PyObject *self, PyObject *args) {
 	Py_RETURN_NONE;
 }
 
-
-
-static double* setMatTranslation(double* mat, double x, double y, double z) {
-	return set16(mat,  1,0,0,x,  0,1,0,y,  0,0,1,z,  0,0,0,1);
-}
 static PyObject* pySetMatTranslation(PyObject *self, PyObject *args) {
 	int matType;
 	double x,y,z;
@@ -1039,8 +985,8 @@ static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  dou
 	z32 = z3-z2;
 	
 
-	az = y21*(z3-z1) - y31*(z2-z1);
-	bz = -x21*(z3-z1) + x31*(z2-z1);
+	az = y21*z31 - y31*z21;
+	bz = -x21*z31 + x31*z21;
 	c = x21*y31 - x31*y21;
 
 	area = .5*(-y2*x3 + y1*(-x2+x3) + x1*(y2-y3) + x2*y3);
@@ -1055,7 +1001,8 @@ static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  dou
 	//v1 = 3-1/
 	//v2 = p - 1
 	
-	double b1, b2, b3;
+	double b1, b2, b3, 
+		bDenom = -1./((y2-y3)*x31 + (x3-x2)*y31);
 
 	int index, dRGBA, dR, dG, dB, dA;
 	double val = 1, wp, up, vp;						
@@ -1071,8 +1018,8 @@ static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  dou
 				y01 = y-y1;
 				z01 = depth-z1;
 
-				b1 = ((y2-y3)*(x-x3) + (x3-x2)*(y-y3)) / ((y2-y3)*(x1-x3) + (x3-x2)*(y1-y3));
-				b2 = ((y3-y1)*(x-x3) + (x1-x3)*(y-y3)) / ((y2-y3)*(x1-x3) + (x3-x2)*(y1-y3));
+				b1 = ((y2-y3)*(x-x3) + (x3-x2)*(y-y3)) * bDenom;
+				b2 = ((y3-y1)*(x-x3) + (x1-x3)*(y-y3)) * bDenom;
 				b3 = 1. - b1 - b2;
 								
 				if(!doDepthTest || (depth >= near && depth <= far)) {
@@ -1286,10 +1233,12 @@ static mtl** loadMtl(char* filename) {
 		
 		if(cc[0] == '\r') {}
 		else if(cc[0] == '\n') {
-			lines[++lNum][0] = '\0';
-			lLen = 0;
+			if(lLen > 0) {
+				lines[++lNum][0] = '\0';
+				lLen = 0;
+			}
 		}
-		else if(lLen > 0) {
+		else {
 			strcat(lines[lNum], cc);
 			lLen++;
 		}
@@ -1373,10 +1322,12 @@ static void loadObj(char* filename, int id) {
 		
 		if(cc[0] == '\r') {}
 		else if(cc[0] == '\n') {
-			lines[++lNum][0] = '\0';
-			lLen = 0;
+			if(lLen > 0) {
+				lines[++lNum][0] = '\0';
+				lLen = 0;
+			}
 		}
-		else if(lLen > 0) {
+		else  {
 			strcat(lines[lNum], cc);
 			lLen++;
 		}
@@ -1388,6 +1339,7 @@ static void loadObj(char* filename, int id) {
 	int i, vNum = 0, vnNum = 0, vtNum = 0, fNum = 0;
 	// Loop through File Once to Get # of each
 	for(l = 0; l < lNum; l++) {
+		printf("copying...\n");		
 		strcpy(line, lines[l]);	
 		printf("%s\n", line);
 
@@ -1402,6 +1354,8 @@ static void loadObj(char* filename, int id) {
 			mNum++;
 		}
 	}
+	
+	printf("1st pass done! faces:%d mtls:%d\n", fNum-mNum, mNum);
 
 	int
 		ii, f = 0, v = 0,
@@ -1535,7 +1489,6 @@ static PyObject* pyDrawObj(PyObject *self, PyObject *args) {
 
 	
 
-static double timer;
 static PyObject* pyTest(PyObject *self, PyObject *args) {
 	PyArrayObject *arrayin;
 	

@@ -12,7 +12,6 @@ static double* setMatIdentity(double *mat);
 
 
 static double
-	D2R = M_PI / 180,
 	tempVec[4] = {0,0,0,1},
 	tempMatMult[16] = {1,0,0,0, 
 					 0,1,0,0,	
@@ -161,6 +160,14 @@ static double* setMatIdentity(double *mat) {
 		0,0,1,0,
 		0,0,0,1);
 }
+
+static double* setMatTranslation(double* mat, double x, double y, double z) {
+	return set16(mat,  1,0,0,x,  0,1,0,y,  0,0,1,z,  0,0,0,1);
+}
+
+
+
+
 
 
 static double mdot(double x1, double y1, double z1, double x2, double y2, double z2) {

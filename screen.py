@@ -6,7 +6,7 @@ import time
 import random
 from pygame.locals	import *
 from pygame.gfxdraw	import *
-from math2		import *
+from math2			import *
 from drawable 		import Drawable
 import canv3d
 import numpy
@@ -126,7 +126,8 @@ class Screen(object):
 		canv3d.setMatIdentity(MAT_T)
 		canv3d.addMatTranslation(MAT_T, 0,0,-100)
 		canv3d.addMatRotationY(MAT_T, 50*epoch())
-		canv3d.addMatScale(MAT_T, 50,50,50)
+		#canv3d.addMatScale(MAT_T, 50,50,50)
+		canv3d.addMatScale(MAT_T, 1,1,1)
 		canv3d.compileMats()
 		canv3d.drawObj(self.starship)
 
