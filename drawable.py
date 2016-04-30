@@ -5,41 +5,33 @@ import math
 import time
 import random
 from pygame.locals	import *
-from math2		import *
+from math2			import *
 from sprite 		import Sprite
 
 
 class Drawable(object):
-	def __init__(self, gameSpace, x,y, fileName, frameNumX, frameNumY):
+	def __init__(self, gameSpace, x,y,z):
 		self.gs = gameSpace
 
 		self.x = x
 		self.y = y
+		self.z = z
 				
-		# Load Sprite
-		self.sprite = Sprite(fileName, frameNumX, frameNumY);
-		self.spriteIndex = 0
-		self.spriteSpeed = 1
-		self.spriteAngle = 0
-		self.spriteScale = 1
-		self.spriteLoop = True
-
-		self.vx = 0
-		self.vy = 0
-
+		self.speed = 0
+		
+		
+		
 		
 	def destroy(self):
 		self.gs.instanceRemove(self)
 		
 	def tick(self, input):
-		# Move (x,y) based on velocity
-		self.x += self.vx
-		self.y += self.vy
 		
-		# Animate image, and loop if necessary
-		self.spriteIndex += self.spriteSpeed
-		if self.spriteLoop:
-			self.spriteIndex %= self.sprite.frameNum
+		
+		# Move (x,y,z) based on velocity
+		self.x += speed * (self.lookAt[0] - self.pos[0])
+		self.y += speed * (self.lookAt[1] - self.pos[1])
+		self.z += speed * (self.lookAt[2] - self.pos[2])
 		
 	def draw(self, screen):		
-		self.sprite.draw(screen, self.x, self.y, self.spriteIndex, self.spriteAngle, self.spriteScale);
+		pass

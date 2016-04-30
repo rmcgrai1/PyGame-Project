@@ -59,10 +59,10 @@ class Screen(object):
 
 		canv3d.setTexture(pygame.surfarray.pixels2d(self.tex), self.texW, self.texH);
                 
-                self.radians = 0;
+		self.radians = 0;
 		self.mouse_dx = 0;
-                self.mouse_dy = 0;
-                self.speed = 0;
+		self.mouse_dy = 0;
+		self.speed = 0;
         
 
 	def tick(self, input):
@@ -73,15 +73,27 @@ class Screen(object):
 	def finalize(self):
 
 		canv3d.clear();
+		
+		lookDis = -100;
 
-                #Camera Setting
+		#Camera Setting
 		canv3d.cameraTurn(-self.mouse_dx/6.0, self.mouse_dy/6.0);
 		canv3d.cameraForwards(self.speed);
-		canv3d.setMatCamera(MAT_MV);
 
-                #Initialize Perspective and Transform
+		canv3d.cameraForwards(-lookDis);
+
+		canv3d.setMatIdentity(MAT_MV)
+		canv3d.setMatCamera(MAT_MV);
+		#canv3d.addMatCameraRotation(MAT_MV);
+
+		#Initialize Perspective and Transform
 		canv3d.setMatIdentity(MAT_P)
 		canv3d.setMatIdentity(MAT_T)
+		
+		canv3d.compileMats()
+		
+		
+		
 		
 		pl = self.gs.player
 		
@@ -122,14 +134,27 @@ class Screen(object):
 		canv3d.setTexture(self.dnP, self.skS,self.skS);
 		canv3d.draw3dFloor(-sk,-sk,sk,sk, -sk)
 
-		
+
+
 		canv3d.setMatIdentity(MAT_T)
-		canv3d.addMatTranslation(MAT_T, 0,0,-100)
-		canv3d.addMatRotationY(MAT_T, 50*epoch())
+		canv3d.addMatCameraPosition(MAT_T)
+
+		canv3d.cameraForwards(-lookDis);
+		canv3d.setMatIdentity(MAT_MV)
+		canv3d.setMatCamera(MAT_MV);
+
+
+		#canv3d.addMatRotationY(MAT_T, 50*epoch())
+		canv3d.addMatCameraRotation(MAT_T);
 		#canv3d.addMatScale(MAT_T, 50,50,50)
-		canv3d.addMatScale(MAT_T, 1,1,1)
+		canv3d.addMatScale(MAT_T, .25,.25,.25)
 		canv3d.compileMats()
 		canv3d.drawObj(self.starship)
+		
+		
+		canv3d.cameraForwards(lookDis);	
+		canv3d.setMatIdentity(MAT_MV)
+		canv3d.setMatCamera(MAT_MV);
 
 
 
@@ -162,6 +187,9 @@ class Screen(object):
 		# WHERE THE MAGIC HAPPENS
 		self.img = pygame.transform.scale(self._img, self.drawResolution) #smoothscale
 		self.rect = self.img.get_rect()
+		
+		canv3d.cameraForwards(lookDis);
+
 
 		
 	def draw(self, screen):

@@ -75,24 +75,6 @@ static void setRGB(int r, int g, int b);
 
 /******************************* RGBA INT FUNCTIONS ************************************/
 
-static int convertRGBA2Int(int r, int g, int b, int a) {
-	return (a&0x0ff) << 24 | (r&0x0ff) << 16 | (g&0x0ff) << 8 | (b&0x0ff);
-}
-static int convertRGB2Int(int r, int g, int b) {
-	return (255&0x0ff) << 24 | (r&0x0ff) << 16 | (g&0x0ff) << 8 | (b&0x0ff);
-}
-
-static void convertInt2RGBA(int argb, int *r, int *g, int *b, int *a) {
-	*r = (argb>>16) & 0xFF;
-	*g = (argb>>8) & 0xFF;
-	*b = (argb) & 0xFF;
-	*a = (argb>>24) & 0xFF;
-}
-
-
-	
-
-
 double calculateLength(double* vec4) {
 	return sqrt(vec4[0]*vec4[0] + vec4[1]*vec4[1] + vec4[2]*vec4[2] + vec4[3]*vec4[3]);
 }
@@ -105,7 +87,6 @@ static double* getMat(int matType) {
 		default:				return NULL;
 	}
 }
-
 
 static PyObject* pySetMatIdentity(PyObject *self, PyObject *args) {
 	int matType;
@@ -543,16 +524,18 @@ double* mat4MultVec3(double *m, double *v, double* destVec) {
     v1 = v[0] * m[4] + v[1] * m[5] + v[2] * m[6] + m[7];
     v2 = v[0] * m[8] + v[1] * m[9] + v[2] * m[10] + m[11];
 
-    //the below is required in case v == destVec
+	//the below is required in case v == destVec
     destVec[0] = v0;
     destVec[1] = v1;
     destVec[2] = v2;
     return destVec;
 }
 
+
+
+
 //deltaX and deltaY are in degrees
-static void cameraTurn(double deltaX, double deltaY)
-{
+static void cameraTurn(double deltaX, double deltaY) {
   double upDownRotate[16];
   double leftRightRotate[16];
   double eyeTrans[16];
@@ -584,10 +567,9 @@ static void cameraTurn(double deltaX, double deltaY)
   //mat4MultVec3(toTransform, gCameraUp, gCameraUp);
   mat4MultVec3(leftRightRotate, globalUpDownAxis, globalUpDownAxis);
 
-  for (i = 0; i < 3; i++)
-    {
-      gCameraUp[i] = globalLeftRightAxis[i];
-    }
+	for (i = 0; i < 3; i++) {
+		gCameraUp[i] = globalLeftRightAxis[i];
+	}
   
   //printMat(getMat(MAT_VIEW));
 
@@ -611,19 +593,18 @@ static void cameraForwards(double distance) {
 	double dirToMoveMag;
 	int i;
 	for (i = 0; i < 3; i++) {
-      dirToMove[i] = gCameraAt[i] - gCameraEye[i];
-    }
-  dirToMoveMag = magnitude(dirToMove, 3);
-  
-  distToMove[0] = distance * dirToMove[0] / dirToMoveMag;
-  distToMove[1] = distance * dirToMove[1] / dirToMoveMag;
-  distToMove[2] = distance * dirToMove[2] / dirToMoveMag;
+		dirToMove[i] = gCameraAt[i] - gCameraEye[i];
+	}
+	dirToMoveMag = magnitude(dirToMove, 3);
 
-  for (i = 0; i < 3; i++)
-    {
-      gCameraEye[i] = gCameraEye[i] + distToMove[i];
-      gCameraAt[i] = gCameraAt[i] + distToMove[i];
-    }
+	distToMove[0] = distance * dirToMove[0] / dirToMoveMag;
+	distToMove[1] = distance * dirToMove[1] / dirToMoveMag;
+	distToMove[2] = distance * dirToMove[2] / dirToMoveMag;
+
+	for (i = 0; i < 3; i++) {
+		gCameraEye[i] = gCameraEye[i] + distToMove[i];
+		gCameraAt[i] = gCameraAt[i] + distToMove[i];
+	}
 }
 
 static PyObject* pyCameraForwards(PyObject *self, PyObject *args) {
@@ -648,28 +629,25 @@ static PyObject* pySetMatCamera(PyObject *self, PyObject *args) {
 	Py_RETURN_NONE;
 }
 
-
+static double* addMatCamera(double* mat) {
+	setMatCamera(tempMatAdd);
+	return multMatMat(mat,tempMatAdd, mat);
+}
 static PyObject* pyAddMatCamera(PyObject *self, PyObject *args) {
-	int matType;
-	if(!PyArg_ParseTuple(args, "i", &matType))
+	int id;
+	if(!PyArg_ParseTuple(args, "i", &id))
 		return NULL;
 	
-	double* mat = getMat(matType);
-
-	setMatCamera(tempMatAdd);
-	multMatMat(mat,tempMatAdd, mat);
-	
+	addMatCamera(getMat(id));
 	Py_RETURN_NONE;
 }
 
 
-static double* setMatCameraPosition(double *mat)
-{
+static double* setMatCameraPosition(double *mat) {
   setMatIdentity(mat);
   setMatTranslation(mat, gCameraEye[0], gCameraEye[1], gCameraEye[2]);
   return mat;
 }
-
 static PyObject* pySetMatCameraPosition(PyObject *self, PyObject *args) {
   int matType;
   if(!PyArg_ParseTuple(args, "i", &matType))
@@ -678,6 +656,49 @@ static PyObject* pySetMatCameraPosition(PyObject *self, PyObject *args) {
   setMatCameraPosition(getMat(matType));
   Py_RETURN_NONE;
 }
+
+static double* addMatCameraPosition(double *mat) {
+	setMatCameraPosition(tempMatAdd);
+	return multMatMat(mat,tempMatAdd, mat);
+}
+static PyObject* pyAddMatCameraPosition(PyObject *self, PyObject *args) {
+  int matType;
+  if(!PyArg_ParseTuple(args, "i", &matType))
+    return NULL;
+  
+  addMatCameraPosition(getMat(matType));
+  Py_RETURN_NONE;
+}
+
+
+
+static double* setMatCameraRotation(double *mat) {
+	setMatIdentity(mat);
+	setMatLook(mat, 0,0,0, (gCameraAt[0]-gCameraEye[0]),(gCameraAt[1]-gCameraEye[1]),-(gCameraAt[2]-gCameraEye[2]), gCameraUp[0],gCameraUp[1],-gCameraUp[2]);
+	return mat;
+}
+static PyObject* pySetMatCameraRotation(PyObject *self, PyObject *args) {
+  int matType;
+  if(!PyArg_ParseTuple(args, "i", &matType))
+    return NULL;
+  
+  setMatCameraRotation(getMat(matType));
+  Py_RETURN_NONE;
+}
+
+static double* addMatCameraRotation(double *mat) {
+	setMatCameraRotation(tempMatAdd);
+	return multMatMat(mat,tempMatAdd, mat);
+}
+static PyObject* pyAddMatCameraRotation(PyObject *self, PyObject *args) {
+  int matType;
+  if(!PyArg_ParseTuple(args, "i", &matType))
+    return NULL;
+  
+  addMatCameraRotation(getMat(matType));
+  Py_RETURN_NONE;
+}
+
 
 static void init(int resW, int resH, double n, double f, int dFog, int* pixs) {
 	RESOLUTION_WIDTH = resW;
@@ -1215,7 +1236,8 @@ static int createObj(void) {
 }
 
 static mtl** loadMtl(char* filename) {
-  mtl **mtls = NULL, *m;
+	mtl **mtls = NULL, *m;
+	int* tex;
 		
 	FILE *fp;
 	char lines[200][200], line[200], *type, *substr, c, cc[2];
@@ -1294,8 +1316,9 @@ static mtl** loadMtl(char* filename) {
 				printf("kd: %lf\n", kd[i]);
 			}
 		}
+		else if(!strcmp(type,"map_Kd"))
+			m->map_Kd = loadBMP(strtok(NULL, " "), &m->map_Kd_width, &m->map_Kd_height);
 	}
-	
 	return mtls;
 }
 
@@ -1340,7 +1363,7 @@ static void loadObj(char* filename, int id) {
 	
 	printf("Done reading!\n");
 
-	int i, vNum = 0, fNum = 0; //vnNum = 0, vtNum = 0;
+	int i, vNum = 0, fNum = 0, uvNum = 0; //vnNum = 0, vtNum = 0;
 	// Loop through File Once to Get # of each
 	for(l = 0; l < lNum; l++) {
 		printf("copying...\n");		
@@ -1351,6 +1374,8 @@ static void loadObj(char* filename, int id) {
 		
 		if(!strcmp(type,"v"))
 			vNum++;
+		else if(!strcmp(type,"vt"))
+			uvNum++;
 		else if(!strcmp(type, "f"))
 			fNum++;
 		else if(!strcmp(type, "usemtl")) {
@@ -1362,10 +1387,12 @@ static void loadObj(char* filename, int id) {
 	printf("1st pass done! faces:%d mtls:%d\n", fNum-mNum, mNum);
 
 	int
-		ii, f = 0, v = 0,
+		ii, f = 0, v = 0, vt = 0,
 		*faces = (int*) malloc(9 * fNum * sizeof(int));
 	double
-		*vertices = (double*) malloc(3 * vNum * sizeof(double));
+		*vertices = (double*) malloc(3 * vNum * sizeof(double)),
+		*uvs = (double*) malloc(2 * uvNum * sizeof(double));
+
 	
 	mtl **mtls = NULL; // *m;
 	
@@ -1380,6 +1407,13 @@ static void loadObj(char* filename, int id) {
 				vertices[3*v + i] = atof(substr);
 			}
 			v++;
+		}
+		else if(!strcmp(type,"vt")) {
+			for(i = 0; i < 2; i++) {
+				substr = strtok(NULL, " ");
+				uvs[2*vt + i] = atof(substr);
+			}
+			vt++;
 		}
 		else if(!strcmp(type,"mtllib")) {
 			mtls = loadMtl(strtok(NULL, " "));
@@ -1416,8 +1450,10 @@ static void loadObj(char* filename, int id) {
 		
 	
 	o->vNum = vNum;
+	o->uvNum = uvNum;
 	o->fNum = fNum;
 	o->faces = faces;
+	o->uvs = uvs;
 	o->vertices = vertices;
 	o->mtls = mtls;
 }
@@ -1439,10 +1475,12 @@ static void drawObj(obj* o) {
 	  //*faces = o->faces,
 		f,
 		v1, v2, v3,
-	        fNum = o->fNum;
+		vt1, vt2, vt3,
+	    fNum = o->fNum;
 	  //vNum = o->vNum;
 	double
-		*vertices = o->vertices;
+		*vertices = o->vertices,
+		*uvs = o->uvs;
 	mtl *currentMtl;
 	
 	int 
@@ -1456,8 +1494,11 @@ static void drawObj(obj* o) {
 	for(f = 0; f < fNum; f++) {	
 		// Get vertices
 		v1 = o->faces[9*f];
+		vt1 = o->faces[9*f+1];		
 		v2 = o->faces[9*f+3];
+		vt2 = o->faces[9*f+4];		
 		v3 = o->faces[9*f+6];		
+		vt3 = o->faces[9*f+7];
 		
 		if(v1 == -1) {
 			if(v2 != -1) {				
@@ -1465,14 +1506,17 @@ static void drawObj(obj* o) {
 				R = (int) (255 * currentMtl->kd[0]);
 				G = (int) (255 * currentMtl->kd[1]);
 				B = (int) (255 * currentMtl->kd[2]);
+				texture = currentMtl->map_Kd;
+				textureWidth = currentMtl->map_Kd_width;
+				textureHeight = currentMtl->map_Kd_height;
 			}
 		}
 		else {
 			// Draw triangle btwn vertices
 			drawTriangle0(
-				vertices[3*v1],vertices[3*v1+1],vertices[3*v1+2],0,0,
-				vertices[3*v2],vertices[3*v2+1],vertices[3*v2+2],0,0,
-				vertices[3*v3],vertices[3*v3+1],vertices[3*v3+2],0,0);
+				vertices[3*v1],vertices[3*v1+1],vertices[3*v1+2],	uvs[2*vt1],uvs[2*vt1+1],
+				vertices[3*v2],vertices[3*v2+1],vertices[3*v2+2],	uvs[2*vt2],uvs[2*vt2+1],
+				vertices[3*v3],vertices[3*v3+1],vertices[3*v3+2],	uvs[2*vt3],uvs[2*vt3+1]);
 		}
 	}
 	
@@ -1523,7 +1567,7 @@ static PyObject* pyTest(PyObject *self, PyObject *args) {
 		
 ////////////////////////////////////////////////////////////////////////////////////////
 
-static PyMethodDef canv3d_funcs[34] = {
+static PyMethodDef canv3d_funcs[37] = {
 	{"setMatIdentity", (PyCFunction) pySetMatIdentity, METH_VARARGS, NULL },
 	{"setMatTranslation", (PyCFunction) pySetMatTranslation, METH_VARARGS, NULL },
 	{"addMatTranslation", (PyCFunction) pyAddMatTranslation, METH_VARARGS, NULL },
@@ -1561,6 +1605,9 @@ static PyMethodDef canv3d_funcs[34] = {
 	{"setMatCamera", (PyCFunction) pySetMatCamera, METH_VARARGS, NULL},
 	{"addMatCamera", (PyCFunction) pyAddMatCamera, METH_VARARGS, NULL},
 	{"setMatCameraPosition", (PyCFunction) pySetMatCameraPosition, METH_VARARGS, NULL},
+	{"addMatCameraPosition", (PyCFunction) pyAddMatCameraPosition, METH_VARARGS, NULL},
+	{"setMatCameraRotation", (PyCFunction) pySetMatCameraRotation, METH_VARARGS, NULL},
+	{"addMatCameraRotation", (PyCFunction) pyAddMatCameraRotation, METH_VARARGS, NULL},
     {NULL}
 };
 
