@@ -9,8 +9,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include "hashmap.h"
-#include "CImg.h"
+#include "obj.h"
 
+
+//#include "canv3d.h"
 #include "linalg.h"
 
 #define MAT_MODELVIEW		0
@@ -68,8 +70,6 @@ static int
 	
 	
 static void setRGB(int r, int g, int b);
-
-
 
 
 
@@ -402,7 +402,7 @@ double dot(double *u, double *v, int length) {
 }
 	
 static double* setMatLook(double *mat, double x,double y,double z, double nx,double ny,double nz, double upx,double upy,double upz) {
-
+  
   
   int i;
   
@@ -449,9 +449,9 @@ static double* setMatLook(double *mat, double x,double y,double z, double nx,dou
   mat[12] = mat[13] = mat[14] = 0;
   mat[15] = 1;
   return mat;
-  /*
   
-	double 
+  
+	/*double 
 		sx = ny*upz - upy*nz,
 		sy = -nx*upz + upx*nz,
 		sz = nx*upy - upx*ny,
@@ -469,7 +469,7 @@ static double* setMatLook(double *mat, double x,double y,double z, double nx,dou
 		sy,upy,-ny,0,
 		sz,upz,-nz,0,
 		0,0,0,1);
-	return transpose(mat);
+	return transpose(mat);*/
   
 	/*return set16(mat, 
 		sx,sy,sz,0,
@@ -734,7 +734,7 @@ static PyObject* pySetTexture(PyObject *self, PyObject *args) {
 }
 
 
-static void clear() {
+static void clear(void) {
 	int i;
 	for(i = 0; i < PIXEL_NUMBER; i++) {
 		pixels[i] = CLEAR_PIXEL;
@@ -746,7 +746,8 @@ static PyObject* pyClear(PyObject *self) {
 	Py_RETURN_NONE;
 }
 
-static void clearStatic(self) {
+//JACOB CHANGED SELF TO VOID
+static void clearStatic(void) {
 	int i, val;
 	for(i = 0; i < PIXEL_NUMBER; i++) {
 		val = rand() % 255;
@@ -899,27 +900,28 @@ static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  dou
 	
 	double w1, w2, w3,
 		miX, miY, maX, maY,
-		x01, y01, z01,
-		x21, y21, z21,
-		x31, y31, z31,
-		x32, y32, z32,
+	        //x01, y01, z01,
+	        x21, y21, z21,
+	        x31, y31, z31,
+	        //x32, y32, z32,
 		az, bz, c,
-		au, bu,
-		av, bv,
+	        //au, bu,
+		//av, bv,
 		area,
 		s, t,
 		depth;
 		
 	int x,y, u,v, miXi,miYi,maXi,maYi;
-	double ow1, ow2, ow3;
-		
-	ow1 = w1 = tempVert1[3];	
+	//double ow1, ow2, ow3;
+	
+	
+	/*ow1 = */w1 = tempVert1[3];	
 	z1 = tempVert1[2]; ///w1;
 
-	ow2 = w2 = tempVert2[3];				
+	/*ow2 = */w2 = tempVert2[3];				
 	z2 = tempVert2[2]; ///w2;
 	
-	ow3 = w3 = tempVert3[3];
+	/*ow3 = */w3 = tempVert3[3];
 	z3 = tempVert3[2]; ///w3;
 
 	// Completely outside of the frustem
@@ -980,10 +982,11 @@ static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  dou
 	y31 = y3-y1;
 	z31 = z3-z1;
 	
+	/*
 	x32 = x3-x2;
 	y32 = y3-y2;
 	z32 = z3-z2;
-	
+	*/
 
 	az = y21*z31 - y31*z21;
 	bz = -x21*z31 + x31*z21;
@@ -1004,7 +1007,7 @@ static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  dou
 	double b1, b2, b3, 
 		bDenom = -1./((y2-y3)*x31 + (x3-x2)*y31);
 
-	int index, dRGBA, dR, dG, dB, dA;
+	int index, dRGBA=0, dR=0, dG= 0, dB=0, dA;
 	double val = 1, wp, up, vp;						
 	for(x = miXi; x < maXi; x++) {
 		for(y = miYi; y < maYi; y++) {
@@ -1014,9 +1017,9 @@ static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  dou
 			if(0 <= s && s <= 1 && 0 <= t && t <= 1 && s+t <= 1) {
 				depth = (z1 + (az*(x-x1) + bz*(y-y1))/-c);
 			
-				x01 = x-x1;
-				y01 = y-y1;
-				z01 = depth-z1;
+				//x01 = x-x1;
+				//y01 = y-y1;
+				//z01 = depth-z1;
 
 				b1 = ((y2-y3)*(x-x3) + (x3-x2)*(y-y3)) * bDenom;
 				b2 = ((y3-y1)*(x-x3) + (x1-x3)*(y-y3)) * bDenom;
@@ -1181,7 +1184,7 @@ static PyObject* pyDraw3dWall(PyObject *self, PyObject *args) {
 }
 
 					
-static void compileMats() {
+static void compileMats(void) {
 	setMatIdentity(completeMat);
 	multMatMat(completeMat, projMat,	completeMat);
 	multMatMat(completeMat, modelviewMat,	completeMat);
@@ -1193,7 +1196,7 @@ static PyObject* pyCompileMats(PyObject *self) {
 }
 
 
-static int createObj() {
+static int createObj(void) {
 	int id = modelNum++;
 	
 	obj** oldModelArray = modelArray;
@@ -1212,7 +1215,7 @@ static int createObj() {
 }
 
 static mtl** loadMtl(char* filename) {
-	mtl **mtls, *m;
+  mtl **mtls = NULL, *m;
 		
 	FILE *fp;
 	char lines[200][200], line[200], *type, *substr, c, cc[2];
@@ -1221,7 +1224,7 @@ static mtl** loadMtl(char* filename) {
 	int l = 0, lLen = 0, lNum = 0, mNum = 0;
 	
 	if((fp = fopen(filename, "r")) == NULL)
-		return;
+	  return NULL;
 	
 	cc[1] = '\0';
 	
@@ -1245,6 +1248,7 @@ static mtl** loadMtl(char* filename) {
 	}
 	
 	fclose(fp);
+
 
 	int i;
 	// Loop through File Once to Get # of each
@@ -1336,7 +1340,7 @@ static void loadObj(char* filename, int id) {
 	
 	printf("Done reading!\n");
 
-	int i, vNum = 0, vnNum = 0, vtNum = 0, fNum = 0;
+	int i, vNum = 0, fNum = 0; //vnNum = 0, vtNum = 0;
 	// Loop through File Once to Get # of each
 	for(l = 0; l < lNum; l++) {
 		printf("copying...\n");		
@@ -1363,7 +1367,7 @@ static void loadObj(char* filename, int id) {
 	double
 		*vertices = (double*) malloc(3 * vNum * sizeof(double));
 	
-	mtl **mtls, *m;
+	mtl **mtls = NULL; // *m;
 	
 	// Loop through File Second Time
 	for(l = 0; l < lNum; l++) {
@@ -1432,11 +1436,11 @@ static PyObject* pyLoadObj(PyObject *self, PyObject *args) {
 
 static void drawObj(obj* o) {	
 	int
-		*faces = o->faces,
+	  //*faces = o->faces,
 		f,
 		v1, v2, v3,
-		fNum = o->fNum,
-		vNum = o->vNum;
+	        fNum = o->fNum;
+	  //vNum = o->vNum;
 	double
 		*vertices = o->vertices;
 	mtl *currentMtl;
@@ -1519,7 +1523,7 @@ static PyObject* pyTest(PyObject *self, PyObject *args) {
 		
 ////////////////////////////////////////////////////////////////////////////////////////
 
-static PyMethodDef canv3d_funcs[33] = {
+static PyMethodDef canv3d_funcs[34] = {
 	{"setMatIdentity", (PyCFunction) pySetMatIdentity, METH_VARARGS, NULL },
 	{"setMatTranslation", (PyCFunction) pySetMatTranslation, METH_VARARGS, NULL },
 	{"addMatTranslation", (PyCFunction) pyAddMatTranslation, METH_VARARGS, NULL },

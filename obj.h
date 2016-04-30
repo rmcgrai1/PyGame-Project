@@ -1,4 +1,4 @@
-int* loadBMP(char *fileName) {
+/*int* loadBMP(char *fileName) {
 	//Uses Function from Library from netghost.narod.ru/gff/sample/code/micbmp/
 
 	FILE * fp;
@@ -45,7 +45,7 @@ int* loadBMP(char *fileName) {
 
 	//Return Image Struct
 	return out;
-}
+}*/
 
 
 /*********************************** OBJ LOADING ************************************/
