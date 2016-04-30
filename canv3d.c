@@ -1270,7 +1270,7 @@ static int createObj(void) {
 }
 
 static mtl** loadMtl(char* filename) {
-  mtl **mtls = NULL; // *m;
+  mtl **mtls = NULL, *m;
 		
 	FILE *fp;
 	char lines[200][200], line[200], *type, *substr, c, cc[2];
@@ -1491,7 +1491,7 @@ static void drawObj(obj* o) {
 	  //vNum = o->vNum;
 	double
 		*vertices = o->vertices;
-	//mtl *currentMtl;
+	mtl *currentMtl;
 	
 	int 
 		tRGBA = RGBA,
