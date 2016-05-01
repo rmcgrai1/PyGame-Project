@@ -38,6 +38,7 @@ class Skybox(Drawable):
 		
 	def draw(self, screen):		
 		#Skybox
+		canv3d.setMatIdentity(MAT_T)
 		canv3d.setMatCameraPosition(MAT_T)
 		canv3d.compileMats()
 

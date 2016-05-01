@@ -575,14 +575,12 @@ static void turn(double *eyeVec, double *atVec, double *upVec, double deltaX, do
   
   rotateAboutAxis(upDownRotate, deltaY, globalUpDownAxis);
     
-  setMatIdentity(toTransform);
-  multMatMat(toTransform, eyeTrans, toTransform);
-  multMatMat(toTransform, upDownRotate, toTransform);
-  multMatMat(toTransform, eyeNegTrans, toTransform);
-  	    printVec(atVec);
+	setMatIdentity(toTransform);
+	multMatMat(toTransform, eyeTrans, toTransform);
+	multMatMat(toTransform, upDownRotate, toTransform);
+	multMatMat(toTransform, eyeNegTrans, toTransform);
 	multMatVec(toTransform, atVec, atVec);
-  	    printVec(atVec);
-
+ 
   //mat4MultVec3(toTransform, upVec, upVec);
   multMatVec(upDownRotate, globalLeftRightAxis, globalLeftRightAxis);
   
@@ -1387,7 +1385,6 @@ static int createObj(void) {
 }
 
 static mtl** loadMtl(char* filename) {
-	mtl **mtls = NULL, *m;
 	int* tex;
 		
 	FILE *fp;
@@ -1437,9 +1434,8 @@ static mtl** loadMtl(char* filename) {
 	}
 
 	int mi = 0;
-	double
-		*kd;
-	mtls = (mtl**) malloc(mNum * sizeof(mtl*));
+	mtl *m = NULL,
+		**mtls = (mtl**) malloc(mNum * sizeof(mtl*));
 
 	
 	// Loop through File Second Time
@@ -1457,12 +1453,12 @@ static mtl** loadMtl(char* filename) {
 			m->name = malloc(strlen(substr+1) * sizeof(char));
 			strcpy(m->name, substr);
 
-			m->kd = kd = (double*) malloc(3 * sizeof(double));
+			m->kd = (double*) malloc(3 * sizeof(double));
 		}
 		else if(!strcmp(type,"Kd")) {
 			for(i = 0; i < 3; i++) {
 				substr = strtok(NULL, " ");				
-				kd[i] = atof(substr);
+				m->kd[i] = atof(substr);
 				
 				//printf("kd: %lf\n", kd[i]);
 			}
@@ -1478,8 +1474,6 @@ static void loadObj(char* filename, int id) {
 	
 	FILE *fp;
 	char lines[400][200], line[200], *type, *substr, c, cc[2];
-	size_t len = 0;
-	ssize_t read;
 	int l = 0, lNum = 0, mNum = 0, lLen;
 	
 	//printf("Loading \"%s\"...\n", filename);
