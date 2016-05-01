@@ -6,6 +6,7 @@ static double* copyVec(double* srcVec, double* dstVec);
 static double* copyMat(double *srcMat, double *dstMat);
 static double* multMatMat(double* mat1, double* mat2, double* dstMat);
 static double* multMatVec(double* mat, double* vec, double* dstVec);
+static double* multMatVec3(double* mat, double* vec, double* dstVec, double slot4);
 static double* setMatIdentity(double *mat);
 
 
@@ -115,27 +116,37 @@ static double* transpose(double *mat) {
 
 static double* multMatMat(double* mat1, double* mat2, double* dstMat) {
 	// Very ugly, but more efficient!!
-	tempMatMult[0] = mat1[0]*mat2[0] + mat1[1]*mat2[4] + mat1[2]*mat2[8] + mat1[3]*mat2[12];
-	tempMatMult[1] = mat1[0]*mat2[1] + mat1[1]*mat2[5] + mat1[2]*mat2[9] + mat1[3]*mat2[13];
-	tempMatMult[2] = mat1[0]*mat2[2] + mat1[1]*mat2[6] + mat1[2]*mat2[10] + mat1[3]*mat2[14];
-	tempMatMult[3] = mat1[0]*mat2[3] + mat1[1]*mat2[7] + mat1[2]*mat2[11] + mat1[3]*mat2[15];
+	double* dst;
 	
-	tempMatMult[4] = mat1[4]*mat2[0] + mat1[5]*mat2[4] + mat1[6]*mat2[8] + mat1[7]*mat2[12];
-	tempMatMult[5] = mat1[4]*mat2[1] + mat1[5]*mat2[5] + mat1[6]*mat2[9] + mat1[7]*mat2[13];
-	tempMatMult[6] = mat1[4]*mat2[2] + mat1[5]*mat2[6] + mat1[6]*mat2[10] + mat1[7]*mat2[14];
-	tempMatMult[7] = mat1[4]*mat2[3] + mat1[5]*mat2[7] + mat1[6]*mat2[11] + mat1[7]*mat2[15];
+	if(mat1 == dstMat || mat2 == dstMat)
+		dst = tempMatMult;
+	else
+		dst = dstMat;
+	
+	dst[0] = mat1[0]*mat2[0] + mat1[1]*mat2[4] + mat1[2]*mat2[8] + mat1[3]*mat2[12];
+	dst[1] = mat1[0]*mat2[1] + mat1[1]*mat2[5] + mat1[2]*mat2[9] + mat1[3]*mat2[13];
+	dst[2] = mat1[0]*mat2[2] + mat1[1]*mat2[6] + mat1[2]*mat2[10] + mat1[3]*mat2[14];
+	dst[3] = mat1[0]*mat2[3] + mat1[1]*mat2[7] + mat1[2]*mat2[11] + mat1[3]*mat2[15];
+	
+	dst[4] = mat1[4]*mat2[0] + mat1[5]*mat2[4] + mat1[6]*mat2[8] + mat1[7]*mat2[12];
+	dst[5] = mat1[4]*mat2[1] + mat1[5]*mat2[5] + mat1[6]*mat2[9] + mat1[7]*mat2[13];
+	dst[6] = mat1[4]*mat2[2] + mat1[5]*mat2[6] + mat1[6]*mat2[10] + mat1[7]*mat2[14];
+	dst[7] = mat1[4]*mat2[3] + mat1[5]*mat2[7] + mat1[6]*mat2[11] + mat1[7]*mat2[15];
 
-	tempMatMult[8] = mat1[8]*mat2[0] + mat1[9]*mat2[4] + mat1[10]*mat2[8] + mat1[11]*mat2[12];
-	tempMatMult[9] = mat1[8]*mat2[1] + mat1[9]*mat2[5] + mat1[10]*mat2[9] + mat1[11]*mat2[13];
-	tempMatMult[10] = mat1[8]*mat2[2] + mat1[9]*mat2[6] + mat1[10]*mat2[10] + mat1[11]*mat2[14];
-	tempMatMult[11] = mat1[8]*mat2[3] + mat1[9]*mat2[7] + mat1[10]*mat2[11] + mat1[11]*mat2[15];
+	dst[8] = mat1[8]*mat2[0] + mat1[9]*mat2[4] + mat1[10]*mat2[8] + mat1[11]*mat2[12];
+	dst[9] = mat1[8]*mat2[1] + mat1[9]*mat2[5] + mat1[10]*mat2[9] + mat1[11]*mat2[13];
+	dst[10] = mat1[8]*mat2[2] + mat1[9]*mat2[6] + mat1[10]*mat2[10] + mat1[11]*mat2[14];
+	dst[11] = mat1[8]*mat2[3] + mat1[9]*mat2[7] + mat1[10]*mat2[11] + mat1[11]*mat2[15];
 
-	tempMatMult[12] = mat1[12]*mat2[0] + mat1[13]*mat2[4] + mat1[14]*mat2[8] + mat1[15]*mat2[12];
-	tempMatMult[13] = mat1[12]*mat2[1] + mat1[13]*mat2[5] + mat1[14]*mat2[9] + mat1[15]*mat2[13];
-	tempMatMult[14] = mat1[12]*mat2[2] + mat1[13]*mat2[6] + mat1[14]*mat2[10] + mat1[15]*mat2[14];
-	tempMatMult[15] = mat1[12]*mat2[3] + mat1[13]*mat2[7] + mat1[14]*mat2[11] + mat1[15]*mat2[15];
+	dst[12] = mat1[12]*mat2[0] + mat1[13]*mat2[4] + mat1[14]*mat2[8] + mat1[15]*mat2[12];
+	dst[13] = mat1[12]*mat2[1] + mat1[13]*mat2[5] + mat1[14]*mat2[9] + mat1[15]*mat2[13];
+	dst[14] = mat1[12]*mat2[2] + mat1[13]*mat2[6] + mat1[14]*mat2[10] + mat1[15]*mat2[14];
+	dst[15] = mat1[12]*mat2[3] + mat1[13]*mat2[7] + mat1[14]*mat2[11] + mat1[15]*mat2[15];
 
-	return copyMat(tempMatMult, dstMat);
+	if(dst != dstMat)
+		return copyMat(tempMatMult, dstMat);
+	else
+		return dst;
 }
 	
 static double* multMatVec(double* mat, double* vec, double* dstVec) {
@@ -147,8 +158,22 @@ static double* multMatVec(double* mat, double* vec, double* dstVec) {
 			cell += mat[4*y + x]*vec[x];
 		tempVec[y] = cell;
 	}
-
+	
 	return copyVec(tempVec, dstVec);
+}
+
+static double* multMatVec3(double* mat, double* vec, double* dstVec, double slot4) {
+	double* dst = tempVec;
+	
+	dst[0] = mat[0]*vec[0] + mat[1]*vec[1] + mat[2]*vec[2] + mat[3]*slot4;
+	dst[1] = mat[4]*vec[0] + mat[5]*vec[1] + mat[6]*vec[2] + mat[7]*slot4;
+	dst[2] = mat[8]*vec[0] + mat[9]*vec[1] + mat[10]*vec[2] + mat[11]*slot4;
+
+	dstVec[0] = dst[0];
+	dstVec[1] = dst[1];
+	dstVec[2] = dst[2];
+	
+	return dstVec;
 }
 
 

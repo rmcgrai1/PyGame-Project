@@ -428,7 +428,7 @@ static double* rotateAboutAxis(double *mat, double angle, const double* axis) {
   z = normAxis[2];
    
   mat[0] = x*x*omc + c; 
-  mat[1] =   x*y*omc - z*s;
+  mat[1] = x*y*omc - z*s;
   mat[2] = x*z*omc + y*s;
   mat[3] = 0;
   
@@ -472,7 +472,7 @@ static void turn(double *eyeVec, double *atVec, double *upVec, double deltaX, do
 	setMatTranslation(toTransform, eyeVec[0],eyeVec[1],eyeVec[2]);
 	multMatMat(toTransform, upDownRotate, toTransform);
 	addMatTranslation(toTransform, -eyeVec[0],-eyeVec[1],-eyeVec[2]);
-	multMatVec(toTransform, atVec, atVec);
+	multMatVec3(toTransform, atVec, atVec, 1);
 
 	multMatVec(upDownRotate, globalLeftRightAxis, globalLeftRightAxis);
 
@@ -483,7 +483,7 @@ static void turn(double *eyeVec, double *atVec, double *upVec, double deltaX, do
 	setMatTranslation(toTransform, eyeVec[0],eyeVec[1],eyeVec[2]);
 	multMatMat(toTransform, leftRightRotate, toTransform);
 	addMatTranslation(toTransform, -eyeVec[0],-eyeVec[1],-eyeVec[2]);
-	multMatVec(toTransform, atVec, atVec);
+	multMatVec3(toTransform, atVec, atVec, 1);
 	//mat4MultVec3(toTransform, upVec, upVec);
 	multMatVec(leftRightRotate, globalUpDownAxis, globalUpDownAxis);
 
@@ -493,11 +493,12 @@ static void turn(double *eyeVec, double *atVec, double *upVec, double deltaX, do
 static PyObject* pyTurn(PyObject *self, PyObject *args) {
 	PyArrayObject *eyeArray, *atArray, *upArray;
 	double deltaX, deltaY;
+	int eyeOffset, atOffset, upOffset;
 	
-	if(!PyArg_ParseTuple(args, "O!O!O!dd", &PyArray_Type,&eyeArray, &PyArray_Type,&atArray, &PyArray_Type,&upArray, &deltaX, &deltaY))
+	if(!PyArg_ParseTuple(args, "O!iO!iO!idd", &PyArray_Type,&eyeArray,&eyeOffset,  &PyArray_Type,&atArray,&atOffset,  &PyArray_Type,&upArray,&upOffset,  &deltaX, &deltaY))
 	    return NULL;
   
-	turn((double*)(eyeArray->data), (double*)(atArray->data), (double*)(upArray->data), deltaX, deltaY);	
+	turn((double*)(eyeArray->data)+eyeOffset, (double*)(atArray->data)+atOffset, (double*)(upArray->data)+upOffset, deltaX, deltaY);
 	Py_RETURN_NONE;
 }
 

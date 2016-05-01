@@ -14,15 +14,9 @@ static double
 	D2R = M_PI / 180;
 
 
-static double cosd(double deg) {
-	return cos(deg * D2R);
-}
-static double sind(double deg) {
-	return sin(deg * D2R);
-}
-static double tand(double deg) {
-	return tan(deg * D2R);
-}
+static double cosd(double deg) {return cos(deg * D2R);}
+static double sind(double deg) {return sin(deg * D2R);}
+static double tand(double deg) {return tan(deg * D2R);}
 
 static double epoch() {
 	return time(NULL);
