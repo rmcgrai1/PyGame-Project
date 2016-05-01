@@ -48,8 +48,8 @@ class Arwing(Drawable):
 			
 		self.speed += (toSpeed - self.speed)/20;
 		
-		toRoll = -2*dx
-		toPitch = 2*dy
+		toRoll = -12*dx*adjust
+		toPitch = 12*dy*adjust
 		self.roll += (toRoll - self.roll)/5
 		self.pitch += (toPitch - self.pitch)/5
 		
