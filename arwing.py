@@ -17,16 +17,43 @@ class Arwing(Drawable):
 		super(Arwing, self).__init__(gameSpace, x,y,z)
 
 		self.model = canv3d.loadObj("Arwing.obj");
+	
+		self.jetTex = pygame.surfarray.pixels2d(pygame.image.load("img/jet.png").convert_alpha())
+		self.jetTexWidth = 128
+		self.jetTexHeight = 128
 		
 		self.dpos = numpy.array([x, y, z, 1.])		
 		self.dtoPos = numpy.array([x, y, z-1, 1.])		
 		self.dupNorm = numpy.array([0,1,0,0.])
-
-        
+		
+		self.speed = 5
+		self.roll = 0
+		self.pitch = 0
+	
 	def tick(self, input):
 		super(Arwing, self).tick(input)
 		
-		canv3d.turn(self.pos, self.toPos, self.upNorm, input['mouse_dx']/6, -input['mouse_dy']/6);
+		dx = input['mouse_dx']
+		dy = input['mouse_dy']
+		hDir = input['key_hdir']
+		vDir = input['key_vdir']
+		
+		if vDir == -1:
+			toSpeed = 10
+		elif vDir == 1:
+			toSpeed = 2
+		else:
+			toSpeed = 5
+			
+		self.speed += (toSpeed - self.speed)/20;
+		
+		toRoll = -2*dx
+		toPitch = 2*dy
+		self.roll += (toRoll - self.roll)/5
+		self.pitch += (toPitch - self.pitch)/5
+		
+		
+		canv3d.turn(self.pos, self.toPos, self.upNorm, -dx/6,dy/6);
 		
 		x = self.pos[0]
 		y = self.pos[1]
@@ -65,9 +92,22 @@ class Arwing(Drawable):
 		nZ = self.dtoPos[2]-self.dpos[2]
 		
 		canv3d.addMatAntiLook(MAT_T, 0,0,0,		nX,nY,nZ,		self.dupNorm[0],self.dupNorm[1],self.dupNorm[2]);
+		canv3d.addMatTranslation(MAT_T, 0,-50,0)
+		canv3d.addMatRotationX(MAT_T, self.pitch)
+		canv3d.addMatRotationZ(MAT_T, self.roll)
+		canv3d.addMatTranslation(MAT_T, 0,-5,0)
 		
 		canv3d.addMatScale(MAT_T,.25,.25,.25);
 		canv3d.compileMats()
 		
 				
 		canv3d.drawObj(self.model);
+		
+		canv3d.setTexture(self.jetTex, self.jetTexWidth, self.jetTexHeight)
+		
+		s = 25 * (1 + .5*rnd()) 
+		spc = 35
+		up = 10
+		back = -55
+		canv3d.draw3dFloor(-spc-s,up-s,-spc+s,up+s,back);
+		canv3d.draw3dFloor(spc-s,up-s,spc+s,up+s,back);

@@ -1132,8 +1132,10 @@ static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  dou
 	double b1, b2, b3, 
 		bDenom = -1./((y2-y3)*x31 + (x3-x2)*y31);
 
-	int index, dRGBA=0, dR=0, dG= 0, dB=0, dA;
-	double val = 1, wp, up, vp;						
+	int index, dRGBA=0, 
+		dR=0, dG=0, dB=0, dA=0,
+		pR=0, pG=0, pB=0, pA=0;
+	double val = 1, wp, up, vp, fr;						
 	for(x = miXi; x < maXi; x++) {
 		for(y = miYi; y < maYi; y++) {
 			s = 1/(2*area)*(y1*x3 - x1*y3 + y31*x - x31*y);
@@ -1190,14 +1192,40 @@ static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  dou
 								dB = (int) (dB/255. * B);
 								dA = (int) (dA/255. * A);
 								
+								if(dA == 0)
+									continue;
+								
 								dRGBA = convertRGBA2Int(dR,dG,dB,dA);
 							}
+					
 							
-							if(!doFog)
-								pixels[index] = dRGBA;
+							if(!doFog) {
+								if(dA == 255)
+									pixels[index] = dRGBA;
+								else if (dA > 0) {
+									convertInt2RGBA(pixels[index], &pR,&pG,&pB,&pA);
+									
+									fr = dA/255.;
+
+									// Colors have to be squared!
+									pR = sqrt((1-fr)*pR*pR + fr*dR*dR);
+									pG = sqrt((1-fr)*pG*pG + fr*dG*dG);
+									pB = sqrt((1-fr)*pB*pB + fr*dB*dB);
+									
+									pixels[index] = convertRGB2Int((int)(pR),(int)(pG),(int)(pB));	
+								}
+							}
 							else {
 								val = contain(0, (far-depth)/(far-near), 1);
-								pixels[index] = convertRGB2Int((int)(dR*val),(int)(dG*val),(int)(dB*val));
+								
+								if(dA == 1)
+									pixels[index] = convertRGB2Int((int)(dR*val),(int)(dG*val),(int)(dB*val));
+								else {
+									convertInt2RGBA(pixels[index], &pR,&pG,&pB,&pA);
+									
+									
+									pixels[index] = convertRGB2Int((int)(dR*val),(int)(dG*val),(int)(dB*val));									
+								}									
 							}
 						}
 					}
@@ -1690,7 +1718,7 @@ static PyObject* pyTest(PyObject *self, PyObject *args) {
 		
 ////////////////////////////////////////////////////////////////////////////////////////
 
-static PyMethodDef canv3d_funcs[42] = {
+static PyMethodDef canv3d_funcs[43] = {
 	{"setMatIdentity", (PyCFunction) pySetMatIdentity, METH_VARARGS, NULL },
 	{"setMatTranslation", (PyCFunction) pySetMatTranslation, METH_VARARGS, NULL },
 	{"addMatTranslation", (PyCFunction) pyAddMatTranslation, METH_VARARGS, NULL },

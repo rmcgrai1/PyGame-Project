@@ -61,9 +61,9 @@ class GameSpace:
 		self.canv3d_doFog = 0
 		
 		self.clock = pygame.time.Clock()	
-		self.player = self.instanceAppend(Arwing(self, 0,0,0))
 		self.skybox = self.instanceAppend(Skybox(self, "img/orbital-element_lf.jpg","img/orbital-element_rt.jpg","img/orbital-element_ft.jpg","img/orbital-element_bk.jpg","img/orbital-element_up.jpg","img/orbital-element_dn.jpg"))
-		
+		self.player = self.instanceAppend(Arwing(self, 0,0,0))
+	
 		# Create 3d Canvas
 		self.canv3d_img_ = pygame.Surface((self.canv3d_width,self.canv3d_height)).convert_alpha()
 		canv3d.init(self.canv3d_width,self.canv3d_height, self.canv3d_near, self.canv3d_far, self.canv3d_doFog, pygame.surfarray.pixels2d(self.canv3d_img_));
