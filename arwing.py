@@ -26,7 +26,7 @@ class Arwing(Drawable):
 	def tick(self, input):
 		super(Arwing, self).tick(input)
 		
-		canv3d.turn(self.pos, self.toPos, self.upNorm, input['mouse_dx']/6, -input['mouse_dy']/6);
+		canv3d.turn(self.pos, self.toPos, self.upNorm, input['mouse_dx']*input['mouse_d_adjust'], -input['mouse_dy']*input['mouse_d_adjust']);
 		
 		x = self.pos[0]
 		y = self.pos[1]
