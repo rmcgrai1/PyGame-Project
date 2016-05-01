@@ -25,9 +25,9 @@ class Drawable(object):
 		
 	def tick(self, input):
 		# Move (x,y,z) based on velocity
-		aX = self.speed * (self.toPos[0] - self.pos[0])
-		aY = self.speed * (self.toPos[1] - self.pos[1])
-		aZ = self.speed * (self.toPos[2] - self.pos[2])
+		aX = -self.speed * (self.toPos[0] - self.pos[0])
+		aY = -self.speed * (self.toPos[1] - self.pos[1])
+		aZ = -self.speed * (self.toPos[2] - self.pos[2])
 
 		self.pos[0] += aX;
 		self.pos[1] += aY;
