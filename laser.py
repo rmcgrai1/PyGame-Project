@@ -14,58 +14,32 @@ import canv3d
 
 class Laser(Drawable):
 	def __init__(self, gameSpace, x,y,z, atX,atY,atZ, upX,upY,upZ):
-		super(Arwing, self).__init__(gameSpace, x,y,z, atX,atY,atZ, upX,upY,upZ)
-
-		self.model = canv3d.loadObj("Arwing.obj");
-	
-		self.jetTex = pygame.surfarray.pixels2d(pygame.image.load("img/jet.png").convert_alpha())
-		self.jetTexWidth = 128
-		self.jetTexHeight = 128
-		
-		self.dpos = numpy.array([x, y, z, 1.])		
-		self.dtoPos = numpy.array([x, y, z-1, 1.])		
-		self.dupNorm = numpy.array([0,1,0,0.])
-		
-		self.speed = 5
-		self.roll = 0
-		self.pitch = 0
-		self.yaw = 0
-		
+		super(Laser, self).__init__(gameSpace, x,y,z, atX,atY,atZ, upX,upY,upZ)
+		self.speed = 30
 	
 	def tick(self, input):
 		super(Laser, self).tick(input)
 		
-	def draw(self, screen):
+	def draw(self, screen):	
 		canv3d.setMatIdentity(MAT_T)
 		canv3d.addMatTranslation(MAT_T, self.ori[0],self.ori[1],self.ori[2])
-
-		spd = 8
-		for i in range(0,3):
-			self.dpos[i] += (self.ori[i] - self.dpos[i])/spd;
-			self.dtoPos[i] += (self.ori[3+i] - self.dtoPos[i])/spd;
-			self.dupNorm[i] += (self.ori[6+i] - self.dupNorm[i])/spd;
 		
-		nX = self.dtoPos[0]-self.dpos[0]
-		nY = self.dtoPos[1]-self.dpos[1]
-		nZ = self.dtoPos[2]-self.dpos[2]
+		nX = self.ori[3]-self.ori[0]
+		nY = self.ori[4]-self.ori[1]
+		nZ = self.ori[5]-self.ori[2]
 		
-		canv3d.addMatAntiLook(MAT_T, 0,0,0,		nX,nY,nZ,		self.dupNorm[0],self.dupNorm[1],self.dupNorm[2]);
-		canv3d.addMatRotationX(MAT_T, self.pitch)
-		canv3d.addMatRotationY(MAT_T, self.yaw)
-		canv3d.addMatRotationZ(MAT_T, self.roll)
+		#canv3d.addMatAntiLook(MAT_T, 0,0,0,		nX,nY,nZ,		self.ori[6],self.ori[7],self.ori[8]);
 		canv3d.addMatTranslation(MAT_T, 0,-5,0)
 		
 		canv3d.addMatScale(MAT_T,.25,.25,.25);
 		canv3d.compileMats()
 		
-				
-		canv3d.drawObj(self.model);
+		canv3d.unsetTexture()
 		
-		canv3d.setTexture(self.jetTex, self.jetTexWidth, self.jetTexHeight)
-		
-		s = 25 * (1 + .5*rnd()) 
-		spc = 35
-		up = 10
-		back = -55
-		canv3d.draw3dFloor(-spc-s,up-s,-spc+s,up+s,back);
-		canv3d.draw3dFloor(spc-s,up-s,spc+s,up+s,back);
+		l = 100
+		w = 8
+		canv3d.draw3dFloor(-l,-l, l,l, 0);
+		canv3d.drawTriangle(
+			0,0,1,0,0,
+			-w,0,l,0,0, 
+			w,0,l,0,0)

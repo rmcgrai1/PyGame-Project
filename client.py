@@ -38,11 +38,15 @@ white = (255,255,255)
 
 arwingInsts = [];
 
-class ClientConnection(Protocol):
-	def dataReceived(self, data):
+class ClientConnection(LineReceiver):
+	def lineReceived(self, data):
 		#print 'received, ', data
 		
-		jso = json.loads(data)
+		try:
+			jso = json.loads(data)
+		except:
+			print "invalid json: " + data
+			return
 		type = jso['type']
 		
 		gs = GameSpace.instance
@@ -176,6 +180,11 @@ class GameSpace:
 		#4. Tick regulation
 		#self.clock.tick(60);
 
+		
+		keyHDir = 0
+		keyVDir = 0
+		mDown = False
+		
 		#5. User input reading
 		if (self.cameraMethod == 1):
 				pygame.mouse.set_pos(self.mouse_center_x, self.mouse_center_y);
@@ -183,9 +192,6 @@ class GameSpace:
 		mdx, mdy = 0, 0
 		md_adjust = 1;
 		
-		keyHDir = 0
-		keyVDir = 0
-		mDown = False
 
 		if (self.cameraMethod == 2):
 				mdx, mdy = pygame.mouse.get_pos();
@@ -226,12 +232,12 @@ class GameSpace:
 		#6. Tick updating and polling
 
 		input = {
-		"mouse_down": mDown,
-		"mouse_dy": mdy,
-		"mouse_dx": mdx,
-		"mouse_d_adjust": md_adjust,
-		"key_hdir": keyHDir,
-		"key_vdir": keyVDir
+			"mouse_down": mDown,
+			"mouse_dy": mdy,
+			"mouse_dx": mdx,
+			"mouse_d_adjust": md_adjust,
+			"key_hdir": keyHDir,
+			"key_vdir": keyVDir
 		}
 			
 

@@ -9,6 +9,7 @@ from math2		import *
 from sprite 		import Sprite
 from drawable		import *
 from mat		import *
+from laser			import *
 import canv3d
 
 

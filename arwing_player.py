@@ -16,10 +16,19 @@ from arwing			import *
 class ArwingPlayer(Arwing):
 	def __init__(self, gameSpace, x,y,z):
 		super(ArwingPlayer, self).__init__(gameSpace, x,y,z)
+		self.mDownPrev = False
 		
 			
 	def tick(self, input):
 		super(ArwingPlayer, self).tick(input)
+		
+		if (not self.mDownPrev) and (input['mouse_down']):
+			self.gs.instanceAppend(Laser(self.gs,
+				self.ori[0],self.ori[1],self.ori[2],
+				self.ori[3],self.ori[4],self.ori[5],
+				self.ori[6],self.ori[7],self.ori[8]
+			))
+		self.mDownPrev = input['mouse_down']
 		
 		dx = input['mouse_dx']
 		dy = input['mouse_dy']

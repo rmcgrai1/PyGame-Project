@@ -715,6 +715,17 @@ static PyObject* pySetTexture(PyObject *self, PyObject *args) {
 }
 
 
+static void unsetTexture() {
+	texture = NULL;
+	textureWidth = -1;
+	textureHeight = -1;
+}
+static PyObject* pyUnsetTexture(PyObject *self) {
+	unsetTexture();
+	Py_RETURN_NONE;
+}
+
+
 static void clear(void) {
 	int i;
 	for(i = 0; i < PIXEL_NUMBER; i++) {
@@ -1581,7 +1592,7 @@ static PyObject* pyTest(PyObject *self, PyObject *args) {
 		
 ////////////////////////////////////////////////////////////////////////////////////////
 
-static PyMethodDef canv3d_funcs[43] = {
+static PyMethodDef canv3d_funcs[44] = {
 	{"setMatIdentity", (PyCFunction) pySetMatIdentity, METH_VARARGS, NULL },
 	{"setMatTranslation", (PyCFunction) pySetMatTranslation, METH_VARARGS, NULL },
 	{"addMatTranslation", (PyCFunction) pyAddMatTranslation, METH_VARARGS, NULL },
@@ -1605,6 +1616,7 @@ static PyMethodDef canv3d_funcs[43] = {
 
 	{"init", (PyCFunction) pyInit, METH_VARARGS, NULL },
 	{"setTexture", (PyCFunction) pySetTexture, METH_VARARGS, NULL },
+	{"unsetTexture", (PyCFunction) pyUnsetTexture, METH_NOARGS, NULL },
 	{"drawTriangle", (PyCFunction) pyDrawTriangle, METH_VARARGS, NULL },
 	{"drawQuad", (PyCFunction) pyDrawQuad, METH_VARARGS, NULL },
 	{"drawPolygon", (PyCFunction) pyDrawPolygon, METH_VARARGS, NULL },
