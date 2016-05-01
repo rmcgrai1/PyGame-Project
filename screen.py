@@ -11,48 +11,21 @@ from drawable 		import Drawable
 import canv3d
 import numpy
 from numpy	import *
-
-
-MAT_MV = 0
-MAT_P = 1
-MAT_T = 2
-
-class Screen(object):
-	def __init__(self, gs, resW, resH, outW, outH):
-		self.gs = gs
-		
-		self.resolutionWidth,self.resolutionHeight = resW,resH
-		self.aspect = resW/resH
-		
-		self.drawResolution = self.drawWidth,self.drawHeight = outW,outH
-
-		self.tex = pygame.image.load("img/photo.jpg").convert_alpha()
-		self.texW = self.tex.get_width()
-		self.texH = self.tex.get_height()
-
-		
-		self._img = pygame.Surface( (self.resolutionWidth,self.resolutionHeight) ).convert_alpha()
-		self.rect = self._img.get_rect()
-		
-		self.far = 5000
-		
-		self.pixels = pygame.surfarray.pixels2d(self._img);
-		canv3d.init(resW, resH, .1, self.far, 0, self.pixels);
-			
+	def __init__(leftName, rightName, frontName, backName, upName, downName):
 		self.skS = 512
-		self.rt = pygame.image.load("img/orbital-element_rt.jpg").convert_alpha()
-		self.rtP = pygame.surfarray.pixels2d(self.rt)
-		
-		self.bk = pygame.image.load("img/orbital-element_bk.jpg").convert_alpha()
-		self.bkP = pygame.surfarray.pixels2d(self.bk)
-		self.dn = pygame.image.load("img/orbital-element_dn.jpg").convert_alpha()
-		self.dnP = pygame.surfarray.pixels2d(self.dn)
-		self.ft = pygame.image.load("img/orbital-element_ft.jpg").convert_alpha()
-		self.ftP = pygame.surfarray.pixels2d(self.ft)
-		self.lf = pygame.image.load("img/orbital-element_lf.jpg").convert_alpha()
+		self.lf = pygame.image.load(leftName).convert_alpha()
 		self.lfP = pygame.surfarray.pixels2d(self.lf)
-		self.up = pygame.image.load("img/orbital-element_up.jpg").convert_alpha()
+		self.rt = pygame.image.load(rightName).convert_alpha()
+		self.rtP = pygame.surfarray.pixels2d(self.rt)
+		self.ft = pygame.image.load(frontName).convert_alpha()
+		self.ftP = pygame.surfarray.pixels2d(self.ft)
+		self.bk = pygame.image.load(backName).convert_alpha()
+		self.bkP = pygame.surfarray.pixels2d(self.bk)
+		self.up = pygame.image.load(upName).convert_alpha()
 		self.upP = pygame.surfarray.pixels2d(self.up)
+		self.dn = pygame.image.load(downName).convert_alpha()
+		self.dnP = pygame.surfarray.pixels2d(self.dn)
+
 		
 		#self.starship = canv3d.loadObj("starship.obj");
 		self.starship = canv3d.loadObj("Arwing.obj");
@@ -182,16 +155,3 @@ class Screen(object):
 		canv3d.setRGB(0,255,0);
 		canv3d.draw3dFloor(-s,-s,s,s, -s)				
 		canv3d.draw3dFloor(-s,-s,s,s, s)
-		
-		
-		# WHERE THE MAGIC HAPPENS
-		self.img = pygame.transform.scale(self._img, self.drawResolution) #smoothscale
-		self.rect = self.img.get_rect()
-		
-		canv3d.cameraForwards(lookDis);
-
-
-		
-	def draw(self, screen):
-		self.finalize()
-		screen.blit(self.img, self.rect)

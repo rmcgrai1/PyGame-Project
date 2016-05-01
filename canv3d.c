@@ -44,11 +44,11 @@ static double
 				 0,1,0,0, 
 				 0,0,1,0,
 					 0,0,0,1},
-  globalUpDownAxis[3] = {1, 0, 0 },
-  globalLeftRightAxis[3] = {0, 1, 0},
-  gCameraEye[3] = {0, 0, 0},
-  gCameraAt[3] = {0, 0, -1},
-  gCameraUp[3] = {0, 1, 0};
+  globalUpDownAxis[4] = {1, 0, 0 , 0},
+  globalLeftRightAxis[4] = {0, 1, 0, 0},
+  gCameraEye[4] = {0, 0, 0, 1},
+  gCameraAt[4] = {0, 0, -1, 1},
+  gCameraUp[4] = {0, 1, 0, 0};
 
 
 static int 
@@ -287,7 +287,7 @@ static double* setMatPerspective(double *mat, double fov) {
 		0.0, 0.0, -1.0050251, 0.0);*/
 		
 	//transpose(mat);
-	//printf("\n");
+	////printf("\n");
 	
 	return mat;	
 	/*return set16(mat,
@@ -384,6 +384,7 @@ double dot(double *u, double *v, int length) {
 	
 static double* setMatLook(double *mat, double x,double y,double z, double nx,double ny,double nz, double upx,double upy,double upz) {
   
+  //printf("setMatLook()\n");
   
   int i;
   
@@ -409,7 +410,7 @@ static double* setMatLook(double *mat, double x,double y,double z, double nx,dou
     }
      
   if (eyeAtEqual) return setMatIdentity(mat);
-  //printf("(%lf, %lf)\n", at[0], at[2]);
+  ////printf("(%lf, %lf)\n", at[0], at[2]);
 
   subtractVecCopy(eye, at, temp, 3);
   normalizeCopy(temp, n, 3);
@@ -469,6 +470,45 @@ static PyObject* pySetMatLook(PyObject *self, PyObject *args) {
 	Py_RETURN_NONE;
 }
 
+
+
+
+static double* addMatLook(double* mat, double x,double y,double z, double nx,double ny,double nz, double upx,double upy,double upz) {
+	setMatLook(tempMatPersp, x,y,z, nx,ny,nz, upx,upy,upz);
+	return multMatMat(mat, tempMatPersp, mat);
+}
+static PyObject* pyAddMatLook(PyObject *self, PyObject *args) {
+	int matType;
+	double x,y,z, nx,ny,nz, upx,upy,upz;
+	if(!PyArg_ParseTuple(args, "iddddddddd", &matType, &x,&y,&z, &nx,&ny,&nz, &upx,&upy,&upz))
+		return NULL;
+
+	addMatLook(getMat(matType), x,y,z, nx,ny,nz, upx,upy,upz);
+	Py_RETURN_NONE;
+}
+
+
+
+static double* addMatAntiLook(double* mat, double x,double y,double z, double nx,double ny,double nz, double upx,double upy,double upz) {
+	setMatLook(tempMatAdd, x,y,z, nx,ny,nz, upx,upy,upz);
+	transpose(tempMatAdd);
+	return multMatMat(mat, tempMatAdd, mat);
+}
+static PyObject* pyAddMatAntiLook(PyObject *self, PyObject *args) {
+	int matType;
+	double x,y,z, nx,ny,nz, upx,upy,upz;
+	if(!PyArg_ParseTuple(args, "iddddddddd", &matType, &x,&y,&z, &nx,&ny,&nz, &upx,&upy,&upz))
+		return NULL;
+
+	addMatAntiLook(getMat(matType), x,y,z, nx,ny,nz, upx,upy,upz);
+	Py_RETURN_NONE;
+}
+
+
+
+
+
+
 //axis is an array of length 3
 //angle is in degrees
 static double* rotateAboutAxis(double *mat, double angle, const double* axis)
@@ -518,24 +558,11 @@ static double* rotateAboutAxis(double *mat, double angle, const double* axis)
     return mat;
 }
 
-double* mat4MultVec3(double *m, double *v, double* destVec) {
-  double v0, v1, v2;
-    v0 = v[0] * m[0] + v[1] * m[1] + v[2] * m[2] + m[3];
-    v1 = v[0] * m[4] + v[1] * m[5] + v[2] * m[6] + m[7];
-    v2 = v[0] * m[8] + v[1] * m[9] + v[2] * m[10] + m[11];
-
-	//the below is required in case v == destVec
-    destVec[0] = v0;
-    destVec[1] = v1;
-    destVec[2] = v2;
-    return destVec;
-}
-
 
 
 
 //deltaX and deltaY are in degrees
-static void cameraTurn(double deltaX, double deltaY) {
+static void turn(double *eyeVec, double *atVec, double *upVec, double deltaX, double deltaY) {
   double upDownRotate[16];
   double leftRightRotate[16];
   double eyeTrans[16];
@@ -543,40 +570,58 @@ static void cameraTurn(double deltaX, double deltaY) {
   double toTransform[16];
 
   int i;
-  setMatTranslation(eyeTrans, gCameraEye[0], gCameraEye[1], gCameraEye[2]);
-  setMatTranslation(eyeNegTrans, -gCameraEye[0], -gCameraEye[1], -gCameraEye[2]);
+  setMatTranslation(eyeTrans, eyeVec[0], eyeVec[1], eyeVec[2]);
+  setMatTranslation(eyeNegTrans, -eyeVec[0], -eyeVec[1], -eyeVec[2]);
   
   rotateAboutAxis(upDownRotate, deltaY, globalUpDownAxis);
-  
+    
   setMatIdentity(toTransform);
   multMatMat(toTransform, eyeTrans, toTransform);
   multMatMat(toTransform, upDownRotate, toTransform);
   multMatMat(toTransform, eyeNegTrans, toTransform);
-  mat4MultVec3(toTransform, gCameraAt, gCameraAt);
-  //mat4MultVec3(toTransform, gCameraUp, gCameraUp);
-  mat4MultVec3(upDownRotate, globalLeftRightAxis, globalLeftRightAxis);
+  	    printVec(atVec);
+	multMatVec(toTransform, atVec, atVec);
+  	    printVec(atVec);
+
+  //mat4MultVec3(toTransform, upVec, upVec);
+  multMatVec(upDownRotate, globalLeftRightAxis, globalLeftRightAxis);
   
-  //printf("ud: (%.1lf,%.1lf,%.1lf), ca: (%.1lf,%.1lf,%.1lf) cu: (%.1lf,%.1lf,%.1lf)\n", globalUpDownAxis[0], globalUpDownAxis[1], globalUpDownAxis[2], gCameraAt[0], gCameraAt[1], gCameraAt[2], gCameraUp[0], gCameraUp[1], gCameraUp[2]);
+  ////printf("ud: (%.1lf,%.1lf,%.1lf), ca: (%.1lf,%.1lf,%.1lf) cu: (%.1lf,%.1lf,%.1lf)\n", globalUpDownAxis[0], globalUpDownAxis[1], globalUpDownAxis[2], gCameraAt[0], gCameraAt[1], gCameraAt[2], gCameraUp[0], gCameraUp[1], gCameraUp[2]);
 
   rotateAboutAxis(leftRightRotate, deltaX, globalLeftRightAxis);
   setMatIdentity(toTransform);
   multMatMat(toTransform, eyeTrans, toTransform);
   multMatMat(toTransform, leftRightRotate, toTransform);
   multMatMat(toTransform, eyeNegTrans, toTransform);
-  mat4MultVec3(toTransform, gCameraAt, gCameraAt);
-  //mat4MultVec3(toTransform, gCameraUp, gCameraUp);
-  mat4MultVec3(leftRightRotate, globalUpDownAxis, globalUpDownAxis);
+  multMatVec(toTransform, atVec, atVec);
+  //mat4MultVec3(toTransform, upVec, upVec);
+  multMatVec(leftRightRotate, globalUpDownAxis, globalUpDownAxis);
 
 	for (i = 0; i < 3; i++) {
-		gCameraUp[i] = globalLeftRightAxis[i];
+		upVec[i] = globalLeftRightAxis[i];
 	}
+	
+
   
-  //printMat(getMat(MAT_VIEW));
+  ////printMat(getMat(MAT_VIEW));
 
   //return getMat(MAT_MODEL);
 }
+static PyObject* pyTurn(PyObject *self, PyObject *args) {
+	PyArrayObject *eyeArray, *atArray, *upArray;
+	double deltaX, deltaY;
+	
+	if(!PyArg_ParseTuple(args, "O!O!O!dd", &PyArray_Type,&eyeArray, &PyArray_Type,&atArray, &PyArray_Type,&upArray, &deltaX, &deltaY))
+	    return NULL;
+  
+	turn((double*)(eyeArray->data), (double*)(atArray->data), (double*)(upArray->data), deltaX, deltaY);	
+	Py_RETURN_NONE;
+}
 
 
+static void cameraTurn(double deltaX, double deltaY) {
+  turn(gCameraEye, gCameraAt, gCameraUp, deltaX, deltaY);
+}
 static PyObject* pyCameraTurn(PyObject *self, PyObject *args) {
   double mouse_dx, mouse_dy;
   if(!PyArg_ParseTuple(args, "dd", &mouse_dx, &mouse_dy))
@@ -617,7 +662,13 @@ static PyObject* pyCameraForwards(PyObject *self, PyObject *args) {
 }
 
 static double* setMatCamera(double* mat) {
+	//printf("EYEVEC:");
+	//printVec(gCameraEye);
+	//printf("BEFORE\n");
+	//printMat(mat);
 	setMatLook(mat, gCameraEye[0], gCameraEye[1], gCameraEye[2], gCameraAt[0], gCameraAt[1], gCameraAt[2], gCameraUp[0], gCameraUp[1], gCameraUp[2]);
+	//printf("AFTER\n");
+	//printMat(mat);
 	return mat;
 }
 static PyObject* pySetMatCamera(PyObject *self, PyObject *args) {
@@ -628,6 +679,46 @@ static PyObject* pySetMatCamera(PyObject *self, PyObject *args) {
 	setMatCamera(getMat(matType));
 	Py_RETURN_NONE;
 }
+
+
+
+static void camera(double eyeX, double eyeY, double eyeZ, double atX, double atY, double atZ, double upX, double upY, double upZ) {
+	gCameraEye[0] = eyeX;
+	gCameraEye[1] = eyeY;
+	gCameraEye[2] = eyeZ;
+
+	gCameraAt[0] = atX;
+	gCameraAt[1] = atY;
+	gCameraAt[2] = atZ;
+	
+	gCameraUp[0] = upX;
+	gCameraUp[1] = upY;
+	gCameraUp[2] = upZ;
+
+	//printf("YOOHOO!\n");
+	
+	//printf("EYEVEC:");
+	//printVec(gCameraEye);
+	//printVec(gCameraAt);
+	//printVec(gCameraUp);
+}
+static PyObject* pyCamera(PyObject *self, PyObject *args) {
+	double
+		eyeX, eyeY, eyeZ,
+		atX, atY, atZ,
+		upX, upY, upZ;
+	if(!PyArg_ParseTuple(args, "ddddddddd", &eyeX,&eyeY,&eyeZ, &atX,&atY,&atZ, &upX,&upY,&upZ)) {
+		//printf("Failed to parse pyCamera tuple!\n");
+		return NULL;
+	}
+
+	camera(
+		eyeX, eyeY, eyeZ,
+		atX, atY, atZ,
+		upX, upY, upZ);
+	Py_RETURN_NONE;
+}
+
 
 static double* addMatCamera(double* mat) {
 	setMatCamera(tempMatAdd);
@@ -792,7 +883,7 @@ static void drawQuad(double x1,double y1,double z1,double u1,double v1,	double x
 
 static void clipTriangle(double x1,double y1,double z1,double u1,double v1,double w1,	double x2,double y2,double z2,double u2,double v2,double w2,  double x3,double y3,double z3,double u3,double v3, double w3) {
 	//http://www.cubic.org/docs/3dclip.htm
-	
+		
 	double 
 		s12 = w1/(w1-w2),
 		s13 = w1/(w1-w3),
@@ -817,7 +908,8 @@ static void clipTriangle(double x1,double y1,double z1,double u1,double v1,doubl
 static void clipQuad(double x1,double y1,double z1,double u1,double v1,double w1,	double x2,double y2,double z2,double u2,double v2,double w2,  double x3,double y3,double z3,double u3,double v3, double w3) {
 	//http://www.cubic.org/docs/3dclip.htm
 	
-	//printf("quad: %lf %lf %lf\n", w1, w2, w3);
+	////printf("quad: %lf %lf %lf\n", w1, w2, w3);
+
 	
 	double 
 		s12 = w1/(w1-w2),
@@ -835,12 +927,12 @@ static void clipQuad(double x1,double y1,double z1,double u1,double v1,double w1
 		u02 = u1 + s13 * (u3 - u1),
 		v02 = v1 + s13 * (v3 - v1);
 	
-	/*printf("quad: s12:%lf s13:%lf\n", s12, s13);
-	printf("X: <%lf %lf %lf>\n", x1, y1, z1);
-	printf("01: <%lf %lf %lf>\n", x01, y01, z01);
-	printf("02: <%lf %lf %lf>\n", x02, y02, z02);
-	printf("2: <%lf %lf %lf>\n", x2, y2, z2);
-	printf("3: <%lf %lf %lf>\n", x3, y3, z3);*/
+	/*//printf("quad: s12:%lf s13:%lf\n", s12, s13);
+	//printf("X: <%lf %lf %lf>\n", x1, y1, z1);
+	//printf("01: <%lf %lf %lf>\n", x01, y01, z01);
+	//printf("02: <%lf %lf %lf>\n", x02, y02, z02);
+	//printf("2: <%lf %lf %lf>\n", x2, y2, z2);
+	//printf("3: <%lf %lf %lf>\n", x3, y3, z3);*/
 	
 	/*drawQuad(
 		x01,y01,z01,u01,v01,
@@ -861,7 +953,7 @@ static void clip(double x1,double y1,double z1,double u1,double v1,double w1,  d
 	//TODO: FIX CLIPPING ERROR
 
 
-	//printf("clip: %lf %lf %lf\n", w1, w2, w3);
+	////printf("clip: %lf %lf %lf\n", w1, w2, w3);
 
 	int w1N = w1 < pseudoNear,
 		w2N = w2 < pseudoNear,
@@ -905,10 +997,20 @@ static void drawTriangle0(double x1,double y1,double z1,double u1,double v1,  do
 			x3,y3,z3,u3,v3, 0);
 }
 
+
 	
 static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  double x2,double y2,double z2,double u2,double v2,  double x3,double y3,double z3,double u3,double v3, int tries) {
 	//printf("> drawTriangle()\n");
-
+	
+	//printMat(modelviewMat);
+	//printMat(projMat);
+	//printMat(transMat);
+	//printMat(completeMat);
+	
+	//printf("<%lf, %lf, %lf>\n", x1, y1, z1);
+	//printf("<%lf, %lf, %lf>\n", x2, y2, z2);
+	//printf("<%lf, %lf, %lf>\n", x3, y3, z3);
+	
 	set4(tempVert1, x1,y1,z1,1);
 	set4(tempVert2, x2,y2,z2,1);
 	set4(tempVert3, x3,y3,z3,1);
@@ -916,6 +1018,7 @@ static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  dou
 	multMatVec(completeMat, tempVert1, tempVert1);
 	multMatVec(completeMat, tempVert2, tempVert2);
 	multMatVec(completeMat, tempVert3, tempVert3);
+
 	
 	double oz1 = z1, oz2 = z2, oz3 = z3;
 	
@@ -936,6 +1039,7 @@ static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  dou
 	//double ow1, ow2, ow3;
 	
 	
+	
 	/*ow1 = */w1 = tempVert1[3];	
 	z1 = tempVert1[2]; ///w1;
 
@@ -948,7 +1052,7 @@ static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  dou
 	// Completely outside of the frustem
 	if(tries == 0) {
 		if((z1 < near && z2 < near && z3 < near) || (z1 > far && z2 > far && z3 > far)) {
-			//printf("offscreen...\n");
+			////printf("offscreen...\n");
 			return;
 		}
 
@@ -1016,7 +1120,7 @@ static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  dou
 	area = .5*(-y2*x3 + y1*(-x2+x3) + x1*(y2-y3) + x2*y3);
 	
 	if(area == 0) {
-		//printf("ZERO AREA!\n");
+		////printf("ZERO AREA!\n");
 		return;
 	}
 
@@ -1075,7 +1179,7 @@ static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  dou
 							v = (int)(textureHeight * vp);*/
 						
 						
-							//printf("%d, %d\n", u, v);
+							////printf("%d, %d\n", u, v);
 						
 							if(u >= 0 && u < textureWidth && v >= 0 && v < textureHeight) {
 								dRGBA = texture[textureHeight*v + u];
@@ -1111,6 +1215,16 @@ static PyObject* pyDrawTriangle(PyObject *self, PyObject *args) {
       return NULL;
   
 	drawTriangle0(x1,y1,z1,u1,v1,  x2,y2,z2,u2,v2,  x3,y3,z3,u3,v3);		
+	Py_RETURN_NONE;
+}
+
+
+static PyObject* pyPrintMats(PyObject *self) {
+	printMat(transMat);
+	printMat(modelviewMat);
+	printMat(projMat);
+	printMat(completeMat);
+
 	Py_RETURN_NONE;
 }
 
@@ -1163,7 +1277,7 @@ static PyObject* pyGetXY(PyObject *self, PyObject *args) {
 }
 
 
-static void drawPolygon(double x, double y, double r, int n) {
+static void drawPolygon(double x,double y,double z, double r, int n) {
 	int i;
 	double d, xi,yi, xf,yf;
 	
@@ -1176,8 +1290,17 @@ static void drawPolygon(double x, double y, double r, int n) {
 		yf = y - r*sind(d);
 
 		if(i > 0)
-			drawTriangle0(xi,yi,1,0,0, xf,yf,1,0,0, x,y,1,0,0);
+			drawTriangle0(xi,yi,z,0,0, xf,yf,z,0,0, x,y,z,0,0);
 	}
+}
+static PyObject* pyDrawPolygon(PyObject *self, PyObject *args) {
+	double x,y,z,r;
+	int n;
+	if(!PyArg_ParseTuple(args, "ddddi", &x,&y,&z,&r,&n))
+      return NULL;
+  
+	drawPolygon(x,y,z,r,n);
+	Py_RETURN_NONE;
 }
 
 static void draw3dFloor(double x1, double y1, double x2, double y2, double z) {
@@ -1277,7 +1400,7 @@ static mtl** loadMtl(char* filename) {
 	for(l = 0; l < lNum; l++) {
 		strcpy(line, lines[l]);	
 
-		printf("%s\n", line);
+		//printf("%s\n", line);
 		
 		type = strtok(line, " ");
 		
@@ -1298,8 +1421,8 @@ static mtl** loadMtl(char* filename) {
 				
 		if(!strcmp(type,"newmtl")) {
 			substr = strtok(NULL, " ");
-			printf("Adding material: %s\n", substr);
-			printf("%s\n", substr);
+			//printf("Adding material: %s\n", substr);
+			//printf("%s\n", substr);
 			
 			m = mtls[mi++] = (mtl*) malloc(sizeof(mtl));
 			
@@ -1313,7 +1436,7 @@ static mtl** loadMtl(char* filename) {
 				substr = strtok(NULL, " ");				
 				kd[i] = atof(substr);
 				
-				printf("kd: %lf\n", kd[i]);
+				//printf("kd: %lf\n", kd[i]);
 			}
 		}
 		else if(!strcmp(type,"map_Kd"))
@@ -1331,10 +1454,10 @@ static void loadObj(char* filename, int id) {
 	ssize_t read;
 	int l = 0, lNum = 0, mNum = 0, lLen;
 	
-	printf("Loading \"%s\"...\n", filename);
+	//printf("Loading \"%s\"...\n", filename);
 
 	if((fp = fopen(filename, "r")) == NULL) {
-		printf("File does not exist!\n");
+		//printf("File does not exist!\n");
 		return;
 	}
 	
@@ -1345,7 +1468,7 @@ static void loadObj(char* filename, int id) {
 	// Load file into string array
 	while(!feof(fp)) {
 		cc[0] = fgetc(fp);
-		printf("%s", cc);
+		//printf("%s", cc);
 		
 		if(cc[0] == '\r') {}
 		else if(cc[0] == '\n') {
@@ -1361,14 +1484,14 @@ static void loadObj(char* filename, int id) {
 	}
 	fclose(fp);
 	
-	printf("Done reading!\n");
+	//printf("Done reading!\n");
 
 	int i, vNum = 0, fNum = 0, uvNum = 0; //vnNum = 0, vtNum = 0;
 	// Loop through File Once to Get # of each
 	for(l = 0; l < lNum; l++) {
-		printf("copying...\n");		
+		//printf("copying...\n");		
 		strcpy(line, lines[l]);	
-		printf("%s\n", line);
+		//printf("%s\n", line);
 
 		type = strtok(line, " ");
 		
@@ -1384,7 +1507,7 @@ static void loadObj(char* filename, int id) {
 		}
 	}
 	
-	printf("1st pass done! faces:%d mtls:%d\n", fNum-mNum, mNum);
+	//printf("1st pass done! faces:%d mtls:%d\n", fNum-mNum, mNum);
 
 	int
 		ii, f = 0, v = 0, vt = 0,
@@ -1424,13 +1547,13 @@ static void loadObj(char* filename, int id) {
 			ii = -1;
 			substr = strtok(NULL, " ");
 			for(i = 0; i < mNum; i++) {
-				printf("%s\n", mtls[i]->name);
+				//printf("%s\n", mtls[i]->name);
 				if(!strcmp(substr,mtls[i]->name)) {
 					ii = i;
 					break;
 				}
 			}
-			printf("Setting material: %d\n", ii);
+			//printf("Setting material: %d\n", ii);
 			faces[9*f + 3] = ii;
 			
 			f++;
@@ -1446,7 +1569,7 @@ static void loadObj(char* filename, int id) {
 		}
 	}
 	
-	printf("DONE!\n");
+	//printf("DONE!\n");
 		
 	
 	o->vNum = vNum;
@@ -1541,7 +1664,7 @@ static PyObject* pyTest(PyObject *self, PyObject *args) {
 	PyArrayObject *arrayin;
 	
 	if(!PyArg_ParseTuple(args, "O!", &PyArray_Type,&arrayin)) {
-		printf("FAILED TO PARSE!\n");
+		//printf("FAILED TO PARSE!\n");
 	    return NULL;
 	}    
 	//init(resW,resH,n,f,doFog, (int*) (pixs->data));
@@ -1567,7 +1690,7 @@ static PyObject* pyTest(PyObject *self, PyObject *args) {
 		
 ////////////////////////////////////////////////////////////////////////////////////////
 
-static PyMethodDef canv3d_funcs[37] = {
+static PyMethodDef canv3d_funcs[42] = {
 	{"setMatIdentity", (PyCFunction) pySetMatIdentity, METH_VARARGS, NULL },
 	{"setMatTranslation", (PyCFunction) pySetMatTranslation, METH_VARARGS, NULL },
 	{"addMatTranslation", (PyCFunction) pyAddMatTranslation, METH_VARARGS, NULL },
@@ -1583,6 +1706,8 @@ static PyMethodDef canv3d_funcs[37] = {
 	{"setMatPerspective", (PyCFunction) pySetMatPerspective, METH_VARARGS, NULL },
 	{"addMatPerspective", (PyCFunction) pyAddMatPerspective, METH_VARARGS, NULL },
 	{"setMatLook", (PyCFunction) pySetMatLook, METH_VARARGS, NULL },
+	{"addMatLook", (PyCFunction) pyAddMatLook, METH_VARARGS, NULL },
+	{"addMatAntiLook", (PyCFunction) pyAddMatAntiLook, METH_VARARGS, NULL },
 
 	{"loadObj", (PyCFunction) pyLoadObj, METH_VARARGS, NULL},
 	{"drawObj", (PyCFunction) pyDrawObj, METH_VARARGS, NULL},
@@ -1591,6 +1716,7 @@ static PyMethodDef canv3d_funcs[37] = {
 	{"setTexture", (PyCFunction) pySetTexture, METH_VARARGS, NULL },
 	{"drawTriangle", (PyCFunction) pyDrawTriangle, METH_VARARGS, NULL },
 	{"drawQuad", (PyCFunction) pyDrawQuad, METH_VARARGS, NULL },
+	{"drawPolygon", (PyCFunction) pyDrawPolygon, METH_VARARGS, NULL },
 	{"draw3dWall", (PyCFunction) pyDraw3dWall, METH_VARARGS, NULL },
 	{"draw3dFloor", (PyCFunction) pyDraw3dFloor, METH_VARARGS, NULL },
 	{"compileMats", (PyCFunction) pyCompileMats, METH_NOARGS, NULL },
@@ -1599,7 +1725,13 @@ static PyMethodDef canv3d_funcs[37] = {
 	{"setRGB", (PyCFunction) pySetRGB, METH_VARARGS, NULL },
 	{"getXY", (PyCFunction) pyGetXY, METH_VARARGS, NULL },
 
+	{"printMats", (PyCFunction) pyPrintMats, METH_NOARGS, NULL },
+
+
+	
 	{"test", (PyCFunction) pyTest, METH_VARARGS, NULL },
+	{"camera", (PyCFunction) pyCamera, METH_VARARGS, NULL},
+	{"turn", (PyCFunction) pyTurn, METH_VARARGS, NULL},
 	{"cameraTurn", (PyCFunction) pyCameraTurn, METH_VARARGS, NULL},
 	{"cameraForwards", (PyCFunction) pyCameraForwards, METH_VARARGS, NULL},
 	{"setMatCamera", (PyCFunction) pySetMatCamera, METH_VARARGS, NULL},
