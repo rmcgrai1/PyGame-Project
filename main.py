@@ -59,25 +59,25 @@ class GameSpace:
 		self.canv3d_height = 240
 		self.canv3d_aspect = self.canv3d_width/self.canv3d_height
 		self.canv3d_doFog = 0
+                
+                mouse_center_x = self.width/2;
+		mouse_center_y = self.height/2;
 		
 		self.clock = pygame.time.Clock()	
 		self.player = self.instanceAppend(Arwing(self, 0,0,0))
 		self.skybox = self.instanceAppend(Skybox(self, "img/orbital-element_lf.jpg","img/orbital-element_rt.jpg","img/orbital-element_ft.jpg","img/orbital-element_bk.jpg","img/orbital-element_up.jpg","img/orbital-element_dn.jpg"))
-		
+		self.reticle = self.instanceAppend(Reticle(mouse_center_x, mouse_center_y));
 		# Create 3d Canvas
 		self.canv3d_img_ = pygame.Surface((self.canv3d_width,self.canv3d_height)).convert_alpha()
 		canv3d.init(self.canv3d_width,self.canv3d_height, self.canv3d_near, self.canv3d_far, self.canv3d_doFog, pygame.surfarray.pixels2d(self.canv3d_img_));
 		
-		mouse_center_x = self.width/2;
-		mouse_center_y = self.height/2;
-                cameraMethod = 1;
+                cameraMethod = 2;
                 if (cameraMethod == 1):
                         pygame.mouse.set_visible(False);
                         pygame.event.set_grab(True);
                         #pygame.mouse.set_pos(mouse_center_x, mouse_center_y);
                 elif (cameraMethod == 2):
-                        #pygame.mouse.set_cursor(
-                        pass;
+                        pygame.mouse.set_visible(False);
 
 		#3. Game loop
 		while True:
@@ -91,16 +91,17 @@ class GameSpace:
 			mdx, mdy = 0, 0
                         md_adjust = 1;
 
+                        if (cameraMethod == 2):
+                                mdx, mdy = pygame.mouse.get_pos();
+                                mdx = mdx - mouse_center_x;
+                                mdy = mdy - mouse_center_y;
+                                md_adjust = -1.0/128;
 
 			for event in pygame.event.get():
                                 if (event.type == pygame.MOUSEMOTION):
                                         if (cameraMethod == 1):
                                                 mdx, mdy = event.rel;
                                                 md_adjust = 1.0/6;
-                                        elif (cameraMethod == 2):
-                                                mdx = pygame.mouse.get_pos() - mouse_center_x;
-                                                mdy = pygame.mouse.get_pos() - mouse_center_y;
-                                                md_adjust = 1.0/16;
 				if event.type == QUIT:
 					pygame.mixer.quit()
 					sys.exit()
@@ -174,8 +175,33 @@ class GameSpace:
 
 			# Blit 3d canvas to screen
 			screen.blit(self.canv3d_img, self.rect);
-			
+                        self.reticle.blitToScreen(screen);
+
 			pygame.display.flip()
+
+class Reticle:
+        def __init__(self, centerX, centerY):
+                self.small = pygame.image.load("img/Crosshairs_Small.png");
+                self.smallRect = self.small.get_rect();
+                self.smallRect.center = (centerX, centerY);
+                self.large = pygame.image.load("img/Crosshairs_Large.png");
+                self.largeRect = self.large.get_rect();
+                self.largeRect.center = (centerX, centerY);
+                self.centerX = centerX;
+                self.centerY = centerY;
+
+        #dx and dy are the distance from the center
+        def tick(self, input):
+                reticleLag = 0.80;
+                self.smallRect.center = (self.centerX+input['mouse_dx'], self.centerY+input['mouse_dy']);
+                self.largeRect.center = (self.centerX + input['mouse_dx']*reticleLag, self.centerY + input['mouse_dy']*reticleLag);
+        
+        def draw(self, screen):
+                pass;
+
+        def blitToScreen(self, screen):
+                screen.blit(self.small, self.smallRect);
+                screen.blit(self.large, self.largeRect);
 
 if __name__ == '__main__':
 	gs = GameSpace()
