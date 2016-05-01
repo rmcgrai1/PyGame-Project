@@ -106,11 +106,6 @@ static PyObject* pySetMatTranslation(PyObject *self, PyObject *args) {
 	setMatTranslation(getMat(matType), x,y,z);
 	Py_RETURN_NONE;
 }
-
-static double* addMatTranslation(double* mat, double x, double y, double z) {
-	setMatTranslation(tempMatAdd, x,y,z);
-	return multMatMat(mat,tempMatAdd, mat);
-}
 static PyObject* pyAddMatTranslation(PyObject *self, PyObject *args) {
 	int matType;
 	double x,y,z;
@@ -121,11 +116,6 @@ static PyObject* pyAddMatTranslation(PyObject *self, PyObject *args) {
 	Py_RETURN_NONE;
 }
 	
-	
-	
-static double* setMatScale(double* mat, double sx, double sy, double sz) {
-	return set16(mat,  sx,0,0,0,  0,sy,0,0,  0,0,sz,0,  0,0,0,1);
-}
 static PyObject* pySetMatScale(PyObject *self, PyObject *args) {
 	int matType;
 	double sx,sy,sz;
@@ -134,11 +124,6 @@ static PyObject* pySetMatScale(PyObject *self, PyObject *args) {
   
 	setMatScale(getMat(matType), sx, sy, sz);
 	Py_RETURN_NONE;
-}
-
-static double* addMatScale(double* mat, double sx, double sy, double sz) {
-	setMatScale(tempMatAdd, sx,sy,sz);
-	return multMatMat(mat,tempMatAdd, mat);
 }
 static PyObject* pyAddMatScale(PyObject *self, PyObject *args) {
 	int matType;
@@ -150,14 +135,6 @@ static PyObject* pyAddMatScale(PyObject *self, PyObject *args) {
 	Py_RETURN_NONE;
 }
 
-		
-	
-static double* setMatRotationX(double* mat, double degX) {
-	double 
-		co = cosd(degX),
-		si = sind(degX);
-	return set16(mat,  1,0,0,0,  0,co,-si,0,  0,si,co,0,  0,0,0,1);
-}
 static PyObject* pySetMatRotationX(PyObject *self, PyObject *args) {
 	int matType;
 	double degX;
@@ -166,11 +143,6 @@ static PyObject* pySetMatRotationX(PyObject *self, PyObject *args) {
   
 	setMatRotationX(getMat(matType), degX);
 	Py_RETURN_NONE;
-}
-
-static double* addMatRotationX(double* mat, double degX) {
-	setMatRotationX(tempMatAdd, degX);
-	return multMatMat(mat,tempMatAdd, mat);
 }
 static PyObject* pyAddMatRotationX(PyObject *self, PyObject *args) {
 	int matType;
@@ -181,19 +153,7 @@ static PyObject* pyAddMatRotationX(PyObject *self, PyObject *args) {
 	addMatRotationX(getMat(matType), degX);
 	Py_RETURN_NONE;
 }
-	
-	
-	
-static double* setMatRotationY(double* mat, double degY) {
-	double
-		co = cosd(degY),
-		si = sind(degY);
-	return set16(mat,
-		co,0,si,0,
-		0,1,0,0,
-		-si,0,co,0,
-		0,0,0,1);
-}
+		
 static PyObject* pySetMatRotationY(PyObject *self, PyObject *args) {
 	int matType;
 	double degY;	
@@ -202,11 +162,6 @@ static PyObject* pySetMatRotationY(PyObject *self, PyObject *args) {
   
 	setMatRotationY(getMat(matType), degY);		
 	Py_RETURN_NONE;
-}
-
-static double* addMatRotationY(double* mat, double degY) {
-	setMatRotationY(tempMatAdd, degY);
-	return multMatMat(mat,tempMatAdd, mat);
 }	
 static PyObject* pyAddMatRotationY(PyObject *self, PyObject *args) {
 	int matType;
@@ -217,19 +172,7 @@ static PyObject* pyAddMatRotationY(PyObject *self, PyObject *args) {
 	addMatRotationY(getMat(matType), degY);		
 	Py_RETURN_NONE;
 }
-	
-	
-	
-static double* setMatRotationZ(double* mat, double degZ) {
-	double
-		co = cosd(degZ),
-		si = sind(degZ);
-	return set16(mat,
-		co,si,0,0,  
-		-si,co,0,0,  
-		0,0,1,0,  
-		0,0,0,1);
-}
+
 static PyObject* pySetMatRotationZ(PyObject *self, PyObject *args) {
 	int matType;
 	double degZ;
@@ -238,11 +181,6 @@ static PyObject* pySetMatRotationZ(PyObject *self, PyObject *args) {
   
 	setMatRotationZ(getMat(matType), degZ);
 	Py_RETURN_NONE;
-}
-
-static double* addMatRotationZ(double* mat, double degZ) {
-	setMatRotationZ(tempMatAdd, degZ);
-	return multMatMat(mat,tempMatAdd, mat);
 }
 static PyObject* pyAddMatRotationZ(PyObject *self, PyObject *args) {
 	int matType;
@@ -381,83 +319,45 @@ double dot(double *u, double *v, int length) {
 	}
 	return sumTotal;
 }
+
 	
-static double* setMatLook(double *mat, double x,double y,double z, double nx,double ny,double nz, double upx,double upy,double upz) {
+static double* setMatLook(double *mat, double x,double y,double z, double atX,double atY,double atZ, double upx,double upy,double upz) { 
+	// Calculate front vector
+	double
+		nx = x-atX,
+		ny = y-atY,
+		nz = z-atZ,
+		l = sqrt(nx*nx + ny*ny + nz*nz);
+	nx /= l;
+	ny /= l;
+	nz /= l;	
   
-  //printf("setMatLook()\n");
-  
-  int i;
-  
-  double eye[3];
-  double at[3];
-  double up[3];
-  double n[3];
-  double u[3];
-  double v[3];
-  double temp[3];
-  int eyeAtEqual = 0;
-  
-  eye[0] = x; eye[1] = y; eye[2] = z;
-  at[0] = nx; at[1] = ny; at[2] = nz;
-  up[0] = upx; up[1] = upy; up[2] = upz;
-
-  for (i = 0; i < 3; i++)
-    {
-      if (eye[i] != at[i])
-	{
-	  eyeAtEqual = 0;
-	}
-    }
-     
-  if (eyeAtEqual) return setMatIdentity(mat);
-  ////printf("(%lf, %lf)\n", at[0], at[2]);
-
-  subtractVecCopy(eye, at, temp, 3);
-  normalizeCopy(temp, n, 3);
-  crossVec3Copy(up, n, temp);
-  normalizeCopy(temp, u, 3);
-  crossVec3Copy(n, u, temp);
-  normalizeCopy(temp, v, 3);
-
-  mat[0] = u[0]; mat[1] = u[1]; mat[2] = u[2];
-  mat[3] = -dot(u, eye, 3);
-
-  mat[4] = v[0]; mat[5] = v[1]; mat[6] = v[2];
-  mat[7] = -dot(v, eye, 3);
-
-  mat[8] = n[0]; mat[9] = n[1]; mat[10] = n[2];
-  mat[11] = -dot(n, eye, 3);
-
-  mat[12] = mat[13] = mat[14] = 0;
-  mat[15] = 1;
-  return mat;
-  
-  
-	/*double 
-		sx = ny*upz - upy*nz,
-		sy = -nx*upz + upx*nz,
-		sz = nx*upy - upx*ny,
-		l = sqrt(sx*sx + sy*sy + sz*sz);
+	// Calculate side vector, then normalize
+	double
+		sx = upy*nz - ny*upz,
+		sy = -upx*nz + nx*upz,
+		sz = upx*ny - nx*upy;
+	l = sqrt(sx*sx + sy*sy + sz*sz);
 	sx /= l;
 	sy /= l;
 	sz /= l;
 
-	upx = sy*nz - ny*sz;
-	upy = -sx*nz + nx*sz;
-	upz = sx*ny - nx*sy;
+	// Calculate new up vector (doesn't need to be normalized b/c product of 2 normal vectors)
+	upx = ny*sz - sy*nz;
+	upy = -nx*sz + sx*nz;
+	upz = nx*sy - sx*ny;
 
-	set16(mat, 
-		sx,upx,-nx,0,
-		sy,upy,-ny,0,
-		sz,upz,-nz,0,
-		0,0,0,1);
-	return transpose(mat);*/
-  
-	/*return set16(mat, 
-		sx,sy,sz,0,
-		upx,upy,upz,0,
-		-nx,-ny,-nz,0,
-		0,0,0,1);*/
+	// Calculate Translation
+	double 
+		sd = -(sx*x + sy*y + sz*z),
+		upd = -(upx*x + upy*y + upz*z),
+		nd = -(nx*x + ny*y + nz*z);
+
+	return set16(mat, 
+		sx,	sy,	sz,	sd,
+		upx,upy,upz,upd,
+		nx,	ny,	nz, nd,
+		0,	0,	0,	1);
 }
 
 static PyObject* pySetMatLook(PyObject *self, PyObject *args) {
@@ -490,8 +390,7 @@ static PyObject* pyAddMatLook(PyObject *self, PyObject *args) {
 
 
 static double* addMatAntiLook(double* mat, double x,double y,double z, double nx,double ny,double nz, double upx,double upy,double upz) {
-	setMatLook(tempMatAdd, x,y,z, nx,ny,nz, upx,upy,upz);
-	transpose(tempMatAdd);
+	transpose(setMatLook(tempMatAdd, x,y,z, nx,ny,nz, upx,upy,upz));
 	return multMatMat(mat, tempMatAdd, mat);
 }
 static PyObject* pyAddMatAntiLook(PyObject *self, PyObject *args) {
@@ -511,8 +410,7 @@ static PyObject* pyAddMatAntiLook(PyObject *self, PyObject *args) {
 
 //axis is an array of length 3
 //angle is in degrees
-static double* rotateAboutAxis(double *mat, double angle, const double* axis)
-{
+static double* rotateAboutAxis(double *mat, double angle, const double* axis) {
   double x, y, z, c, omc, s;
   double normAxis[3];
   normAxis[0] = axis[0];
@@ -565,45 +463,32 @@ static double* rotateAboutAxis(double *mat, double angle, const double* axis)
 static void turn(double *eyeVec, double *atVec, double *upVec, double deltaX, double deltaY) {
   double upDownRotate[16];
   double leftRightRotate[16];
-  double eyeTrans[16];
-  double eyeNegTrans[16];
   double toTransform[16];
 
   int i;
-  setMatTranslation(eyeTrans, eyeVec[0], eyeVec[1], eyeVec[2]);
-  setMatTranslation(eyeNegTrans, -eyeVec[0], -eyeVec[1], -eyeVec[2]);
   
   rotateAboutAxis(upDownRotate, deltaY, globalUpDownAxis);
     
-	setMatIdentity(toTransform);
-	multMatMat(toTransform, eyeTrans, toTransform);
+	setMatTranslation(toTransform, eyeVec[0],eyeVec[1],eyeVec[2]);
 	multMatMat(toTransform, upDownRotate, toTransform);
-	multMatMat(toTransform, eyeNegTrans, toTransform);
+	addMatTranslation(toTransform, -eyeVec[0],-eyeVec[1],-eyeVec[2]);
 	multMatVec(toTransform, atVec, atVec);
- 
-  //mat4MultVec3(toTransform, upVec, upVec);
-  multMatVec(upDownRotate, globalLeftRightAxis, globalLeftRightAxis);
-  
-  ////printf("ud: (%.1lf,%.1lf,%.1lf), ca: (%.1lf,%.1lf,%.1lf) cu: (%.1lf,%.1lf,%.1lf)\n", globalUpDownAxis[0], globalUpDownAxis[1], globalUpDownAxis[2], gCameraAt[0], gCameraAt[1], gCameraAt[2], gCameraUp[0], gCameraUp[1], gCameraUp[2]);
 
-  rotateAboutAxis(leftRightRotate, deltaX, globalLeftRightAxis);
-  setMatIdentity(toTransform);
-  multMatMat(toTransform, eyeTrans, toTransform);
-  multMatMat(toTransform, leftRightRotate, toTransform);
-  multMatMat(toTransform, eyeNegTrans, toTransform);
-  multMatVec(toTransform, atVec, atVec);
-  //mat4MultVec3(toTransform, upVec, upVec);
-  multMatVec(leftRightRotate, globalUpDownAxis, globalUpDownAxis);
+	multMatVec(upDownRotate, globalLeftRightAxis, globalLeftRightAxis);
 
-	for (i = 0; i < 3; i++) {
+	////printf("ud: (%.1lf,%.1lf,%.1lf), ca: (%.1lf,%.1lf,%.1lf) cu: (%.1lf,%.1lf,%.1lf)\n", globalUpDownAxis[0], globalUpDownAxis[1], globalUpDownAxis[2], gCameraAt[0], gCameraAt[1], gCameraAt[2], gCameraUp[0], gCameraUp[1], gCameraUp[2]);
+
+	rotateAboutAxis(leftRightRotate, deltaX, globalLeftRightAxis);
+
+	setMatTranslation(toTransform, eyeVec[0],eyeVec[1],eyeVec[2]);
+	multMatMat(toTransform, leftRightRotate, toTransform);
+	addMatTranslation(toTransform, -eyeVec[0],-eyeVec[1],-eyeVec[2]);
+	multMatVec(toTransform, atVec, atVec);
+	//mat4MultVec3(toTransform, upVec, upVec);
+	multMatVec(leftRightRotate, globalUpDownAxis, globalUpDownAxis);
+
+	for (i = 0; i < 3; i++)
 		upVec[i] = globalLeftRightAxis[i];
-	}
-	
-
-  
-  ////printMat(getMat(MAT_VIEW));
-
-  //return getMat(MAT_MODEL);
 }
 static PyObject* pyTurn(PyObject *self, PyObject *args) {
 	PyArrayObject *eyeArray, *atArray, *upArray;
@@ -660,14 +545,7 @@ static PyObject* pyCameraForwards(PyObject *self, PyObject *args) {
 }
 
 static double* setMatCamera(double* mat) {
-	//printf("EYEVEC:");
-	//printVec(gCameraEye);
-	//printf("BEFORE\n");
-	//printMat(mat);
-	setMatLook(mat, gCameraEye[0], gCameraEye[1], gCameraEye[2], gCameraAt[0], gCameraAt[1], gCameraAt[2], gCameraUp[0], gCameraUp[1], gCameraUp[2]);
-	//printf("AFTER\n");
-	//printMat(mat);
-	return mat;
+	return setMatLook(mat, gCameraEye[0], gCameraEye[1], gCameraEye[2], gCameraAt[0], gCameraAt[1], gCameraAt[2], gCameraUp[0], gCameraUp[1], gCameraUp[2]);
 }
 static PyObject* pySetMatCamera(PyObject *self, PyObject *args) {
 	int matType;
@@ -692,13 +570,6 @@ static void camera(double eyeX, double eyeY, double eyeZ, double atX, double atY
 	gCameraUp[0] = upX;
 	gCameraUp[1] = upY;
 	gCameraUp[2] = upZ;
-
-	//printf("YOOHOO!\n");
-	
-	//printf("EYEVEC:");
-	//printVec(gCameraEye);
-	//printVec(gCameraAt);
-	//printVec(gCameraUp);
 }
 static PyObject* pyCamera(PyObject *self, PyObject *args) {
 	double
@@ -817,9 +688,8 @@ static PyObject* pyInit(PyObject *self, PyObject *args) {
 	int resW, resH, doFog;
 	PyArrayObject *arrayin;
 	double n, f;
-	if(!PyArg_ParseTuple(args, "iiddiO!", &resW,&resH,&n,&f,&doFog, &PyArray_Type,&arrayin)) {
+	if(!PyArg_ParseTuple(args, "iiddiO!", &resW,&resH,&n,&f,&doFog, &PyArray_Type,&arrayin))
 	    return NULL;
-	}
   
 	init(resW,resH,n,f,doFog, (int*) (arrayin->data));
 	Py_RETURN_NONE;
@@ -1590,9 +1460,7 @@ static void loadObj(char* filename, int id) {
 			f++;
 		}
 	}
-	
-	//printf("DONE!\n");
-		
+			
 	
 	o->vNum = vNum;
 	o->uvNum = uvNum;

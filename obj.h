@@ -22,8 +22,6 @@ int* loadBMP(char *fileName, int *w, int *h) {
 	
 	int size =  bitmapInfoHeader.biSizeImage;
 	
-	printf("img: %d %d\n", width, height);
-	printf("size: %d\n", size);
 	
 	//Allocate Space for Image
 	int* texPixels = (int *) malloc(height*width * sizeof(int));
@@ -43,8 +41,6 @@ int* loadBMP(char *fileName, int *w, int *h) {
 	//Free Space Taken Up by the Original Array
 	free(bitmapData);
 	
-	printf("DONE!?");
-
 	//Return Image Struct
 	return texPixels;
 }

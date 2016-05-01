@@ -164,8 +164,59 @@ static double* setMatIdentity(double *mat) {
 static double* setMatTranslation(double* mat, double x, double y, double z) {
 	return set16(mat,  1,0,0,x,  0,1,0,y,  0,0,1,z,  0,0,0,1);
 }
+static double* addMatTranslation(double* mat, double x, double y, double z) {
+	setMatTranslation(tempMatAdd, x,y,z);
+	return multMatMat(mat,tempMatAdd, mat);
+}
 
+static double* setMatScale(double* mat, double sx, double sy, double sz) {
+	return set16(mat,  sx,0,0,0,  0,sy,0,0,  0,0,sz,0,  0,0,0,1);
+}
+static double* addMatScale(double* mat, double sx, double sy, double sz) {
+	setMatScale(tempMatAdd, sx,sy,sz);
+	return multMatMat(mat,tempMatAdd, mat);
+}
 
+static double* setMatRotationX(double* mat, double degX) {
+	double 
+		co = cosd(degX),
+		si = sind(degX);
+	return set16(mat,  1,0,0,0,  0,co,-si,0,  0,si,co,0,  0,0,0,1);
+}
+static double* addMatRotationX(double* mat, double degX) {
+	setMatRotationX(tempMatAdd, degX);
+	return multMatMat(mat,tempMatAdd, mat);
+}
+
+static double* setMatRotationY(double* mat, double degY) {
+	double
+		co = cosd(degY),
+		si = sind(degY);
+	return set16(mat,
+		co,0,si,0,
+		0,1,0,0,
+		-si,0,co,0,
+		0,0,0,1);
+}
+static double* addMatRotationY(double* mat, double degY) {
+	setMatRotationY(tempMatAdd, degY);
+	return multMatMat(mat,tempMatAdd, mat);
+}
+
+static double* setMatRotationZ(double* mat, double degZ) {
+	double
+		co = cosd(degZ),
+		si = sind(degZ);
+	return set16(mat,
+		co,si,0,0,  
+		-si,co,0,0,  
+		0,0,1,0,  
+		0,0,0,1);
+}
+static double* addMatRotationZ(double* mat, double degZ) {
+	setMatRotationZ(tempMatAdd, degZ);
+	return multMatMat(mat,tempMatAdd, mat);
+}
 
 
 

@@ -27,14 +27,14 @@ typedef struct tagBITMAPFILEHEADER {
 
 typedef struct tagBITMAPINFOHEADER {
     UINT32 biSize;  //specifies the number of bytes required by the struct
-    long biWidth;  //specifies width in pixels
-    long biHeight;  //species height in pixels
+    int biWidth;  //specifies width in pixels
+    int biHeight;  //species height in pixels
     UINT16 biPlanes; //specifies the number of color planes, must be 1
     UINT16 biBitCount; //specifies the number of bit per pixel
     UINT32 biCompression;//spcifies the type of compression
     UINT32 biSizeImage;  //size of image in bytes
-    long biXPelsPerMeter;  //number of pixels per meter in x axis
-    long biYPelsPerMeter;  //number of pixels per meter in y axis
+    int biXPelsPerMeter;  //number of pixels per meter in x axis
+    int biYPelsPerMeter;  //number of pixels per meter in y axis
     UINT32 biClrUsed;  //number of colors used by th ebitmap
     UINT32 biClrImportant;  //number of colors that are important
 } BITMAPINFOHEADER;
@@ -72,7 +72,6 @@ unsigned char *LoadBitmapFile(char *filename, BITMAPINFOHEADER *bitmapInfoHeader
     fseek(filePtr, bitmapFileHeader.bOffBits, SEEK_SET);
 
     //allocate enough memory for the bitmap image data
-	printf("Allocating %d bytes!", bitmapInfoHeader->biSizeImage);
     bitmapImage = (unsigned char*) malloc(bitmapInfoHeader->biSizeImage);
 
     //verify memory allocation
