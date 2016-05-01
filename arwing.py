@@ -93,7 +93,6 @@ class Arwing(Drawable):
 		nZ = self.dtoPos[2]-self.dpos[2]
 		
 		canv3d.addMatAntiLook(MAT_T, 0,0,0,		nX,nY,nZ,		self.dupNorm[0],self.dupNorm[1],self.dupNorm[2]);
-		canv3d.addMatTranslation(MAT_T, 0,-50,0)
 		canv3d.addMatRotationX(MAT_T, self.pitch)
 		canv3d.addMatRotationZ(MAT_T, self.roll)
 		canv3d.addMatTranslation(MAT_T, 0,-5,0)

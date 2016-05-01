@@ -1,18 +1,17 @@
 //http://stackoverflow.com/questions/14279242/read-bitmap-file-into-structure
 
-typedef char           INT8;
-typedef short          INT16;
-typedef long           INT32;
-typedef unsigned char  UINT8;
-typedef unsigned short UINT16;
-typedef unsigned long  UINT32;
+typedef char			INT8;
+typedef short			INT16;
+typedef int				INT32;
+typedef unsigned char	UINT8;
+typedef unsigned short	UINT16;
+typedef unsigned int	UINT32;
 
 
 
 #pragma pack(push, 1)
 
-typedef struct tagBITMAPFILEHEADER
-{
+typedef struct tagBITMAPFILEHEADER {
     UINT16 bfType;  //specifies the file type
     UINT32 bfSize;  //specifies the size in bytes of the bitmap file
     UINT16 bfReserved1;  //reserved; must be 0
@@ -26,8 +25,7 @@ typedef struct tagBITMAPFILEHEADER
 
 #pragma pack(push, 1)
 
-typedef struct tagBITMAPINFOHEADER
-{
+typedef struct tagBITMAPINFOHEADER {
     UINT32 biSize;  //specifies the number of bytes required by the struct
     long biWidth;  //specifies width in pixels
     long biHeight;  //species height in pixels
