@@ -36,13 +36,16 @@ class ArwingPlayer(Arwing):
 			
 		self.speed += (toSpeed - self.speed)/20;
 		
-		toRoll = -12*dx*adjust
-		toPitch = 12*dy*adjust
+		toRoll = -12*dx*adjust * 2
+		toYaw = -12*dx*adjust  * 2
+		toPitch = 12*dy*adjust * 2
+		
 		self.roll += (toRoll - self.roll)/5
+		self.yaw += (toYaw - self.yaw)/5
 		self.pitch += (toPitch - self.pitch)/5
 		
 		
-		canv3d.turn(self.ori,0, self.ori,3, self.ori,6, -dx*adjust,dy*adjust);
+		canv3d.turn(self.ori,0, self.ori,3, self.ori,6, -dx*adjust,-dy*adjust);
 		
 		x = self.ori[0]
 		y = self.ori[1]

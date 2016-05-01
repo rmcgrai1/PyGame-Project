@@ -5,16 +5,16 @@ import math
 import time
 import random
 from pygame.locals	import *
-from math2		import *
+from math2			import *
 from sprite 		import Sprite
 from drawable		import *
-from mat		import *
+from mat			import *
 import canv3d
 
 
-class Arwing(Drawable):
-	def __init__(self, gameSpace, x,y,z):
-		super(Arwing, self).__init__(gameSpace, x,y,z, x,y,z+1, 0,1,0)
+class Laser(Drawable):
+	def __init__(self, gameSpace, x,y,z, atX,atY,atZ, upX,upY,upZ):
+		super(Arwing, self).__init__(gameSpace, x,y,z, atX,atY,atZ, upX,upY,upZ)
 
 		self.model = canv3d.loadObj("Arwing.obj");
 	
@@ -33,7 +33,7 @@ class Arwing(Drawable):
 		
 	
 	def tick(self, input):
-		super(Arwing, self).tick(input)
+		super(Laser, self).tick(input)
 		
 	def draw(self, screen):
 		canv3d.setMatIdentity(MAT_T)

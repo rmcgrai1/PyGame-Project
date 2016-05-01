@@ -15,7 +15,7 @@ from numpy			import *
 
 class Skybox(Drawable):
 	def __init__(self, gameSpace, leftName, rightName, frontName, backName, upName, downName):
-		super(Skybox, self).__init__(gameSpace, 0,0,0)
+		super(Skybox, self).__init__(gameSpace, 0,0,0, 0,0,1, 0,1,0)
 
 		self.boxSize = gameSpace.canv3d_far / 2
 		

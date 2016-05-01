@@ -11,10 +11,10 @@ import numpy
 from numpy	import *
 
 class Drawable(object):
-	def __init__(self, gameSpace, x,y,z):
+	def __init__(self, gameSpace, x,y,z, atX,atY,atZ, upX,upY,upZ):
 		self.gs = gameSpace
 
-		self.ori = [x,y,z,  x,y,z-1,  0,1,0.]
+		self.ori = [x+0.,y,z,  atX,atY,atZ,  upX,upY,upZ]
 		self.ori = numpy.array(self.ori)	
 		
 		self.speed = 0
