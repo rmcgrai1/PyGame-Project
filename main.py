@@ -96,7 +96,7 @@ class GameSpace:
                                 mdx, mdy = pygame.mouse.get_pos();
                                 mdx = mdx - mouse_center_x;
                                 mdy = mdy - mouse_center_y;
-                                md_adjust = -1.0/128;
+                                md_adjust = 1.0/128;
 
 			for event in pygame.event.get():
                                 if (event.type == pygame.MOUSEMOTION):
