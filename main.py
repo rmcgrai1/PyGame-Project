@@ -71,8 +71,12 @@ class GameSpace:
 		#240,180
                 mouse_center_x = self.width/2;
                 mouse_center_y = self.height/2;
-                pygame.mouse.set_visible(False);
-                pygame.event.set_grab(True);
+                cameraMethod = 1;
+                if (cameraMethod == 1):
+                        pygame.mouse.set_visible(False);
+                        pygame.event.set_grab(True);
+                elif (cameraMethod == 2):
+                        pygame.mouse.set_cursor(
                 #pygame.mouse.set_pos(mouse_center_x, mouse_center_y);
 
 		#3. Game loop
@@ -83,18 +87,26 @@ class GameSpace:
 			#5. User input reading
 #                        (mdx, mdy) = pygame.mouse.get_rel();
                   #      if ((mx < 0) || (mx > self.width)):
-                        pygame.mouse.set_pos(mouse_center_x, mouse_center_y);
+                        if (cameraMethod == 1):
+                                pygame.mouse.set_pos(mouse_center_x, mouse_center_y);
                         #pygame.mouse.get_rel();
  #                       mdx, mdy = mdx/10000.0, mdy/10000.0;
   #                      print mdx, mdy;
                         mDown = pygame.mouse.get_pressed()[0]
 			mdx, mdy = 0, 0
+                        md_adjust = 1;
 
 
 			for event in pygame.event.get():
                                 if (event.type == pygame.MOUSEMOTION):
-                                        mdx, mdy = event.rel;
-                                        #print mdx, mdy;
+                                        if (cameraMethod == 1):
+                                                mdx, mdy = event.rel;
+                                                md_adjust = 1.0/6;
+                                                #print mdx, mdy;
+                                        elif (cameraMethod == 2):
+                                                mdx = pygame.mouse.get_pos() - mouse_center_x;
+                                                mdy = pygame.mouse.get_pos() - mouse_center_y;
+                                                md_adjust = 1.0/16;
 				if event.type == QUIT:
 					pygame.mixer.quit()
 					sys.exit()
@@ -125,8 +137,10 @@ class GameSpace:
 			#6. Tick updating and polling
 
 			input = {
-				"mouse_down": mDown,                                                            "mouse_dy": mdy,
+				"mouse_down": mDown,
+                                "mouse_dy": mdy,
                                 "mouse_dx": mdx,
+                                "mouse_d_adjust": md_adjust,
 				"key_hdir": keyHDir,
 				"key_vdir": keyVDir
 			}
