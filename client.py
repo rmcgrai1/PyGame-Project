@@ -23,8 +23,10 @@ from twisted.internet.task 		import LoopingCall
 from twisted.internet			import reactor
 from twisted.protocols.basic	import LineReceiver
 from twisted.internet.tcp		import Port
+from twisted.internet.defer import DeferredQueue
 from sys						import *
 from radar						import *
+from hud						import *
 import json
 import gfx2d
 
@@ -41,6 +43,22 @@ white = (255,255,255)
 arwingInsts = [];
 
 class ClientConnection(LineReceiver):
+        def __init__(self, addr):
+                self.addr = addr;
+                self.gs = GameSpace.instance
+                self.gs.mainQueue.get().addCallback(self.sendLaser);
+
+        def sendLaser(self, ori):
+                self.transport.write(json.dumps({
+                        "type": "laser",
+                        "maxAge": 60 * 10,
+                        "oriSpeed": [30,
+                                     ori[0],ori[1],ori[2],
+                                     ori[3]-ori[0],ori[4]-ori[1],ori[5]-ori[2],
+                                     ori[6],ori[7],ori[8] ]
+                })+ "\r\n");
+                self.gs.mainQueue.get().addCallback(self.sendLaser);
+
 	def lineReceived(self, data):
 		#print 'received, ', data
 		
@@ -60,12 +78,10 @@ class ClientConnection(LineReceiver):
 				arwingInsts.append(  gs.instanceAppend(Arwing(gs, 0,0,0))  )
 			arwingInsts.append(gs.player);
 			
-			self.transport.write(json.dumps(
-				{
-					"type": type,
-					"result": "ok"
-				}
-			));
+			self.transport.write(json.dumps({
+				"type": type,
+				"result": "ok"
+			}) + "\r\n");
 		elif type == 'pos':
 			all = jso['all']
 			le = len(all)
@@ -85,7 +101,7 @@ class ClientConnection(LineReceiver):
 			self.transport.write(json.dumps({
 				"type": type,
 				"one": gs.player.ori.tolist()
-			}));
+			}) + "\r\n");
 		elif type == 'del':
 			id = int(jso['id'])
 
@@ -97,16 +113,27 @@ class ClientConnection(LineReceiver):
 				
 				gs.instanceRemove(arw)
 				del arwingInsts[id]
-		
+		elif type == 'laser':
+                        oriSpeed = jso["oriSpeed"];
+                        maxAge = jso["maxAge"]
+                        gs.instanceAppend(Laser(gs,oriSpeed[0], maxAge,
+                                oriSpeed[1],oriSpeed[2],oriSpeed[3],
+				oriSpeed[4]+oriSpeed[1],
+                                oriSpeed[5]+oriSpeed[2],
+                                oriSpeed[6]+oriSpeed[3],
+				oriSpeed[7],oriSpeed[8],oriSpeed[9]
+			))
 	def connectionMade(self):
 		print 'new connection made to ' + str(self.addr)
 		GameSpace.instance.isConnected = True
 	def connectionLost(self, reason):
 		print 'lost connection to ' + str(self.addr)
 		GameSpace.instance.isConnected = False
+
 class ClientConnFactory(ClientFactory):
+
 	def buildProtocol(self, addr):
-		self.conn = ClientConnection()
+                self.conn = ClientConnection(addr);
 		return self.conn
 
 class GameSpace:			
@@ -114,6 +141,7 @@ class GameSpace:
 		GameSpace.instance = self
 		self.clientConnFactory = ClientConnFactory()
 		self.id = -1
+                self.mainQueue = DeferredQueue();
 
 	def instanceAppend(self, inst):
 		self.instanceList.append(inst)
@@ -134,9 +162,12 @@ class GameSpace:
 	def main(self):
 		self.isConnected = False
 		self.connectTimer = 0
-		self.connectTimerMax = 50
-		self.connectChoice = True
-	
+                #Ryan is True, Jacob is False. (Never trust a Jacob, for it is False)
+		self.connectChoice = False;
+                
+		self.connectTimerMax = 75
+		self.connectDiv = 16
+		
 		#1. Initialize game space
 
 		pygame.init()
@@ -167,6 +198,7 @@ class GameSpace:
 		self.reticle = self.instanceAppend(Reticle(self.mouse_center_x, self.mouse_center_y));
 		self.radar = self.instanceAppend(Radar(self));
 		self.player = self.instanceAppend(ArwingPlayer(self, 0,0,0))
+		self.hud = self.instanceAppend(Hud(self))
 
 		# Create 3d Canvas
 		self.canv3d_img_ = pygame.Surface((self.canv3d_width,self.canv3d_height)).convert_alpha()
@@ -194,7 +226,7 @@ class GameSpace:
 				self.connectTimer = self.connectTimerMax
 			else:
 				self.connectTimer -= 1
-	
+		
 		#4. Tick regulation
 		#self.clock.tick(60);
 
@@ -295,10 +327,8 @@ class GameSpace:
 		self.screen.blit(self.canv3d_img, self.rect);
 		self.reticle.blitToScreen(self.screen);
 		self.radar.blitToScreen(self.screen);
+		self.hud.blitToScreen(self.screen)
 		
-		if self.isConnected:
-			gfx2d.drawText(self.screen, "Successfully connected!", 0,0)
-
 		pygame.display.flip()
 			
 			
