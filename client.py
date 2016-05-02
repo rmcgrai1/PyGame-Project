@@ -23,6 +23,7 @@ from twisted.internet.task 		import LoopingCall
 from twisted.internet			import reactor
 from twisted.protocols.basic	import LineReceiver
 from twisted.internet.tcp		import Port
+from twisted.internet.defer import DeferredQueue
 from sys						import *
 from radar						import *
 import json
@@ -41,6 +42,22 @@ white = (255,255,255)
 arwingInsts = [];
 
 class ClientConnection(LineReceiver):
+        def __init__(self, addr):
+                self.addr = addr;
+                self.gs = GameSpace.instance
+                self.gs.mainQueue.get().addCallback(self.sendLaser);
+
+        def sendLaser(self, ori):
+                self.transport.write(json.dumps({
+                        "type": "laser",
+                        "maxAge": 60 * 10,
+                        "oriSpeed": [30,
+                                     ori[0],ori[1],ori[2],
+                                     ori[3]-ori[0],ori[4]-ori[1],ori[5]-ori[2],
+                                     ori[6],ori[7],ori[8] ]
+                })+ "\r\n");
+                self.gs.mainQueue.get().addCallback(self.sendLaser);
+
 	def lineReceived(self, data):
 		#print 'received, ', data
 		
@@ -65,7 +82,7 @@ class ClientConnection(LineReceiver):
 					"type": type,
 					"result": "ok"
 				}
-			));
+			) + "\r\n");
 		elif type == 'pos':
 			all = jso['all']
 			le = len(all)
@@ -85,7 +102,7 @@ class ClientConnection(LineReceiver):
 			self.transport.write(json.dumps({
 				"type": type,
 				"one": gs.player.ori.tolist()
-			}));
+			}) + "\r\n");
 		elif type == 'del':
 			id = int(jso['id'])
 
@@ -97,16 +114,27 @@ class ClientConnection(LineReceiver):
 				
 				gs.instanceRemove(arw)
 				del arwingInsts[id]
-		
+		elif type == 'laser':
+                        oriSpeed = jso["oriSpeed"];
+                        maxAge = jso["maxAge"]
+                        gs.instanceAppend(Laser(gs,oriSpeed[0], maxAge,
+                                oriSpeed[1],oriSpeed[2],oriSpeed[3],
+				oriSpeed[4]+oriSpeed[1],
+                                oriSpeed[5]+oriSpeed[2],
+                                oriSpeed[6]+oriSpeed[3],
+				oriSpeed[7],oriSpeed[8],oriSpeed[9]
+			))
 	def connectionMade(self):
 		print 'new connection made to ' + str(self.addr)
 		GameSpace.instance.isConnected = True
 	def connectionLost(self, reason):
 		print 'lost connection to ' + str(self.addr)
 		GameSpace.instance.isConnected = False
+
 class ClientConnFactory(ClientFactory):
+
 	def buildProtocol(self, addr):
-		self.conn = ClientConnection()
+                self.conn = ClientConnection(addr);
 		return self.conn
 
 class GameSpace:			
@@ -114,6 +142,7 @@ class GameSpace:
 		GameSpace.instance = self
 		self.clientConnFactory = ClientConnFactory()
 		self.id = -1
+                self.mainQueue = DeferredQueue();
 
 	def instanceAppend(self, inst):
 		self.instanceList.append(inst)
@@ -135,8 +164,9 @@ class GameSpace:
 		self.isConnected = False
 		self.connectTimer = 0
 		self.connectTimerMax = 50
-		self.connectChoice = True
-	
+                #Ryan is True, Jacob is False. (Never trust a Jacob, for it is False)
+		self.connectChoice = False;
+                
 		#1. Initialize game space
 
 		pygame.init()

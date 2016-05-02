@@ -48,7 +48,7 @@ int* loadBMP(char *fileName, int *w, int *h) {
 
 /*********************************** OBJ LOADING ************************************/
 
-typedef struct mtl {
+typedef struct mtl_ {
 	char* name;
 	
 	double ns;
@@ -62,7 +62,7 @@ typedef struct mtl {
 	int map_Kd_width, map_Kd_height;
 } mtl;
 
-typedef struct obj {
+typedef struct obj_ {
 	int vNum;
 	double* vertices;
 	int uvNum;
