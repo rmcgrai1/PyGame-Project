@@ -28,7 +28,7 @@ class Laser(Drawable):
 		nY = self.ori[4]-self.ori[1]
 		nZ = self.ori[5]-self.ori[2]
 		
-		#canv3d.addMatAntiLook(MAT_T, 0,0,0,		nX,nY,nZ,		self.ori[6],self.ori[7],self.ori[8]);
+		canv3d.addMatAntiLook(MAT_T, 0,0,0,		nX,nY,nZ,		self.ori[6],self.ori[7],self.ori[8]);
 		canv3d.addMatTranslation(MAT_T, 0,-5,0)
 		
 		canv3d.addMatScale(MAT_T,.25,.25,.25);

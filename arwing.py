@@ -59,14 +59,19 @@ class Arwing(Drawable):
 		canv3d.addMatScale(MAT_T,.25,.25,.25);
 		canv3d.compileMats()
 		
-				
+	
 		canv3d.drawObj(self.model);
-		
 		canv3d.setTexture(self.jetTex, self.jetTexWidth, self.jetTexHeight)
 		
-		s = 25 * (1 + .5*rnd()) 
-		spc = 35
+		xs = 50 * (1 + .5*rnd()) 
+		ys = xs * .8
 		up = 10
-		back = -55
-		canv3d.draw3dFloor(-spc-s,up-s,-spc+s,up+s,back);
-		canv3d.draw3dFloor(spc-s,up-s,spc+s,up+s,back);
+		back = -80
+		canv3d.draw3dFloor(-xs,up-ys,xs,up+ys,back);
+
+		#s = 25 * (1 + .5*rnd()) 
+		#spc = 35
+		#up = 10
+		#back = -55
+		#canv3d.draw3dFloor(-spc-s,up-s,-spc+s,up+s,back);
+		#canv3d.draw3dFloor(spc-s,up-s,spc+s,up+s,back);

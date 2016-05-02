@@ -50,6 +50,12 @@ unsigned char *LoadBitmapFile(char *filename, BITMAPINFOHEADER *bitmapInfoHeader
     unsigned char *bitmapImage;  //store image data
     int imageIdx=0;  //image index counter
     unsigned char tempRGB;  //our swap variable
+	
+	
+	
+	printf("Size of fileheader:%d, infoHeader:%d\n", sizeof(BITMAPFILEHEADER), sizeof(BITMAPINFOHEADER));
+	
+	
 
     //open filename in read binary mode
     filePtr = fopen(filename,"rb");

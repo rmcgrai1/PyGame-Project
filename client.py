@@ -24,6 +24,7 @@ from twisted.internet			import reactor
 from twisted.protocols.basic	import LineReceiver
 from twisted.internet.tcp		import Port
 from sys						import *
+from radar						import *
 import json
 
 
@@ -80,12 +81,21 @@ class ClientConnection(LineReceiver):
 						allInst = all[i]
 						inst.ori[ii] = allInst[ii]
 		
-			self.transport.write(json.dumps(
-				{
-					"type": type,
-					"one": gs.player.ori.tolist()
-				}
-			));
+			self.transport.write(json.dumps({
+				"type": type,
+				"one": gs.player.ori.tolist()
+			}));
+		elif type == 'del':
+			id = int(jso['id'])
+
+			if id < len(arwingInsts):				
+				if id < gs.id:
+					gs.id -= 1
+					
+				arw = arwingInsts[id]
+				
+				gs.instanceRemove(arw)
+				del arwingInsts[id]
 		
 	def connectionMade(self):
 		print 'new connection made to {0} port {1}'.format(SERVER_HOST, SERVER_PORT)
@@ -152,6 +162,7 @@ class GameSpace:
 		self.clock = pygame.time.Clock()	
 		self.skybox = self.instanceAppend(Skybox(self, "img/orbital-element_lf.jpg","img/orbital-element_rt.jpg","img/orbital-element_ft.jpg","img/orbital-element_bk.jpg","img/orbital-element_up.jpg","img/orbital-element_dn.jpg"))
 		self.reticle = self.instanceAppend(Reticle(self.mouse_center_x, self.mouse_center_y));
+		self.radar = self.instanceAppend(Radar(self));
 		self.player = self.instanceAppend(ArwingPlayer(self, 0,0,0))
 
 		# Create 3d Canvas
@@ -276,6 +287,7 @@ class GameSpace:
 		# Blit 3d canvas to screen
 		self.screen.blit(self.canv3d_img, self.rect);
 		self.reticle.blitToScreen(self.screen);
+		self.radar.blitToScreen(self.screen);
 
 		pygame.display.flip()
 			

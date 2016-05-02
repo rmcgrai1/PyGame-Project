@@ -1171,6 +1171,25 @@ static PyObject* pySetRGB(PyObject *self, PyObject *args) {
 	setRGB(r,g,b);
 	Py_RETURN_NONE;
 }
+
+
+static void setRGBA(int r, int g, int b, int a) {
+	RGBA = convertRGBA2Int(r,g,b,a);
+	R = r;
+	G = g;
+	B = b;
+	A = a;
+}
+static PyObject* pySetRGBA(PyObject *self, PyObject *args) {
+	int r,g,b,a;
+	if(!PyArg_ParseTuple(args, "iiii", &r,&g,&b,&a))
+      return NULL;
+  
+	setRGBA(r,g,b,a);
+	Py_RETURN_NONE;
+}
+
+
 static PyObject* pyGetXY(PyObject *self, PyObject *args) {
 	int x,y;
 	
@@ -1528,9 +1547,10 @@ static void drawObj(obj* o) {
 		if(v1 == -1) {
 			if(v2 != -1) {				
 				currentMtl = o->mtls[v2];
-				R = (int) (255 * currentMtl->kd[0]);
-				G = (int) (255 * currentMtl->kd[1]);
-				B = (int) (255 * currentMtl->kd[2]);
+				R = (int) (tR * currentMtl->kd[0]);
+				G = (int) (tG * currentMtl->kd[1]);
+				B = (int) (tB * currentMtl->kd[2]);
+				A = tA;
 				texture = currentMtl->map_Kd;
 				textureWidth = currentMtl->map_Kd_width;
 				textureHeight = currentMtl->map_Kd_height;
@@ -1592,7 +1612,7 @@ static PyObject* pyTest(PyObject *self, PyObject *args) {
 		
 ////////////////////////////////////////////////////////////////////////////////////////
 
-static PyMethodDef canv3d_funcs[44] = {
+static PyMethodDef canv3d_funcs[45] = {
 	{"setMatIdentity", (PyCFunction) pySetMatIdentity, METH_VARARGS, NULL },
 	{"setMatTranslation", (PyCFunction) pySetMatTranslation, METH_VARARGS, NULL },
 	{"addMatTranslation", (PyCFunction) pyAddMatTranslation, METH_VARARGS, NULL },
@@ -1626,6 +1646,7 @@ static PyMethodDef canv3d_funcs[44] = {
 	{"clear", (PyCFunction) pyClear, METH_NOARGS, NULL },
 	{"clearStatic", (PyCFunction) pyClearStatic, METH_NOARGS, NULL },
 	{"setRGB", (PyCFunction) pySetRGB, METH_VARARGS, NULL },
+	{"setRGBA", (PyCFunction) pySetRGBA, METH_VARARGS, NULL },
 	{"getXY", (PyCFunction) pyGetXY, METH_VARARGS, NULL },
 
 	{"printMats", (PyCFunction) pyPrintMats, METH_NOARGS, NULL },
