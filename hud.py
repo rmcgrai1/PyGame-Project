@@ -14,19 +14,19 @@ class Hud(Drawable):
 	def __init__(self, gameSpace):
 		super(Hud, self).__init__(gameSpace, 0,0,0, 0,0,1, 0,1,0)
 	
-		self.imgStatic = Sprite("static.png", 2,1)
-		self.imgFlynn = Sprite("flynn.png", 3,1)
+		self.imgStatic = Sprite("img/static.png", 2,1)
+		self.imgFlynn = Sprite("img/flynn.png", 3,1)
 		
 		self.sndInd = 0
 		self.snds = 6
 		
 		self.sndFlynn = []
 		for i in range(0,self.snds):
-			self.sndFlynn.append(pygame.mixer.Sound("flynn" + str(i) + ".ogg"))
+			self.sndFlynn.append(pygame.mixer.Sound("snd/flynn" + str(i) + ".ogg"))
 		
 		self.ind = 0
 		
-		self.sndRadioStart = pygame.mixer.Sound("radioStart.ogg")
+		self.sndRadioStart = pygame.mixer.Sound("snd/radioStart.ogg")
 		self.sndRadioStart.play()
 
 		self.staticTimeMax = 20

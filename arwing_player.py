@@ -18,8 +18,9 @@ class ArwingPlayer(Arwing):
 	def __init__(self, gameSpace, x,y,z):
 		super(ArwingPlayer, self).__init__(gameSpace, x,y,z)
 		self.mDownPrev = False
+		self.vDirPrev = 0
 		
-		self.sndEngine.play(loops=-1)
+		Arwing.SND_ENGINE.play(loops=-1)
 		
 		self.forwardAxis = numpy.array([0., 0., 0., 0.])
 		
@@ -28,7 +29,7 @@ class ArwingPlayer(Arwing):
 		super(ArwingPlayer, self).tick(input)
 		
 		if (not self.mDownPrev) and (input['mouse_down']):
-			self.sndSingleShot.play()
+			Arwing.SND_SINGLE_SHOT.play()
 			if (self.gs.isConnected):
 				self.gs.mainQueue.put(self.ori);
 			else:
@@ -46,18 +47,22 @@ class ArwingPlayer(Arwing):
 		self.forwardAxis[1] = self.ori[4]-self.ori[1]
 		self.forwardAxis[2] = self.ori[5]-self.ori[2]
 				
-		canv3d.rotateVecAboutAxis(self.ori,6, hDir, self.forwardAxis);
+		#canv3d.rotateVecAboutAxis(self.ori,6, hDir, self.forwardAxis);
 
 		
-
 		if vDir == -1:
-			toSpeed = 10
+			if self.vDirPrev != -1:
+				Arwing.SND_BOOST.play()
+			toSpeed = Arwing.SPD_MAX
 		elif vDir == 1:
-			toSpeed = 2
+			if self.vDirPrev != 1:
+				Arwing.SND_BRAKE.play()
+			toSpeed = Arwing.SPD_MIN
 		else:
-			toSpeed = 5
+			toSpeed = Arwing.SPD_BASE
+		self.vDirPrev = vDir
 			
-		self.speed += (toSpeed - self.speed)/20;
+		self.speed += (toSpeed - self.speed)/20.;
 		
 		toRoll = -12*dx*adjust * 2
 		toYaw = -12*dx*adjust  * 2
@@ -77,7 +82,7 @@ class ArwingPlayer(Arwing):
 		toY = self.ori[4]
 		toZ = self.ori[5]
 				
-		dis = -200
+		dis = -200 * (.5 + .5*self.speed/Arwing.SPD_BASE )
 
 		aX = dis*(toX-x)
 		aY = dis*(toY-y)

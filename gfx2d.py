@@ -37,7 +37,7 @@ def init():
 	global fontSprite
 	global fontCharList
 	
-	fontSprite = Sprite("font.png", 16,16)	
+	fontSprite = Sprite("img/font.png", 16,16)	
 	fontCharList = [None] * (16*16)
 	
 	for y in range(0,16):

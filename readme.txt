@@ -12,5 +12,5 @@ To run, you must:
 
 
 Known Bugs:
-- client seg faults sometimes when exiting after not connecting to server
+- client seg faults randomly??
 - shots multiply
