@@ -38,7 +38,11 @@ class Sprite:
 		# If frame is not already in _img, copy it into _img
 		if self.currentFrame != frame:
 			self.currentFrame = frame
-			subRect = (self.w*_frame,0,self.w*(_frame+1),self.h)
+			
+			xFr = _frame % self.frameNumX
+			yFr = (_frame - xFr)/self.frameNumY
+			
+			subRect = (self.w*xFr,self.h*yFr,self.w*(xFr+1),self.h*(yFr+1))
 			self._img.fill(Sprite.transparent)
 			self._img.blit(self.__img, (0,0), subRect)
 		
@@ -54,7 +58,7 @@ class Sprite:
 		
 		# Return image & rect
 		return (self.img, self.rect)
-		
+				
 
 	def draw(self, screen, x, y, frame = 0, angle = 0, scale = 1, alpha = 1, special_flags = 0):
 		# Get given frame w/ given angle and scale

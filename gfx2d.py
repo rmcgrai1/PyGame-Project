@@ -43,10 +43,12 @@ def init():
 	for y in range(0,16):
 		for x in range(0,16):
 			c = y*16 + x			
-			fontCharList[c] = fontSprite.get(0,0, c)[0]
+			fontCharList[c] = fontSprite.get(0,0, frame=c)[0].copy()
+			
+			print str(fontSprite.get(0,0, c)[1])
 			
 def drawChar(surf, c, x,y):
-	surf.blit(fontCharList[ord(c)], (x,y,x+fontWidth,fontHeight))
+	surf.blit(fontCharList[ord(c)], (x,y, fontWidth,fontHeight))
 	
 def drawText(surf, txt, x,y):
 	oriX = x
