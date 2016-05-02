@@ -29,7 +29,8 @@ import json
 import gfx2d
 
 SERVER_HOST = "student00.cse.nd.edu"
-SERVER_PORT = 40076
+SERVER_PORT_A = 40076
+SERVER_PORT_B = 40064
 
 #toServerQueue = DeferredQueue()
 
@@ -98,10 +99,10 @@ class ClientConnection(LineReceiver):
 				del arwingInsts[id]
 		
 	def connectionMade(self):
-		print 'new connection made to {0} port {1}'.format(SERVER_HOST, SERVER_PORT)
+		print 'new connection made to ' + str(self.addr)
 		GameSpace.instance.isConnected = True
 	def connectionLost(self, reason):
-		print 'lost connection to {0} port {1}'.format(SERVER_HOST, SERVER_PORT)
+		print 'lost connection to ' + str(self.addr)
 		GameSpace.instance.isConnected = False
 class ClientConnFactory(ClientFactory):
 	def buildProtocol(self, addr):
@@ -134,6 +135,7 @@ class GameSpace:
 		self.isConnected = False
 		self.connectTimer = 0
 		self.connectTimerMax = 50
+		self.connectChoice = True
 	
 		#1. Initialize game space
 
@@ -184,7 +186,11 @@ class GameSpace:
 	def gameLoop(self):
 		if not self.isConnected:
 			if self.connectTimer == 0:
-				reactor.connectTCP(SERVER_HOST, SERVER_PORT, ClientConnFactory());
+				if self.connectChoice:
+					reactor.connectTCP(SERVER_HOST, SERVER_PORT_A, ClientConnFactory());
+				else:
+					reactor.connectTCP(SERVER_HOST, SERVER_PORT_B, ClientConnFactory());
+				self.connectChoice = not self.connectChoice;
 				self.connectTimer = self.connectTimerMax
 			else:
 				self.connectTimer -= 1
