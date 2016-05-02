@@ -1365,7 +1365,6 @@ static mtl** loadMtl(char* filename) {
 		}
 		else if(!strcmp(type,"map_Kd"))
 		  {
-		    printf("calling loadBMP\n");
 		    m->map_Kd = loadBMP(strtok(NULL, " "), &m->map_Kd_width, &m->map_Kd_height);
 		  }
 	}
