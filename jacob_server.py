@@ -21,9 +21,9 @@ class MovingObject(object):
                 self.oriSpeed = oriSpeed;
                 
         def tick(self):
-                self.ori[1] += self.ori[4]*self.speed;
-                self.ori[2] += self.ori[5]*self.speed;
-                self.ori[3] += self.ori[6]*self.speed;
+                self.oriSpeed[1] += self.oriSpeed[4]*self.oriSpeed[0];
+                self.oriSpeed[2] += self.oriSpeed[5]*self.oriSpeed[0];
+                self.oriSpeed[3] += self.oriSpeed[6]*self.oriSpeed[0];
 
         def checkCollide(self, other_stuff):
                 pass;
@@ -51,7 +51,7 @@ def serverLoop():
                 laser.tick();
 
 posList = []
-class ServerConn(Protocol):
+class ServerConn(LineReceiver):
 	def __init__(self, parent, id, addr):
 		self.parent = parent
 		self.id = id
@@ -60,7 +60,7 @@ class ServerConn(Protocol):
 		posList.append(self.subpos)
                 newLaserList.append([])
 
-	def dataReceived(self, data):
+	def lineReceived(self, data):
 		"""Overwrites Protocol's method for handling when data is received from the connected address. Any data received is put into the 'toServerQueue', and will be passed along to the server."""
 		#toServerQueue.put(data)
 		#print data
@@ -80,11 +80,12 @@ class ServerConn(Protocol):
 				"all": posList
 			}) + "\r\n")
                 elif type == 'laser':
+			print "I'm a firing mah lazorz"
                         oriSpeed = jso['oriSpeed'];
                         maxAge = jso['maxAge'];
-                        laserList[self.id].append(Laser(self.id, maxAge, oriSpeed.copy()));
+                        laserList.append(Laser(self.id, maxAge, oriSpeed[:]));
                         for player in newLaserList:
-                                newLaserList.append([maxAge, oriSpeed]);
+                                player.append([maxAge, oriSpeed]);
                         for laser in newLaserList[self.id]:
                                 self.transport.write(json.dumps({
                                         "type" : "laser",
