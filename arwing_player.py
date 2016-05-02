@@ -18,11 +18,14 @@ class ArwingPlayer(Arwing):
 		super(ArwingPlayer, self).__init__(gameSpace, x,y,z)
 		self.mDownPrev = False
 		
+		self.sndEngine.play(loops=-1)
+		
 			
 	def tick(self, input):
 		super(ArwingPlayer, self).tick(input)
 		
 		if (not self.mDownPrev) and (input['mouse_down']):
+			self.sndSingleShot.play()
 			self.gs.instanceAppend(Laser(self.gs,
 				self.ori[0],self.ori[1],self.ori[2],
 				self.ori[3],self.ori[4],self.ori[5],

@@ -32,6 +32,9 @@ class Arwing(Drawable):
 		self.pitch = 0
 		self.yaw = 0
 		
+		self.sndEngine = pygame.mixer.Sound("engine.ogg")
+		self.sndSingleShot = pygame.mixer.Sound("singleshot.ogg")
+		
 	
 	def tick(self, input):
 		super(Arwing, self).tick(input)
