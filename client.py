@@ -26,6 +26,7 @@ from twisted.internet.tcp		import Port
 from twisted.internet.defer import DeferredQueue
 from sys						import *
 from radar						import *
+from hud						import *
 import json
 import gfx2d
 
@@ -77,12 +78,10 @@ class ClientConnection(LineReceiver):
 				arwingInsts.append(  gs.instanceAppend(Arwing(gs, 0,0,0))  )
 			arwingInsts.append(gs.player);
 			
-			self.transport.write(json.dumps(
-				{
-					"type": type,
-					"result": "ok"
-				}
-			) + "\r\n");
+			self.transport.write(json.dumps({
+				"type": type,
+				"result": "ok"
+			}) + "\r\n");
 		elif type == 'pos':
 			all = jso['all']
 			le = len(all)
@@ -163,10 +162,12 @@ class GameSpace:
 	def main(self):
 		self.isConnected = False
 		self.connectTimer = 0
-		self.connectTimerMax = 50
                 #Ryan is True, Jacob is False. (Never trust a Jacob, for it is False)
 		self.connectChoice = False;
                 
+		self.connectTimerMax = 75
+		self.connectDiv = 16
+		
 		#1. Initialize game space
 
 		pygame.init()
@@ -197,6 +198,7 @@ class GameSpace:
 		self.reticle = self.instanceAppend(Reticle(self.mouse_center_x, self.mouse_center_y));
 		self.radar = self.instanceAppend(Radar(self));
 		self.player = self.instanceAppend(ArwingPlayer(self, 0,0,0))
+		self.hud = self.instanceAppend(Hud(self))
 
 		# Create 3d Canvas
 		self.canv3d_img_ = pygame.Surface((self.canv3d_width,self.canv3d_height)).convert_alpha()
@@ -224,7 +226,7 @@ class GameSpace:
 				self.connectTimer = self.connectTimerMax
 			else:
 				self.connectTimer -= 1
-	
+		
 		#4. Tick regulation
 		#self.clock.tick(60);
 
@@ -325,10 +327,8 @@ class GameSpace:
 		self.screen.blit(self.canv3d_img, self.rect);
 		self.reticle.blitToScreen(self.screen);
 		self.radar.blitToScreen(self.screen);
+		self.hud.blitToScreen(self.screen)
 		
-		if self.isConnected:
-			gfx2d.drawText(self.screen, "Successfully connected!", 0,0)
-
 		pygame.display.flip()
 			
 			
