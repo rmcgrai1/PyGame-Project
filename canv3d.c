@@ -1293,10 +1293,13 @@ static mtl** loadMtl(char* filename) {
 	size_t len = 0;
 	ssize_t read;
 	int l = 0, lLen = 0, lNum = 0, mNum = 0;
-	
+       
+
 	if((fp = fopen(filename, "r")) == NULL)
-	  return NULL;
-	
+	  {
+	    printf("Invalid Filename %s\n", filename);
+	    return NULL;
+	  }
 	cc[1] = '\0';
 	
 	lines[0][0] = '\0';
@@ -1320,13 +1323,10 @@ static mtl** loadMtl(char* filename) {
 	
 	fclose(fp);
 
-
 	int i;
 	// Loop through File Once to Get # of each
 	for(l = 0; l < lNum; l++) {
 		strcpy(line, lines[l]);	
-
-		//printf("%s\n", line);
 		
 		type = strtok(line, " ");
 		
@@ -1337,7 +1337,6 @@ static mtl** loadMtl(char* filename) {
 	int mi = 0;
 	mtl *m = NULL,
 		**mtls = (mtl**) malloc(mNum * sizeof(mtl*));
-
 	
 	// Loop through File Second Time
 	for(l = 0; l < lNum; l++) {
@@ -1351,7 +1350,7 @@ static mtl** loadMtl(char* filename) {
 			
 			m = mtls[mi++] = (mtl*) malloc(sizeof(mtl));
 			
-			m->name = malloc(strlen(substr+1) * sizeof(char));
+			m->name = malloc((strlen(substr)+1) * sizeof(char));
 			strcpy(m->name, substr);
 
 			m->kd = (double*) malloc(3 * sizeof(double));
@@ -1365,7 +1364,10 @@ static mtl** loadMtl(char* filename) {
 			}
 		}
 		else if(!strcmp(type,"map_Kd"))
-			m->map_Kd = loadBMP(strtok(NULL, " "), &m->map_Kd_width, &m->map_Kd_height);
+		  {
+		    printf("calling loadBMP\n");
+		    m->map_Kd = loadBMP(strtok(NULL, " "), &m->map_Kd_width, &m->map_Kd_height);
+		  }
 	}
 	return mtls;
 }
@@ -1380,8 +1382,8 @@ static void loadObj(char* filename, int id) {
 	//printf("Loading \"%s\"...\n", filename);
 
 	if((fp = fopen(filename, "r")) == NULL) {
-		//printf("File does not exist!\n");
-		return;
+	  printf("File %s does not exist!\n", filename);
+	  return;
 	}
 	
 	cc[1] = '\0';
