@@ -36,9 +36,9 @@ class Laser(Drawable):
 		
 		canv3d.unsetTexture()
 		
-		l = 100
-		w = 8
-		canv3d.draw3dFloor(-l,-l, l,l, 0);
+		l = 200
+		w = 32
+		#canv3d.draw3dFloor(-l,-l, l,l, 0);
 		canv3d.drawTriangle(
 			0,0,1,0,0,
 			-w,0,l,0,0, 
