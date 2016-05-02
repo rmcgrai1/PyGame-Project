@@ -22,18 +22,73 @@ class ArwingPlayer(Arwing):
 		
 		Arwing.SND_ENGINE.play(loops=-1)
 		
-		self.forwardAxis = numpy.array([0., 0., 0., 0.])
+		self.rotateAxis = numpy.array([0., 0., 0., 0.])
 		
-			
+		self.laserOri = self.ori.copy()
+		
 	def tick(self, input):
 		super(ArwingPlayer, self).tick(input)
 		
 		if (not self.mDownPrev) and (input['mouse_down']):
 			Arwing.SND_SINGLE_SHOT.play()
-			if (self.gs.isConnected):
-				self.gs.mainQueue.put(self.ori);
+			
+			x = self.ori[0]
+			y = self.ori[1]
+			z = self.ori[2]
+						
+			# Calculate forward axis (pre-normalized)
+			fX = self.ori[3]-x
+			fY = self.ori[4]-y
+			fZ = self.ori[5]-z
+
+			# Get up axis (pre-normalized)
+			upX = self.ori[6]
+			upY = self.ori[7]
+			upZ = self.ori[8]
+
+			# Calculate side axis
+			sX = upZ*fY - upY*fZ
+			sY = upX*fZ - upZ*fX
+			sZ = upY*fX - upX*fY
+			
+			
+			
+			self.laserOri[0] = x
+			self.laserOri[1] = y
+			self.laserOri[2] = z
+			self.laserOri[3] = fX
+			self.laserOri[4] = fY
+			self.laserOri[5] = fZ
+			self.laserOri[6] = upX
+			self.laserOri[7] = upY
+			self.laserOri[8] = upZ
+
+			
+			# Rotate Laser w/ Pitch
+			self.rotateAxis[0] = sX
+			self.rotateAxis[1] = sY
+			self.rotateAxis[2] = sZ
+			
+			canv3d.rotateVecAboutAxis(self.laserOri,3, self.pitch, self.rotateAxis)
+
+			
+			# Rotate Laser w/ Yaw
+			self.rotateAxis[0] = self.laserOri[6]
+			self.rotateAxis[1] = self.laserOri[7]
+			self.rotateAxis[2] = self.laserOri[8]
+
+			canv3d.rotateVecAboutAxis(self.laserOri,3, self.yaw, self.rotateAxis)
+
+			if self.gs.isConnected:
+				self.gs.mainQueue.put(self.laserOri);
 			else:
-				self.gs.instanceAppend( Laser(self.gs, ) )
+				self.gs.instanceAppend( Laser(self.gs,30, 60*10,
+					self.laserOri[1],self.laserOri[2],self.laserOri[3],
+					self.laserOri[4]+self.laserOri[1],
+					self.laserOri[5]+self.laserOri[2],
+					self.laserOri[6]+self.laserOri[3],
+					self.laserOri[7],self.laserOri[8],self.laserOri[9]
+				));
 
 		self.mDownPrev = input['mouse_down']
 		
@@ -43,9 +98,9 @@ class ArwingPlayer(Arwing):
 		vDir = input['key_vdir']
 		adjust = input['mouse_d_adjust']
 		
-		self.forwardAxis[0] = self.ori[3]-self.ori[0]
-		self.forwardAxis[1] = self.ori[4]-self.ori[1]
-		self.forwardAxis[2] = self.ori[5]-self.ori[2]
+		self.rotateAxis[0] = self.ori[3]-self.ori[0]
+		self.rotateAxis[1] = self.ori[4]-self.ori[1]
+		self.rotateAxis[2] = self.ori[5]-self.ori[2]
 				
 		#canv3d.rotateVecAboutAxis(self.ori,6, hDir, self.forwardAxis);
 

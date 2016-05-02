@@ -48,14 +48,14 @@ class ClientConnection(LineReceiver):
 		self.gs = GameSpace.instance
 		self.gs.mainQueue.get().addCallback(self.sendLaser);
 
-	def sendLaser(self, ori):
+	def sendLaser(self, laserOri):
 		self.transport.write(json.dumps({
 			"type": "laser",
 			"maxAge": 60 * 10,
 			"oriSpeed": [30,
-				 ori[0],ori[1],ori[2],
-				 ori[3]-ori[0],ori[4]-ori[1],ori[5]-ori[2],
-				 ori[6],ori[7],ori[8] ]
+				 laserOri[0],laserOri[1],laserOri[2],
+				 laserOri[3],laserOri[4],laserOri[5],
+				 laserOri[6],laserOri[7],laserOri[8] ]
 		})+ "\r\n");
 		self.gs.mainQueue.get().addCallback(self.sendLaser);
 
