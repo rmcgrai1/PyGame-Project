@@ -16,6 +16,14 @@ class Hud(Drawable):
 	
 		self.imgStatic = Sprite("static.png", 2,1)
 		self.imgFlynn = Sprite("flynn.png", 3,1)
+		
+		self.sndInd = 0
+		self.snds = 6
+		
+		self.sndFlynn = []
+		for i in range(0,self.snds):
+			self.sndFlynn.append(pygame.mixer.Sound("flynn" + str(i) + ".ogg"))
+		
 		self.ind = 0
 		
 		self.sndRadioStart = pygame.mixer.Sound("radioStart.ogg")
@@ -30,10 +38,10 @@ class Hud(Drawable):
 		self.text = "Do a barrel roll!\n\nTry a somersault!\n\nPress V to brake!"
 				
 		self.imgTalkBar = Surface((640-15-126,96)).convert_alpha()
-		self.imgTalkBar.fill((0,0,128,160))
+		self.imgTalkBar.fill((0,0,128,128))
 
 	def tick(self, input):
-		self.ind = (self.ind + .3) % 2
+		self.ind = (self.ind + .4) % 2
 		
 		if self.staticTime > 0:
 			self.staticTime -= 1
@@ -42,6 +50,12 @@ class Hud(Drawable):
 		else:
 			if self.talkInd < len(self.text):
 				self.talkInd += .25
+				
+				#if random.random() > .25:
+				snd = self.sndFlynn[random.randrange(0,self.snds)]
+				snd.play()
+				
+				self.sndInd = (self.sndInd + 1) % self.snds
 			else:
 				self.ind = 0
 
@@ -51,7 +65,7 @@ class Hud(Drawable):
 	def blitToScreen(self, screen):
 		w = 96
 		h = 96
-	
+			
 		if self.staticTime > 0:
 			h = int(h * (self.staticTimeMax-self.staticTime)/self.staticTimeMax)
 			self.imgStatic.draw(screen, 15+48, 480-48-15, frame=self.ind, scale=(.75, .75*(self.staticTimeMax-self.staticTime)/self.staticTimeMax))	

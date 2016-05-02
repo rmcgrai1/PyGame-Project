@@ -45,7 +45,6 @@ static double
 				 0,0,1,0,
 					 0,0,0,1},
   globalUpDownAxis[4] = {1, 0, 0 , 0},
-  globalLeftRightAxis[4] = {0, 1, 0, 0},
   gCameraEye[4] = {0, 0, 0, 1},
   gCameraAt[4] = {0, 0, -1, 1},
   gCameraUp[4] = {0, 1, 0, 0};
@@ -410,7 +409,7 @@ static PyObject* pyAddMatAntiLook(PyObject *self, PyObject *args) {
 
 //axis is an array of length 3
 //angle is in degrees
-static double* rotateAboutAxis(double *mat, double angle, const double* axis) {
+static double* rotateAboutAxis(double *mat, double angle, double* axis) {
   double x, y, z, c, omc, s;
   double normAxis[3];
   normAxis[0] = axis[0];
@@ -445,15 +444,43 @@ static double* rotateAboutAxis(double *mat, double angle, const double* axis) {
   mat[12] = mat[13] = mat[14] = 0;
   mat[15] = 1;
     
-    /*
-    var result = mat4(
-        vec4( x*x*omc + c,   x*y*omc - z*s, x*z*omc + y*s, 0.0 ),
-        vec4( x*y*omc + z*s, y*y*omc + c,   y*z*omc - x*s, 0.0 ),
-        vec4( x*z*omc - y*s, y*z*omc + x*s, z*z*omc + c,   0.0 ),
-        vec4()
-    );
-    */
     return mat;
+}
+
+
+static void rotateVecAboutAxis(double* vec, double angle, double* axis) {
+	//http://inside.mines.edu/fs_home/gmurray/ArbitraryAxisRotation/
+		
+	double
+		a = 0,
+		b = 0,
+		c = 0,
+		x = vec[0],
+		y = vec[1],
+		z = vec[2],
+		u = axis[0],
+		v = axis[1],
+		w = axis[2],
+		L = u*u + v*v + w*w,
+		sqL = sqrt(L),
+		co = cosd(angle),
+		si = sind(angle),
+		uxvywz = -u*x - v*y - w*z;
+		
+	vec[0] = (( -u*uxvywz )*(1-co) + L*x*co + sqL*(-w*y + v*z)*si) / L;
+	vec[1] = (( -v*uxvywz )*(1-co) + L*y*co + sqL*(w*x - u*z)*si) / L;
+	vec[2] = (( -w*uxvywz )*(1-co) + L*z*co + sqL*(-v*x + u*y)*si) / L;
+}
+static PyObject* pyRotateVecAboutAxis(PyObject *self, PyObject *args) {	
+	int offset;
+	PyArrayObject *vecArray, *axisArray;
+	double angle;
+		
+	if(!PyArg_ParseTuple(args, "O!idO!", &PyArray_Type,&vecArray, &offset, &angle, &PyArray_Type,&axisArray))
+		return NULL;
+
+	rotateVecAboutAxis((double*)(vecArray->data)+offset, angle, (double*)(axisArray->data));
+	Py_RETURN_NONE;
 }
 
 
@@ -474,11 +501,11 @@ static void turn(double *eyeVec, double *atVec, double *upVec, double deltaX, do
 	addMatTranslation(toTransform, -eyeVec[0],-eyeVec[1],-eyeVec[2]);
 	multMatVec3(toTransform, atVec, atVec, 1);
 
-	multMatVec(upDownRotate, globalLeftRightAxis, globalLeftRightAxis);
+	multMatVec3(upDownRotate, upVec,upVec, 0);
 
 	////printf("ud: (%.1lf,%.1lf,%.1lf), ca: (%.1lf,%.1lf,%.1lf) cu: (%.1lf,%.1lf,%.1lf)\n", globalUpDownAxis[0], globalUpDownAxis[1], globalUpDownAxis[2], gCameraAt[0], gCameraAt[1], gCameraAt[2], gCameraUp[0], gCameraUp[1], gCameraUp[2]);
 
-	rotateAboutAxis(leftRightRotate, deltaX, globalLeftRightAxis);
+	rotateAboutAxis(leftRightRotate, deltaX, upVec);
 
 	setMatTranslation(toTransform, eyeVec[0],eyeVec[1],eyeVec[2]);
 	multMatMat(toTransform, leftRightRotate, toTransform);
@@ -486,9 +513,6 @@ static void turn(double *eyeVec, double *atVec, double *upVec, double deltaX, do
 	multMatVec3(toTransform, atVec, atVec, 1);
 	//mat4MultVec3(toTransform, upVec, upVec);
 	multMatVec(leftRightRotate, globalUpDownAxis, globalUpDownAxis);
-
-	for (i = 0; i < 3; i++)
-		upVec[i] = globalLeftRightAxis[i];
 }
 static PyObject* pyTurn(PyObject *self, PyObject *args) {
 	PyArrayObject *eyeArray, *atArray, *upArray;
@@ -1613,7 +1637,7 @@ static PyObject* pyTest(PyObject *self, PyObject *args) {
 		
 ////////////////////////////////////////////////////////////////////////////////////////
 
-static PyMethodDef canv3d_funcs[45] = {
+static PyMethodDef canv3d_funcs[46] = {
 	{"setMatIdentity", (PyCFunction) pySetMatIdentity, METH_VARARGS, NULL },
 	{"setMatTranslation", (PyCFunction) pySetMatTranslation, METH_VARARGS, NULL },
 	{"addMatTranslation", (PyCFunction) pyAddMatTranslation, METH_VARARGS, NULL },
@@ -1657,6 +1681,7 @@ static PyMethodDef canv3d_funcs[45] = {
 	{"test", (PyCFunction) pyTest, METH_VARARGS, NULL },
 	{"camera", (PyCFunction) pyCamera, METH_VARARGS, NULL},
 	{"turn", (PyCFunction) pyTurn, METH_VARARGS, NULL},
+	{"rotateVecAboutAxis", (PyCFunction) pyRotateVecAboutAxis, METH_VARARGS, NULL},
 	{"cameraTurn", (PyCFunction) pyCameraTurn, METH_VARARGS, NULL},
 	{"cameraForwards", (PyCFunction) pyCameraForwards, METH_VARARGS, NULL},
 	{"setMatCamera", (PyCFunction) pySetMatCamera, METH_VARARGS, NULL},

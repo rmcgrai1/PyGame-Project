@@ -45,10 +45,9 @@ def init():
 			c = y*16 + x			
 			fontCharList[c] = fontSprite.get(0,0, frame=c)[0].copy()
 			
-			print str(fontSprite.get(0,0, c)[1])
-			
 def drawChar(surf, c, x,y):
 	surf.blit(fontCharList[ord(c)], (x,y, fontWidth,fontHeight))
+	pass
 	
 def drawText(surf, txt, x,y):
 	oriX = x

@@ -11,6 +11,7 @@ from drawable		import *
 from mat		import *
 import canv3d
 from arwing			import *
+import numpy
 
 
 class ArwingPlayer(Arwing):
@@ -20,17 +21,19 @@ class ArwingPlayer(Arwing):
 		
 		self.sndEngine.play(loops=-1)
 		
+		self.forwardAxis = numpy.array([0., 0., 0., 0.])
+		
 			
 	def tick(self, input):
 		super(ArwingPlayer, self).tick(input)
 		
 		if (not self.mDownPrev) and (input['mouse_down']):
 			self.sndSingleShot.play()
-			self.gs.instanceAppend(Laser(self.gs,
-				self.ori[0],self.ori[1],self.ori[2],
-				self.ori[3],self.ori[4],self.ori[5],
-				self.ori[6],self.ori[7],self.ori[8]
-			))
+			if (self.gs.isConnected):
+				self.gs.mainQueue.put(self.ori);
+			else:
+				self.gs.instanceAppend( Laser(self.gs, ) )
+
 		self.mDownPrev = input['mouse_down']
 		
 		dx = input['mouse_dx']
@@ -38,6 +41,14 @@ class ArwingPlayer(Arwing):
 		hDir = input['key_hdir']
 		vDir = input['key_vdir']
 		adjust = input['mouse_d_adjust']
+		
+		self.forwardAxis[0] = self.ori[3]-self.ori[0]
+		self.forwardAxis[1] = self.ori[4]-self.ori[1]
+		self.forwardAxis[2] = self.ori[5]-self.ori[2]
+				
+		canv3d.rotateVecAboutAxis(self.ori,6, hDir, self.forwardAxis);
+
+		
 
 		if vDir == -1:
 			toSpeed = 10
@@ -65,7 +76,7 @@ class ArwingPlayer(Arwing):
 		toX = self.ori[3]
 		toY = self.ori[4]
 		toZ = self.ori[5]
-		
+				
 		dis = -200
 
 		aX = dis*(toX-x)

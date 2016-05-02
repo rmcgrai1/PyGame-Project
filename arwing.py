@@ -14,10 +14,11 @@ import canv3d
 
 
 class Arwing(Drawable):
+	model = canv3d.loadObj("Arwing.obj");
+
 	def __init__(self, gameSpace, x,y,z):
 		super(Arwing, self).__init__(gameSpace, x,y,z, x,y,z+1, 0,1,0)
 
-		self.model = canv3d.loadObj("Arwing.obj");
 	
 		self.jetTex = pygame.surfarray.pixels2d(pygame.image.load("img/jet.png").convert_alpha())
 		self.jetTexWidth = 128
@@ -63,7 +64,7 @@ class Arwing(Drawable):
 		canv3d.compileMats()
 		
 	
-		canv3d.drawObj(self.model);
+		canv3d.drawObj(Arwing.model);
 		canv3d.setTexture(self.jetTex, self.jetTexWidth, self.jetTexHeight)
 		
 		xs = 50 * (1 + .5*rnd()) 
