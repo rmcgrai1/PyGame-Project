@@ -86,13 +86,15 @@ class ServerConn(LineReceiver):
                         laserList.append(Laser(self.id, maxAge, oriSpeed[:]));
                         for player in newLaserList:
                                 player.append([maxAge, oriSpeed]);
+				print "Appending!"
                         for laser in newLaserList[self.id]:
+				print "This should really only happen once"
                                 self.transport.write(json.dumps({
                                         "type" : "laser",
                                         "maxAge" : laser[0],
                                         "oriSpeed" : laser[1],
                                         }) + "\r\n");
-                                del laser;
+                                del newLaserList[newLaserList[self.id].index(laser)];
                         
 
 	def toClientCallback(self, data):
@@ -122,6 +124,8 @@ class ServerConn(LineReceiver):
 		})+"\r\n"
 
 		del posList[self.id]
+		print "self.id", self.id
+		del newLaserList[self.id];
 
 		for conn in self.parent.conns:
 			if not (conn == self):
