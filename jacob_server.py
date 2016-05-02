@@ -3,6 +3,7 @@ from twisted.internet.protocol	import Protocol, ClientFactory, Factory
 from twisted.internet		import reactor
 from twisted.protocols.basic	import LineReceiver
 from twisted.internet.tcp	import Port
+from twisted.internet.task 		import LoopingCall
 from sys			import *
 import time
 import json
@@ -13,7 +14,7 @@ SERVER_PORT = 40064
 #toServerQueue = DeferredQueue()
 
 
-class MovingObject(Object):
+class MovingObject(object):
         def __init__(self, oriSpeed):
                 """dirX, dirY, dirZ should create a unit vector. oriSpeed is a list of [speed, x, y, z, dirX, dirY, dirZ, upX, upY, upZ]"""
                 #self.ori = {'x': x, 'y': y, 'z': z, 'dirX': dirX, 
@@ -89,7 +90,7 @@ class ServerConn(Protocol):
                                         "type" : "laser",
                                         "maxAge" : laser[0],
                                         "oriSpeed" : laser[1],
-                                        }) + "\r\n";
+                                        }) + "\r\n");
                                 del laser;
                         
 
