@@ -26,7 +26,7 @@ from twisted.internet.tcp		import Port
 from sys						import *
 from radar						import *
 import json
-
+import gfx2d
 
 SERVER_HOST = "student00.cse.nd.edu"
 SERVER_PORT = 40076
@@ -105,7 +105,8 @@ class ClientConnection(LineReceiver):
 		GameSpace.instance.isConnected = False
 class ClientConnFactory(ClientFactory):
 	def buildProtocol(self, addr):
-		return ClientConnection()
+		self.conn = ClientConnection()
+		return self.conn
 
 class GameSpace:			
 	def __init__(self):
@@ -128,7 +129,6 @@ class GameSpace:
 	def quitGame(self):
 		reactor.stop()
 		pygame.mixer.quit()
-		sys.exit()
 
 	def main(self):
 		self.isConnected = False
@@ -142,6 +142,7 @@ class GameSpace:
 
 		self.resolution = self.width,self.height = (640,480)
 		self.screen = pygame.display.set_mode(self.resolution)
+		gfx2d.init()
 
 
 		self.instanceList = []
@@ -288,6 +289,9 @@ class GameSpace:
 		self.screen.blit(self.canv3d_img, self.rect);
 		self.reticle.blitToScreen(self.screen);
 		self.radar.blitToScreen(self.screen);
+		
+		if self.isConnected:
+			gfx2d.drawText(self.screen, "Successfully connected!", 0,0)
 
 		pygame.display.flip()
 			
