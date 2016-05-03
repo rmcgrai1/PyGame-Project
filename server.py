@@ -21,17 +21,27 @@ class MovingObject(object):
                 self.oriSpeed = oriSpeed;
                 
         def tick(self):
-                self.oriSpeed[1] += self.oriSpeed[4]*self.oriSpeed[0];
-                self.oriSpeed[2] += self.oriSpeed[5]*self.oriSpeed[0];
-                self.oriSpeed[3] += self.oriSpeed[6]*self.oriSpeed[0];
+                self.oriSpeed[1] -= self.oriSpeed[4]*self.oriSpeed[0];
+                self.oriSpeed[2] -= self.oriSpeed[5]*self.oriSpeed[0];
+                self.oriSpeed[3] -= self.oriSpeed[6]*self.oriSpeed[0];
 
-        def checkCollide(self, other_stuff):
-                pass;
+        def checkCollide(self, otherXYZ, radius):
+		"""OtherXYZ is a list of [x, y, z]. Checks if otherXYZ is within radius of this object's center"""
+		#1 vs 0 , 2 vs 1, 3 vs 2 is intentional.
+		dx = self.oriSpeed[1] - otherXYZ[0];
+		dy = self.oriSpeed[2] - otherXYZ[1];
+		dz = self.oriSpeed[3] - otherXYZ[2];
+		dist_squared = dx*dx + dy*dy + dz*dz;
+		if (dist_squared < (radius * radius)):
+			return True
+		else:
+			return False
 
 # Each player has one entry, their id.
 # newLaserList[self.id] = [a list of all the lasers self.id doesn't know exist yet]
 newLaserList = {}
 laserList = []
+posDict = {};
 
 class Laser(MovingObject):
         
@@ -46,13 +56,26 @@ class Laser(MovingObject):
 		super(Laser, self).tick();
                 self.age += 1;
                 if (self.age > self.maxAge):
-                        del laserList[laserList.index(self)];
+                        self.remove();
+	
+	def remove(self):
+		del laserList[laserList.index(self)];
+
+	def checkCollide(self, otherXYZ, radius, player_id):
+		if not (player_id == self.creator):
+			return super(Laser, self).checkCollide(otherXYZ, radius)
                 
 def serverLoop():
         for laser in laserList:
                 laser.tick();
+		for player in posDict:
+			if laser.checkCollide(posDict[player][:3], 50, player):
+				print 'You hit player', player;
+				print posDict[player][:3]
+				laser.remove();
+				
 
-posDict = {};
+
 class ServerConn(LineReceiver):
 	def __init__(self, parent, id, addr):
 		self.parent = parent

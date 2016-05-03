@@ -27,7 +27,12 @@ class ArwingPlayer(Arwing):
 		self.laserOri = self.ori.copy()
 		
 	def tick(self, input):
-		super(ArwingPlayer, self).tick(input)
+		new_input = input;
+		if (input['freeze_signal']):
+			new_input = input.copy()
+			#print new_input;
+			new_input['brake'] = True;
+		super(ArwingPlayer, self).tick(new_input)
 		
 		if (not self.mDownPrev) and (input['mouse_down']):
 			Arwing.SND_SINGLE_SHOT.play()

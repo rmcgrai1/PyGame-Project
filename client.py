@@ -36,7 +36,6 @@ SERVER_PORT_B = 40064
 
 #toServerQueue = DeferredQueue()
 
-	
 black = (0,0,0)
 white = (255,255,255)
 
@@ -208,8 +207,8 @@ class GameSpace:
 		self.keyHDir = 0
 		self.keyVDir = 0
 		self.mDown = False
-
-
+		self.brake = False
+		self.brakeLock = False
 
 		#2. Create game objects
 
@@ -291,6 +290,9 @@ class GameSpace:
 					self.keyVDir -= 1
 				elif(event.key == pygame.K_s):
 					self.keyVDir += 1
+				elif(event.key == pygame.K_v):
+					self.brake = True;
+					print "Braking"
 				elif(event.key == pygame.K_ESCAPE):
 					self.quitGame()
 			elif event.type == KEYUP:
@@ -302,7 +304,16 @@ class GameSpace:
 					self.keyVDir += 1
 				elif(event.key == pygame.K_s):
 					self.keyVDir -= 1
-
+				elif(event.key == pygame.K_v):
+					if not self.brakeLock:
+						self.brake = False;
+				elif(event.key == pygame.K_b):
+					if not self.brakeLock:
+						self.brakeLock = True;
+						self.brake = True;
+					else:
+						self.brakeLock = False;
+						self.brake = False;
 
 
 		#6. Tick updating and polling
@@ -313,7 +324,9 @@ class GameSpace:
 			"mouse_dx": mdx,
 			"mouse_d_adjust": md_adjust,
 			"key_hdir": self.keyHDir,
-			"key_vdir": self.keyVDir
+			"key_vdir": self.keyVDir,
+			"brake" : False,
+			"freeze_signal" : self.brake
 		}
 			
 
