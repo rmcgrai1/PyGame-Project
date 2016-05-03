@@ -49,7 +49,7 @@ class Hud(Drawable):
 			self.scaredTime -= 1
 		else:
 			if self.talkInd < len(self.text):
-				self.talkInd += .25
+				self.talkInd += .5
 				
 				#if random.random() > .25:
 				snd = self.sndFlynn[random.randrange(0,self.snds)]

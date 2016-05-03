@@ -904,17 +904,6 @@ static void drawTriangle0(double x1,double y1,double z1,double u1,double v1,  do
 
 	
 static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  double x2,double y2,double z2,double u2,double v2,  double x3,double y3,double z3,double u3,double v3, int tries) {
-	//printf("> drawTriangle()\n");
-	
-	//printMat(modelviewMat);
-	//printMat(projMat);
-	//printMat(transMat);
-	//printMat(completeMat);
-	
-	//printf("<%lf, %lf, %lf>\n", x1, y1, z1);
-	//printf("<%lf, %lf, %lf>\n", x2, y2, z2);
-	//printf("<%lf, %lf, %lf>\n", x3, y3, z3);
-	
 	set4(tempVert1, x1,y1,z1,1);
 	set4(tempVert2, x2,y2,z2,1);
 	set4(tempVert3, x3,y3,z3,1);
@@ -1023,15 +1012,9 @@ static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  dou
 
 	area = .5*(-y2*x3 + y1*(-x2+x3) + x1*(y2-y3) + x2*y3);
 	
-	if(area == 0) {
-		////printf("ZERO AREA!\n");
+	if(area == 0)
 		return;
-	}
 
-	
-	//v0 = 2-1
-	//v1 = 3-1/
-	//v2 = p - 1
 	
 	double b1, b2, b3, 
 		bDenom = -1./((y2-y3)*x31 + (x3-x2)*y31);
@@ -1048,10 +1031,6 @@ static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  dou
 			if(0 <= s && s <= 1 && 0 <= t && t <= 1 && s+t <= 1) {
 				depth = (z1 + (az*(x-x1) + bz*(y-y1))/-c);
 			
-				//x01 = x-x1;
-				//y01 = y-y1;
-				//z01 = depth-z1;
-
 				b1 = ((y2-y3)*(x-x3) + (x3-x2)*(y-y3)) * bDenom;
 				b2 = ((y3-y1)*(x-x3) + (x1-x3)*(y-y3)) * bDenom;
 				b3 = 1. - b1 - b2;
@@ -1077,31 +1056,24 @@ static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  dou
 							
 							u = (int)(textureWidth * up / wp);
 							v = (int)(textureHeight * vp / wp);
-							
-							/*up = u1 * b1 + u2 * b2 + u3 * b3;
-							vp = v1 * b1 + v2 * b2 + v3 * b3;
-							
-							u = (int)(textureWidth * up);
-							v = (int)(textureHeight * vp);*/
-						
-						
-							////printf("%d, %d\n", u, v);
-						
-							if(u >= 0 && u < textureWidth && v >= 0 && v < textureHeight) {
-								dRGBA = texture[textureHeight*v + u];
-								convertInt2RGBA(dRGBA, &dR,&dG,&dB,&dA);
-								
-								dR = (int) (dR/255. * R);
-								dG = (int) (dG/255. * G);
-								dB = (int) (dB/255. * B);
-								dA = (int) (dA/255. * A);
-								
-								if(dA == 0)
-									continue;
-								
-								dRGBA = convertRGBA2Int(dR,dG,dB,dA);
+														
+							if(!(u >= 0 && u < textureWidth && v >= 0 && v < textureHeight)) {
+								u = fabs(fmod(u, 1));
+								v = fabs(fmod(v, 1));
 							}
-					
+							dRGBA = texture[textureHeight*v + u];
+							convertInt2RGBA(dRGBA, &dR,&dG,&dB,&dA);
+							
+							dR = (int) (dR/255. * R);
+							dG = (int) (dG/255. * G);
+							dB = (int) (dB/255. * B);
+							dA = (int) (dA/255. * A);
+							
+							if(dA == 0)
+								continue;
+							
+							dRGBA = convertRGBA2Int(dR,dG,dB,dA);
+						
 							
 							if(!doFog) {
 								if(dA == 255)
@@ -1482,6 +1454,7 @@ static void loadObj(char* filename, int id) {
 		else if(!strcmp(type,"vt")) {
 			for(i = 0; i < 2; i++) {
 				substr = strtok(NULL, " ");
+								
 				uvs[2*vt + i] = atof(substr);
 			}
 			vt++;
@@ -1525,6 +1498,7 @@ static void loadObj(char* filename, int id) {
 	o->uvs = uvs;
 	o->vertices = vertices;
 	o->mtls = mtls;
+	o->mNum = mNum;
 }
 static PyObject* pyLoadObj(PyObject *self, PyObject *args) {
 	char* filename;
@@ -1534,6 +1508,9 @@ static PyObject* pyLoadObj(PyObject *self, PyObject *args) {
 
 	int id = createObj();
 	loadObj(filename, id);
+	
+	printf("Loaded: %i\n", id);
+	
 	return Py_BuildValue("i", id);
 }
 
@@ -1545,8 +1522,10 @@ static void drawObj(obj* o) {
 		f,
 		v1, v2, v3,
 		vt1, vt2, vt3,
-	    fNum = o->fNum;
-	  //vNum = o->vNum;
+	    fNum = o->fNum,
+		mNum = o->mNum,
+		vNum = o->vNum,
+		uvNum = o->uvNum;
 	double
 		*vertices = o->vertices,
 		*uvs = o->uvs;
@@ -1568,9 +1547,9 @@ static void drawObj(obj* o) {
 		vt2 = o->faces[9*f+4];		
 		v3 = o->faces[9*f+6];		
 		vt3 = o->faces[9*f+7];
-		
+				
 		if(v1 == -1) {
-			if(v2 != -1) {				
+			if(v2 != -1) {			
 				currentMtl = o->mtls[v2];
 				R = (int) (tR * currentMtl->kd[0]);
 				G = (int) (tG * currentMtl->kd[1]);

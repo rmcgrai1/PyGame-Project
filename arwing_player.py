@@ -83,11 +83,11 @@ class ArwingPlayer(Arwing):
 				self.gs.mainQueue.put(self.laserOri);
 			else:
 				self.gs.instanceAppend( Laser(self.gs,30, 60*10,
-					self.laserOri[1],self.laserOri[2],self.laserOri[3],
+					self.laserOri[0],self.laserOri[1],self.laserOri[2],
+					self.laserOri[3]+self.laserOri[0],
 					self.laserOri[4]+self.laserOri[1],
 					self.laserOri[5]+self.laserOri[2],
-					self.laserOri[6]+self.laserOri[3],
-					self.laserOri[7],self.laserOri[8],self.laserOri[9]
+					self.laserOri[6],self.laserOri[7],self.laserOri[8]
 				));
 
 		self.mDownPrev = input['mouse_down']
@@ -107,10 +107,12 @@ class ArwingPlayer(Arwing):
 		
 		if vDir == -1:
 			if self.vDirPrev != -1:
+				Arwing.SND_BRAKE.stop()
 				Arwing.SND_BOOST.play()
 			toSpeed = Arwing.SPD_MAX
 		elif vDir == 1:
 			if self.vDirPrev != 1:
+				Arwing.SND_BOOST.stop()
 				Arwing.SND_BRAKE.play()
 			toSpeed = Arwing.SPD_MIN
 		else:

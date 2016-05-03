@@ -14,7 +14,7 @@ import canv3d
 
 
 class Arwing(Drawable):
-	MOD_ARWING = canv3d.loadObj("Arwing.obj");
+	MOD_ARWING = None
 	
 	TEX_JET = None
 	TEX_JET_WIDTH = 128
@@ -33,6 +33,7 @@ class Arwing(Drawable):
 		super(Arwing, self).__init__(gameSpace, x,y,z, x,y,z+1, 0,1,0)
 		
 		if Arwing.TEX_JET == None:
+			Arwing.MOD_ARWING = canv3d.loadObj("Arwing.obj")
 			Arwing.TEX_JET = pygame.surfarray.pixels2d(pygame.image.load("img/jet.png").convert_alpha())
 			Arwing.SND_ENGINE = pygame.mixer.Sound("snd/engine.ogg")
 			Arwing.SND_SINGLE_SHOT = pygame.mixer.Sound("snd/singleshot.ogg")
