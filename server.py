@@ -149,12 +149,9 @@ class ServerConn(LineReceiver):
 
 #		print "There are now ", len(newLaserList), "objects in newLaserList"
 
-#		for conn in self.parent.conns:
-#			if not (conn == self):
-#				if conn.id > self.id:
-#					conn.id -= 1
-#
-#				conn.transport.write(s)
+		for conn in self.parent.conns:
+			if not (conn == self):
+				conn.transport.write(s)
 
 		self.parent.conns.remove(self)
 		self.parent = None
