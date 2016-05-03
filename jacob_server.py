@@ -28,7 +28,9 @@ class MovingObject(object):
         def checkCollide(self, other_stuff):
                 pass;
 
-newLaserList = []
+# Each player has one entry, their id.
+# newLaserList[self.id] = [a list of all the lasers self.id doesn't know exist yet]
+newLaserList = {}
 laserList = []
 
 class Laser(MovingObject):
@@ -50,15 +52,15 @@ def serverLoop():
         for laser in laserList:
                 laser.tick();
 
-posList = []
+posDict = {};
 class ServerConn(LineReceiver):
 	def __init__(self, parent, id, addr):
 		self.parent = parent
 		self.id = id
 		self.addr = addr
 		self.subpos = [0,0,0, 0,0,1, 0,1,0]
-		posList.append(self.subpos)
-                newLaserList.append([])
+		posDict[self.id] = self.subpos;
+                newLaserList[self.id] = [];
 
 	def lineReceived(self, data):
 		"""Overwrites Protocol's method for handling when data is received from the connected address. Any data received is put into the 'toServerQueue', and will be passed along to the server."""
@@ -75,27 +77,31 @@ class ServerConn(LineReceiver):
 				self.subpos[i] = otherSubPos[i]
 
 		if type == 'pos' or type == 'init':
+			#temporary: convert dict to list
+			#tempPosList = [];
+			#for player in posDict.values():
+			#	tempPosList.append(player)
 			self.transport.write(json.dumps({
 				"type": "pos",
-				"all": posList
+				"all": posDict
 			}) + "\r\n")
                 elif type == 'laser':
-			print "I'm a firing mah lazorz"
+			#print "I'm a firing mah lazorz"
                         oriSpeed = jso['oriSpeed'];
                         maxAge = jso['maxAge'];
                         laserList.append(Laser(self.id, maxAge, oriSpeed[:]));
-                        for player in newLaserList:
+                        for player in newLaserList.values():
                                 player.append([maxAge, oriSpeed]);
-				print "Appending!"
-                        for laser in newLaserList[self.id]:
-				print "This should really only happen once"
-                                self.transport.write(json.dumps({
-                                        "type" : "laser",
-                                        "maxAge" : laser[0],
-                                        "oriSpeed" : laser[1],
-                                        }) + "\r\n");
-                                del newLaserList[newLaserList[self.id].index(laser)];
+				#print "Appending!"
                         
+		for laser in newLaserList[self.id]:
+			#print "This should really only happen once"
+			self.transport.write(json.dumps({
+						"type" : "laser",
+						"maxAge" : laser[0],
+						"oriSpeed" : laser[1],
+						}) + "\r\n");
+			del newLaserList[self.id][newLaserList[self.id].index(laser)];
 
 	def toClientCallback(self, data):
 		"""Callback that runs for each item in the 'toClientQueue'. Any data in the queue came from the server, and will automatically be passed along to the client."""		
@@ -107,7 +113,8 @@ class ServerConn(LineReceiver):
 		print "connection received from", self.addr
 		self.transport.write(json.dumps({
 			"type":	"init",
-			"id": 	self.id
+			"id" : self.id,
+			"all_ids":  posDict.keys()
 		}) + "\r\n")
 
 		print "id: " + str(self.id)
@@ -123,9 +130,14 @@ class ServerConn(LineReceiver):
 			"id": self.id
 		})+"\r\n"
 
-		del posList[self.id]
-		print "self.id", self.id
-		del newLaserList[self.id];
+		
+		try:
+			del posDict[self.id]
+			del newLaserList[self.id];
+		except KeyError:
+			print "Key error when deleting from posDict or newLaserList. Key was", self.id, "length of newLaserList was", len(newLaserList), "length of posDict was", len(posDict);
+
+		print "There are now ", len(newLaserList), "objects in newLaserList"
 
 		for conn in self.parent.conns:
 			if not (conn == self):
@@ -139,12 +151,14 @@ class ServerConn(LineReceiver):
 
 class ServerConnFactory(Factory):
 	def __init__(self):
+		self.currentID = 0;
 		self.conns = []
 
 	def buildProtocol(self, addr):
 		"""Overwrites ClientFactory's method for building Protocols. It creates a ProxyToClientConn Protocol and adds it to the factory object so the other factory can access it."""
-		conn = ServerConn(self, len(self.conns), addr)
+		conn = ServerConn(self, self.currentID, addr)
 		self.conns.append(conn)
+		self.currentID = self.currentID + 1;
 		return conn
 
 

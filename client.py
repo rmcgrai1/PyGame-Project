@@ -40,7 +40,7 @@ SERVER_PORT_B = 40064
 black = (0,0,0)
 white = (255,255,255)
 
-arwingInsts = [];
+arwingInsts = {};
 
 class ClientConnection(LineReceiver):
         def __init__(self, addr):
@@ -73,46 +73,69 @@ class ClientConnection(LineReceiver):
 		
 		if type == 'init':
 			gs.id = int(jso['id'])
-			
-			for i in range(0, gs.id):
-				arwingInsts.append(  gs.instanceAppend(Arwing(gs, 0,0,0))  )
-			arwingInsts.append(gs.player);
+			player_ids = jso['all_ids']
+			print "converted json:", jso;
+
+			for player_id in player_ids:
+				if not (player_id == gs.id):
+					arwingInsts[player_id] = gs.instanceAppend(Arwing(gs, 0,0,0))
+					print "INIT APPEND", player_id
+#			for i in range(0, jso['num_players']):
+#				arwingInsts.append(  gs.instanceAppend(Arwing(gs, 0,0,0))  )
+			arwingInsts[gs.id] = gs.player;
 			
 			self.transport.write(json.dumps({
 				"type": type,
 				"result": "ok"
 			}) + "\r\n");
 		elif type == 'pos':
-			all = jso['all']
-			le = len(all)
-			leA = len(arwingInsts)
+			all_dict = jso['all'] #all is a dictionary
+#			le = len(all)
+#			leA = len(arwingInsts)
 			
-			while leA < le:
-				arwingInsts.append(  gs.instanceAppend(Arwing(gs, 0,0,0))  )
-				leA += 1
+#			while leA < le:
+#				arwingInsts.append(  gs.instanceAppend(Arwing(gs, 0,0,0))  )
+#				leA += 1
 			
-			for i in range(0, le):
-				if not (i == gs.id):
+#			i = 0;
+			for player_id in all_dict:
+				if not(int(player_id) == gs.id):
+					if player_id not in all_dict.keys():
+						arwingInsts[int(player_id)] = (gs.instanceAppend(Arwing(gs, 0,0,0)))
+						#print "APPEND: gs id:", gs.id, "player_id", player_id;
+						#print "pos json:", jso
+					
+					inst = arwingInsts[int(player_id)];
+					allInst = all_dict[player_id]
 					for ii in range(0, 9):
-						inst = arwingInsts[i]
-						allInst = all[i]
-						inst.ori[ii] = allInst[ii]
+						inst.ori[ii] = allInst[ii];
+
+
+#			for i in range(0, le):
+#				if not (i == gs.id):
+#					for ii in range(0, 9):
+#						inst = arwingInsts[i]
+#						allInst = all[i]
+#						inst.ori[ii] = allInst[ii]
 		
 			self.transport.write(json.dumps({
 				"type": type,
 				"one": gs.player.ori.tolist()
 			}) + "\r\n");
 		elif type == 'del':
-			id = int(jso['id'])
+			pid = int(jso['id'])
+			arw = arwingInsts[pid];
+			gs.instanceRemove(arw);
+			del arwingInsts[pid];				  
 
-			if id < len(arwingInsts):				
-				if id < gs.id:
-					gs.id -= 1
-					
-				arw = arwingInsts[id]
-				
-				gs.instanceRemove(arw)
-				del arwingInsts[id]
+#			if id < len(arwingInsts):				
+#				if id < gs.id:
+#					gs.id -= 1
+#					
+#				arw = arwingInsts[id]
+#				
+#				gs.instanceRemove(arw)
+#				del arwingInsts[id]
 		elif type == 'laser':
                         oriSpeed = jso["oriSpeed"];
                         maxAge = jso["maxAge"]

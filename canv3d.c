@@ -1294,6 +1294,7 @@ static mtl** loadMtl(char* filename) {
 	ssize_t read;
 	int l = 0, lLen = 0, lNum = 0, mNum = 0;
        
+	printf("In loadMTL\n");
 
 	if((fp = fopen(filename, "r")) == NULL)
 	  {
@@ -1365,6 +1366,7 @@ static mtl** loadMtl(char* filename) {
 		}
 		else if(!strcmp(type,"map_Kd"))
 		  {
+		    printf("CALLING loadBMP!\n");
 		    m->map_Kd = loadBMP(strtok(NULL, " "), &m->map_Kd_width, &m->map_Kd_height);
 		  }
 	}
@@ -1376,9 +1378,9 @@ static void loadObj(char* filename, int id) {
 	
 	FILE *fp;
 	char lines[400][200], line[200], *type, *substr, c, cc[2];
-	int l = 0, lNum = 0, mNum = 0, lLen;
+	int l = 0, lNum = 0, mNum = 0, lLen = 0;
 	
-	//printf("Loading \"%s\"...\n", filename);
+	printf("Loading \"%s\"...\n", filename);
 
 	if((fp = fopen(filename, "r")) == NULL) {
 	  printf("File %s does not exist!\n", filename);
