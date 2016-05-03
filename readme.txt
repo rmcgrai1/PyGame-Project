@@ -9,3 +9,8 @@ To run, you must:
 - run "pip install pygame" to install the pygame library
 - run "pip install numpy" to install the numpy array library
 - run "pip install twisted" to install the twisted networking library
+
+
+Known Bugs:
+- client seg faults randomly??
+- shots multiply

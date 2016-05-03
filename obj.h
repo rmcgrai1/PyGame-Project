@@ -28,6 +28,8 @@ int* loadBMP(char *fileName, int *w, int *h) {
 
 	int pR, pG, pB;
 	
+	printf("\ttop-left pixel: (%d, %d, %d)\n", bitmapData[0], bitmapData[1], bitmapData[2]);
+	
 	for(r = 0; r < height; r++) {
 		//Loop Through Each RGB Struct
 		
@@ -63,16 +65,20 @@ typedef struct mtl_ {
 } mtl;
 
 typedef struct obj_ {
-	int vNum;
 	double* vertices;
-	int uvNum;
+	int vNum;
+
 	double* uvs;	
-	int nNum;
+	int uvNum;
+
 	double* normals;
-	int fNum;
+	int nNum;
+
 	int* faces;
+	int fNum;
 	
 	mtl **mtls;
+	int mNum;
 } obj;
 
 static obj **modelArray;

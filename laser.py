@@ -13,17 +13,22 @@ import canv3d
 
 
 class Laser(Drawable):
+	MOD_LASER = None;
+	
 	def __init__(self, gameSpace, speed, maxAge, x,y,z, atX,atY,atZ, upX,upY,upZ):
 		super(Laser, self).__init__(gameSpace, x,y,z, atX,atY,atZ, upX,upY,upZ)
 		self.speed = speed
-                self.maxAge = maxAge;
-                self.age = 0;
+		self.maxAge = maxAge;
+		self.age = 0;
+		
+		if Laser.MOD_LASER == None:
+			Laser.MOD_LASER = canv3d.loadObj("laser.obj");
 
 	def tick(self, input):
 		super(Laser, self).tick(input)
 		self.age = self.age + 1;
-                if (self.age > self.maxAge):
-                        super(Laser, self).destroy();
+		if (self.age > self.maxAge):
+			super(Laser, self).destroy();
 
 	def draw(self, screen):	
 		canv3d.setMatIdentity(MAT_T)
@@ -36,15 +41,8 @@ class Laser(Drawable):
 		canv3d.addMatAntiLook(MAT_T, 0,0,0,		nX,nY,nZ,		self.ori[6],self.ori[7],self.ori[8]);
 		canv3d.addMatTranslation(MAT_T, 0,-5,0)
 		
-		canv3d.addMatScale(MAT_T,.25,.25,.25);
 		canv3d.compileMats()
 		
 		canv3d.unsetTexture()
 		
-		l = 200
-		w = 32
-		canv3d.draw3dFloor(-l,-l, l,l, 0);
-		canv3d.drawTriangle(
-			0,0,1,0,0,
-			-w,0,l,0,0, 
-			w,0,l,0,0)
+		canv3d.drawObj(Laser.MOD_LASER)

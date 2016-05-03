@@ -45,7 +45,6 @@ static double
 				 0,0,1,0,
 					 0,0,0,1},
   globalUpDownAxis[4] = {1, 0, 0 , 0},
-  globalLeftRightAxis[4] = {0, 1, 0, 0},
   gCameraEye[4] = {0, 0, 0, 1},
   gCameraAt[4] = {0, 0, -1, 1},
   gCameraUp[4] = {0, 1, 0, 0};
@@ -410,7 +409,7 @@ static PyObject* pyAddMatAntiLook(PyObject *self, PyObject *args) {
 
 //axis is an array of length 3
 //angle is in degrees
-static double* rotateAboutAxis(double *mat, double angle, const double* axis) {
+static double* rotateAboutAxis(double *mat, double angle, double* axis) {
   double x, y, z, c, omc, s;
   double normAxis[3];
   normAxis[0] = axis[0];
@@ -445,15 +444,43 @@ static double* rotateAboutAxis(double *mat, double angle, const double* axis) {
   mat[12] = mat[13] = mat[14] = 0;
   mat[15] = 1;
     
-    /*
-    var result = mat4(
-        vec4( x*x*omc + c,   x*y*omc - z*s, x*z*omc + y*s, 0.0 ),
-        vec4( x*y*omc + z*s, y*y*omc + c,   y*z*omc - x*s, 0.0 ),
-        vec4( x*z*omc - y*s, y*z*omc + x*s, z*z*omc + c,   0.0 ),
-        vec4()
-    );
-    */
     return mat;
+}
+
+
+static void rotateVecAboutAxis(double* vec, double angle, double* axis) {
+	//http://inside.mines.edu/fs_home/gmurray/ArbitraryAxisRotation/
+		
+	double
+		a = 0,
+		b = 0,
+		c = 0,
+		x = vec[0],
+		y = vec[1],
+		z = vec[2],
+		u = axis[0],
+		v = axis[1],
+		w = axis[2],
+		L = u*u + v*v + w*w,
+		sqL = sqrt(L),
+		co = cosd(angle),
+		si = sind(angle),
+		uxvywz = -u*x - v*y - w*z;
+		
+	vec[0] = (( -u*uxvywz )*(1-co) + L*x*co + sqL*(-w*y + v*z)*si) / L;
+	vec[1] = (( -v*uxvywz )*(1-co) + L*y*co + sqL*(w*x - u*z)*si) / L;
+	vec[2] = (( -w*uxvywz )*(1-co) + L*z*co + sqL*(-v*x + u*y)*si) / L;
+}
+static PyObject* pyRotateVecAboutAxis(PyObject *self, PyObject *args) {	
+	int offset;
+	PyArrayObject *vecArray, *axisArray;
+	double angle;
+		
+	if(!PyArg_ParseTuple(args, "O!idO!", &PyArray_Type,&vecArray, &offset, &angle, &PyArray_Type,&axisArray))
+		return NULL;
+
+	rotateVecAboutAxis((double*)(vecArray->data)+offset, angle, (double*)(axisArray->data));
+	Py_RETURN_NONE;
 }
 
 
@@ -474,11 +501,11 @@ static void turn(double *eyeVec, double *atVec, double *upVec, double deltaX, do
 	addMatTranslation(toTransform, -eyeVec[0],-eyeVec[1],-eyeVec[2]);
 	multMatVec3(toTransform, atVec, atVec, 1);
 
-	multMatVec(upDownRotate, globalLeftRightAxis, globalLeftRightAxis);
+	multMatVec3(upDownRotate, upVec,upVec, 0);
 
 	////printf("ud: (%.1lf,%.1lf,%.1lf), ca: (%.1lf,%.1lf,%.1lf) cu: (%.1lf,%.1lf,%.1lf)\n", globalUpDownAxis[0], globalUpDownAxis[1], globalUpDownAxis[2], gCameraAt[0], gCameraAt[1], gCameraAt[2], gCameraUp[0], gCameraUp[1], gCameraUp[2]);
 
-	rotateAboutAxis(leftRightRotate, deltaX, globalLeftRightAxis);
+	rotateAboutAxis(leftRightRotate, deltaX, upVec);
 
 	setMatTranslation(toTransform, eyeVec[0],eyeVec[1],eyeVec[2]);
 	multMatMat(toTransform, leftRightRotate, toTransform);
@@ -486,9 +513,6 @@ static void turn(double *eyeVec, double *atVec, double *upVec, double deltaX, do
 	multMatVec3(toTransform, atVec, atVec, 1);
 	//mat4MultVec3(toTransform, upVec, upVec);
 	multMatVec(leftRightRotate, globalUpDownAxis, globalUpDownAxis);
-
-	for (i = 0; i < 3; i++)
-		upVec[i] = globalLeftRightAxis[i];
 }
 static PyObject* pyTurn(PyObject *self, PyObject *args) {
 	PyArrayObject *eyeArray, *atArray, *upArray;
@@ -880,17 +904,6 @@ static void drawTriangle0(double x1,double y1,double z1,double u1,double v1,  do
 
 	
 static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  double x2,double y2,double z2,double u2,double v2,  double x3,double y3,double z3,double u3,double v3, int tries) {
-	//printf("> drawTriangle()\n");
-	
-	//printMat(modelviewMat);
-	//printMat(projMat);
-	//printMat(transMat);
-	//printMat(completeMat);
-	
-	//printf("<%lf, %lf, %lf>\n", x1, y1, z1);
-	//printf("<%lf, %lf, %lf>\n", x2, y2, z2);
-	//printf("<%lf, %lf, %lf>\n", x3, y3, z3);
-	
 	set4(tempVert1, x1,y1,z1,1);
 	set4(tempVert2, x2,y2,z2,1);
 	set4(tempVert3, x3,y3,z3,1);
@@ -999,15 +1012,9 @@ static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  dou
 
 	area = .5*(-y2*x3 + y1*(-x2+x3) + x1*(y2-y3) + x2*y3);
 	
-	if(area == 0) {
-		////printf("ZERO AREA!\n");
+	if(area == 0)
 		return;
-	}
 
-	
-	//v0 = 2-1
-	//v1 = 3-1/
-	//v2 = p - 1
 	
 	double b1, b2, b3, 
 		bDenom = -1./((y2-y3)*x31 + (x3-x2)*y31);
@@ -1024,10 +1031,6 @@ static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  dou
 			if(0 <= s && s <= 1 && 0 <= t && t <= 1 && s+t <= 1) {
 				depth = (z1 + (az*(x-x1) + bz*(y-y1))/-c);
 			
-				//x01 = x-x1;
-				//y01 = y-y1;
-				//z01 = depth-z1;
-
 				b1 = ((y2-y3)*(x-x3) + (x3-x2)*(y-y3)) * bDenom;
 				b2 = ((y3-y1)*(x-x3) + (x1-x3)*(y-y3)) * bDenom;
 				b3 = 1. - b1 - b2;
@@ -1053,31 +1056,24 @@ static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  dou
 							
 							u = (int)(textureWidth * up / wp);
 							v = (int)(textureHeight * vp / wp);
-							
-							/*up = u1 * b1 + u2 * b2 + u3 * b3;
-							vp = v1 * b1 + v2 * b2 + v3 * b3;
-							
-							u = (int)(textureWidth * up);
-							v = (int)(textureHeight * vp);*/
-						
-						
-							////printf("%d, %d\n", u, v);
-						
-							if(u >= 0 && u < textureWidth && v >= 0 && v < textureHeight) {
-								dRGBA = texture[textureHeight*v + u];
-								convertInt2RGBA(dRGBA, &dR,&dG,&dB,&dA);
-								
-								dR = (int) (dR/255. * R);
-								dG = (int) (dG/255. * G);
-								dB = (int) (dB/255. * B);
-								dA = (int) (dA/255. * A);
-								
-								if(dA == 0)
-									continue;
-								
-								dRGBA = convertRGBA2Int(dR,dG,dB,dA);
+														
+							if(!(u >= 0 && u < textureWidth && v >= 0 && v < textureHeight)) {
+								u = fabs(fmod(u, 1));
+								v = fabs(fmod(v, 1));
 							}
-					
+							dRGBA = texture[textureHeight*v + u];
+							convertInt2RGBA(dRGBA, &dR,&dG,&dB,&dA);
+							
+							dR = (int) (dR/255. * R);
+							dG = (int) (dG/255. * G);
+							dB = (int) (dB/255. * B);
+							dA = (int) (dA/255. * A);
+							
+							if(dA == 0)
+								continue;
+							
+							dRGBA = convertRGBA2Int(dR,dG,dB,dA);
+						
 							
 							if(!doFog) {
 								if(dA == 255)
@@ -1460,6 +1456,7 @@ static void loadObj(char* filename, int id) {
 		else if(!strcmp(type,"vt")) {
 			for(i = 0; i < 2; i++) {
 				substr = strtok(NULL, " ");
+								
 				uvs[2*vt + i] = atof(substr);
 			}
 			vt++;
@@ -1503,6 +1500,7 @@ static void loadObj(char* filename, int id) {
 	o->uvs = uvs;
 	o->vertices = vertices;
 	o->mtls = mtls;
+	o->mNum = mNum;
 }
 static PyObject* pyLoadObj(PyObject *self, PyObject *args) {
 	char* filename;
@@ -1512,6 +1510,9 @@ static PyObject* pyLoadObj(PyObject *self, PyObject *args) {
 
 	int id = createObj();
 	loadObj(filename, id);
+	
+	printf("Loaded: %i\n", id);
+	
 	return Py_BuildValue("i", id);
 }
 
@@ -1523,8 +1524,10 @@ static void drawObj(obj* o) {
 		f,
 		v1, v2, v3,
 		vt1, vt2, vt3,
-	    fNum = o->fNum;
-	  //vNum = o->vNum;
+	    fNum = o->fNum,
+		mNum = o->mNum,
+		vNum = o->vNum,
+		uvNum = o->uvNum;
 	double
 		*vertices = o->vertices,
 		*uvs = o->uvs;
@@ -1546,9 +1549,9 @@ static void drawObj(obj* o) {
 		vt2 = o->faces[9*f+4];		
 		v3 = o->faces[9*f+6];		
 		vt3 = o->faces[9*f+7];
-		
+				
 		if(v1 == -1) {
-			if(v2 != -1) {				
+			if(v2 != -1) {			
 				currentMtl = o->mtls[v2];
 				R = (int) (tR * currentMtl->kd[0]);
 				G = (int) (tG * currentMtl->kd[1]);
@@ -1615,7 +1618,7 @@ static PyObject* pyTest(PyObject *self, PyObject *args) {
 		
 ////////////////////////////////////////////////////////////////////////////////////////
 
-static PyMethodDef canv3d_funcs[45] = {
+static PyMethodDef canv3d_funcs[46] = {
 	{"setMatIdentity", (PyCFunction) pySetMatIdentity, METH_VARARGS, NULL },
 	{"setMatTranslation", (PyCFunction) pySetMatTranslation, METH_VARARGS, NULL },
 	{"addMatTranslation", (PyCFunction) pyAddMatTranslation, METH_VARARGS, NULL },
@@ -1659,6 +1662,7 @@ static PyMethodDef canv3d_funcs[45] = {
 	{"test", (PyCFunction) pyTest, METH_VARARGS, NULL },
 	{"camera", (PyCFunction) pyCamera, METH_VARARGS, NULL},
 	{"turn", (PyCFunction) pyTurn, METH_VARARGS, NULL},
+	{"rotateVecAboutAxis", (PyCFunction) pyRotateVecAboutAxis, METH_VARARGS, NULL},
 	{"cameraTurn", (PyCFunction) pyCameraTurn, METH_VARARGS, NULL},
 	{"cameraForwards", (PyCFunction) pyCameraForwards, METH_VARARGS, NULL},
 	{"setMatCamera", (PyCFunction) pySetMatCamera, METH_VARARGS, NULL},

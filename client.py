@@ -43,21 +43,21 @@ white = (255,255,255)
 arwingInsts = {};
 
 class ClientConnection(LineReceiver):
-        def __init__(self, addr):
-                self.addr = addr;
-                self.gs = GameSpace.instance
-                self.gs.mainQueue.get().addCallback(self.sendLaser);
+	def __init__(self, addr):
+		self.addr = addr;
+		self.gs = GameSpace.instance
+		self.gs.mainQueue.get().addCallback(self.sendLaser);
 
-        def sendLaser(self, ori):
-                self.transport.write(json.dumps({
-                        "type": "laser",
-                        "maxAge": 60 * 10,
-                        "oriSpeed": [30,
-                                     ori[0],ori[1],ori[2],
-                                     ori[3]-ori[0],ori[4]-ori[1],ori[5]-ori[2],
-                                     ori[6],ori[7],ori[8] ]
-                })+ "\r\n");
-                self.gs.mainQueue.get().addCallback(self.sendLaser);
+	def sendLaser(self, laserOri):
+		self.transport.write(json.dumps({
+			"type": "laser",
+			"maxAge": 60 * 10,
+			"oriSpeed": [30,
+				 laserOri[0],laserOri[1],laserOri[2],
+				 laserOri[3],laserOri[4],laserOri[5],
+				 laserOri[6],laserOri[7],laserOri[8] ]
+		})+ "\r\n");
+		self.gs.mainQueue.get().addCallback(self.sendLaser);
 
 	def lineReceived(self, data):
 		#print 'received, ', data
@@ -137,14 +137,14 @@ class ClientConnection(LineReceiver):
 #				gs.instanceRemove(arw)
 #				del arwingInsts[id]
 		elif type == 'laser':
-                        oriSpeed = jso["oriSpeed"];
-                        maxAge = jso["maxAge"]
-                        gs.instanceAppend(Laser(gs,oriSpeed[0], maxAge,
-                                oriSpeed[1],oriSpeed[2],oriSpeed[3],
-				oriSpeed[4]+oriSpeed[1],
-                                oriSpeed[5]+oriSpeed[2],
-                                oriSpeed[6]+oriSpeed[3],
-				oriSpeed[7],oriSpeed[8],oriSpeed[9]
+			oriSpeed = jso["oriSpeed"];
+			maxAge = jso["maxAge"]
+			gs.instanceAppend(Laser(gs,oriSpeed[0], maxAge,
+					oriSpeed[1],oriSpeed[2],oriSpeed[3],
+					oriSpeed[4]+oriSpeed[1],
+					oriSpeed[5]+oriSpeed[2],
+					oriSpeed[6]+oriSpeed[3],
+					oriSpeed[7],oriSpeed[8],oriSpeed[9]
 			))
 	def connectionMade(self):
 		print 'new connection made to ' + str(self.addr)
@@ -156,7 +156,7 @@ class ClientConnection(LineReceiver):
 class ClientConnFactory(ClientFactory):
 
 	def buildProtocol(self, addr):
-                self.conn = ClientConnection(addr);
+		self.conn = ClientConnection(addr);
 		return self.conn
 
 class GameSpace:			
@@ -179,7 +179,8 @@ class GameSpace:
 			pass
 
 	def quitGame(self):
-		reactor.stop()
+		if reactor.running:
+			reactor.stop()
 		pygame.mixer.quit()
 
 	def main(self):
@@ -194,14 +195,19 @@ class GameSpace:
 		#1. Initialize game space
 
 		pygame.init()
-		pygame.mixer.init(frequency=22050, size=-16, channels=1, buffer=1024) #4096
-
+		pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=4096) #4096
+		
 		self.resolution = self.width,self.height = (640,480)
 		self.screen = pygame.display.set_mode(self.resolution)
 		gfx2d.init()
 
 
 		self.instanceList = []
+		
+		self.keyHDir = 0
+		self.keyVDir = 0
+		self.mDown = False
+
 
 
 		#2. Create game objects
@@ -253,15 +259,11 @@ class GameSpace:
 		#4. Tick regulation
 		#self.clock.tick(60);
 
-		
-		keyHDir = 0
-		keyVDir = 0
-		mDown = False
-		
+			
 		#5. User input reading
 		if (self.cameraMethod == 1):
 				pygame.mouse.set_pos(self.mouse_center_x, self.mouse_center_y);
-		mDown = pygame.mouse.get_pressed()[0]
+		self.mDown = pygame.mouse.get_pressed()[0]
 		mdx, mdy = 0, 0
 		md_adjust = 1;
 		
@@ -281,36 +283,36 @@ class GameSpace:
 				self.quitGame()
 			elif event.type == KEYDOWN:
 				if(event.key == pygame.K_a):
-					keyHDir -= 1
+					self.keyHDir -= 1
 				elif(event.key == pygame.K_d):
-					keyHDir += 1
+					self.keyHDir += 1
 				elif(event.key == pygame.K_w):
-					keyVDir -= 1
+					self.keyVDir -= 1
 				elif(event.key == pygame.K_s):
-					keyVDir += 1
+					self.keyVDir += 1
 				elif(event.key == pygame.K_ESCAPE):
 					self.quitGame()
 			elif event.type == KEYUP:
 				if(event.key == pygame.K_a):
-					keyHDir += 1
+					self.keyHDir += 1
 				elif(event.key == pygame.K_d):
-					keyHDir -= 1
+					self.keyHDir -= 1
 				elif(event.key == pygame.K_w):
-					keyVDir += 1
+					self.keyVDir += 1
 				elif(event.key == pygame.K_s):
-					keyVDir -= 1
+					self.keyVDir -= 1
 
 
 
 		#6. Tick updating and polling
 
 		input = {
-			"mouse_down": mDown,
+			"mouse_down": self.mDown,
 			"mouse_dy": mdy,
 			"mouse_dx": mdx,
 			"mouse_d_adjust": md_adjust,
-			"key_hdir": keyHDir,
-			"key_vdir": keyVDir
+			"key_hdir": self.keyHDir,
+			"key_vdir": self.keyVDir
 		}
 			
 

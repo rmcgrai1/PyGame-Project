@@ -54,25 +54,30 @@ unsigned char *LoadBitmapFile(char *filename, BITMAPINFOHEADER *bitmapInfoHeader
 	
 	
 	printf("Size of fileheader:%d, infoHeader:%d\n", sizeof(BITMAPFILEHEADER), sizeof(BITMAPINFOHEADER));
-	
+
 	
 
     //open filename in read binary mode
     filePtr = fopen(filename,"rb");
-    if (filePtr == NULL)
+    if (filePtr == NULL) {
+		printf("File \"%s\" does not exist!\n", filename);
         return NULL;
+	}
 
     //read the bitmap file header
     fread(&bitmapFileHeader, sizeof(BITMAPFILEHEADER),1,filePtr);
 
     //verify that this is a bmp file by check bitmap id
     if (bitmapFileHeader.bfType !=0x4D42) {
+		printf("File \"%s\" is invalid bmp!\n", filename);
         fclose(filePtr);
         return NULL;
     }
 
     //read the bitmap info header
     fread(bitmapInfoHeader, sizeof(BITMAPINFOHEADER),1,filePtr); // small edit. forgot to add the closing bracket at sizeof
+	printf("\tsize (in bytes): %d\n", bitmapInfoHeader->biSizeImage);
+	printf("\tresolution: %d x %d\n", bitmapInfoHeader->biWidth, bitmapInfoHeader->biHeight);
 
     //move file point to the begging of bitmap data
     fseek(filePtr, bitmapFileHeader.bOffBits, SEEK_SET);
@@ -82,6 +87,7 @@ unsigned char *LoadBitmapFile(char *filename, BITMAPINFOHEADER *bitmapInfoHeader
 
     //verify memory allocation
     if(!bitmapImage) {
+		printf("Failed to allocate memory!\n", filename);
         free(bitmapImage);
         fclose(filePtr);
         return NULL;
@@ -92,6 +98,7 @@ unsigned char *LoadBitmapFile(char *filename, BITMAPINFOHEADER *bitmapInfoHeader
 
     //make sure bitmap image data was read
     if(bitmapImage == NULL) {
+		printf("Failed to read image!\n", filename);
         fclose(filePtr);
         return NULL;
     }

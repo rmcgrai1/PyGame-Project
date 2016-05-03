@@ -14,40 +14,39 @@ SERVER_PORT = 40064
 
 
 class MovingObject(Object):
-        def __init__(self, oriSpeed):
-                """dirX, dirY, dirZ should create a unit vector. oriSpeed is a list of [speed, x, y, z, dirX, dirY, dirZ, upX, upY, upZ]"""
-                #self.ori = {'x': x, 'y': y, 'z': z, 'dirX': dirX, 
-                self.oriSpeed = oriSpeed;
-                
-        def tick(self):
-                self.ori[1] += self.ori[4]*self.speed;
-                self.ori[2] += self.ori[5]*self.speed;
-                self.ori[3] += self.ori[6]*self.speed;
+	def __init__(self, oriSpeed):
+		"""dirX, dirY, dirZ should create a unit vector. oriSpeed is a list of [speed, x, y, z, dirX, dirY, dirZ, upX, upY, upZ]"""
+		#self.ori = {'x': x, 'y': y, 'z': z, 'dirX': dirX, 
+		self.oriSpeed = oriSpeed;
+			
+	def tick(self):
+		self.ori[1] += self.ori[4]*self.speed;
+		self.ori[2] += self.ori[5]*self.speed;
+		self.ori[3] += self.ori[6]*self.speed;
 
-        def checkCollide(self, other_stuff):
-                pass;
+	def checkCollide(self, other_stuff):
+		pass;
 
 newLaserList = []
 laserList = []
 
 class Laser(MovingObject):
-        
-        def __init__(self, creator, maxAge, oriSpeed):
-                """oriSpeed is a list of [speed, x, y, z, dirX, dirY, dirZ, upX, upY, upZ]"""
-                super(Laser,self).__init__(oriSpeed);
-                self.creator = creator;
-                self.age = 0;
-                self.maxAge = maxAge;
+	def __init__(self, creator, maxAge, oriSpeed):
+		"""oriSpeed is a list of [speed, x, y, z, dirX, dirY, dirZ, upX, upY, upZ]"""
+		super(Laser,self).__init__(oriSpeed);
+		self.creator = creator;
+		self.age = 0;
+		self.maxAge = maxAge;
 
-        def tick(self):
+	def tick(self):
 		super(Laser, self).tick();
-                self.age += 1;
-                if (self.age > self.maxAge):
-                        del laserList[laserList.index(self)];
+		self.age += 1;
+		if (self.age > self.maxAge):
+				del laserList[laserList.index(self)];
                 
 def serverLoop():
-        for laser in laserList:
-                laser.tick();
+	for laser in laserList:
+		laser.tick();
 
 posList = []
 class ServerConn(Protocol):
@@ -57,7 +56,7 @@ class ServerConn(Protocol):
 		self.addr = addr
 		self.subpos = [0,0,0, 0,0,1, 0,1,0]
 		posList.append(self.subpos)
-                newLaserList.append([])
+		newLaserList.append([])
 
 	def dataReceived(self, data):
 		"""Overwrites Protocol's method for handling when data is received from the connected address. Any data received is put into the 'toServerQueue', and will be passed along to the server."""
@@ -78,19 +77,19 @@ class ServerConn(Protocol):
 				"type": "pos",
 				"all": posList
 			}) + "\r\n")
-                elif type == 'laser':
-                        oriSpeed = jso['oriSpeed'];
-                        maxAge = jso['maxAge'];
-                        laserList[self.id].append(Laser(self.id, maxAge, oriSpeed.copy()));
-                        for player in newLaserList:
-                                newLaserList.append([maxAge, oriSpeed]);
-                        for laser in newLaserList[self.id]:
-                                self.transport.write(json.dumps({
-                                        "type" : "laser",
-                                        "maxAge" : laser[0],
-                                        "oriSpeed" : laser[1],
-                                        }) + "\r\n";
-                                del laser;
+		elif type == 'laser':
+			oriSpeed = jso['oriSpeed'];
+			maxAge = jso['maxAge'];
+			laserList[self.id].append(Laser(self.id, maxAge, oriSpeed.copy()));
+			for player in newLaserList:
+				newLaserList.append([maxAge, oriSpeed]);
+			for laser in newLaserList[self.id]:
+				self.transport.write(json.dumps({
+					"type" : "laser",
+					"maxAge" : laser[0],
+					"oriSpeed" : laser[1],
+				}) + "\r\n";
+				del laser;
                         
 
 	def toClientCallback(self, data):
@@ -120,6 +119,7 @@ class ServerConn(Protocol):
 		})+"\r\n"
 
 		del posList[self.id]
+		del laserList[self.id]
 
 		for conn in self.parent.conns:
 			if not (conn == self):

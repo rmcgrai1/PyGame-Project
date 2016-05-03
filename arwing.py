@@ -14,20 +14,38 @@ import canv3d
 
 
 class Arwing(Drawable):
+	MOD_ARWING = None
+	
+	TEX_JET = None
+	TEX_JET_WIDTH = 128
+	TEX_JET_HEIGHT = 128
+
+	SND_ENGINE = None
+	SND_SINGLE_SHOT = None
+	SND_BOOST = None
+	SND_BRAKE = None
+	
+	SPD_BASE = 5
+	SPD_MAX = 10
+	SPD_MIN = 1
+
 	def __init__(self, gameSpace, x,y,z):
 		super(Arwing, self).__init__(gameSpace, x,y,z, x,y,z+1, 0,1,0)
-
-		self.model = canv3d.loadObj("Arwing.obj");
-	
-		self.jetTex = pygame.surfarray.pixels2d(pygame.image.load("img/jet.png").convert_alpha())
-		self.jetTexWidth = 128
-		self.jetTexHeight = 128
 		
+		if Arwing.TEX_JET == None:
+			Arwing.MOD_ARWING = canv3d.loadObj("Arwing.obj")
+			Arwing.TEX_JET = pygame.surfarray.pixels2d(pygame.image.load("img/jet.png").convert_alpha())
+			Arwing.SND_ENGINE = pygame.mixer.Sound("snd/engine.ogg")
+			Arwing.SND_SINGLE_SHOT = pygame.mixer.Sound("snd/singleshot.ogg")
+			Arwing.SND_BOOST = pygame.mixer.Sound("snd/boost.ogg")
+			Arwing.SND_BRAKE = pygame.mixer.Sound("snd/brake.ogg")
+			
+			
 		self.dpos = numpy.array([x, y, z, 1.])		
 		self.dtoPos = numpy.array([x, y, z-1, 1.])		
 		self.dupNorm = numpy.array([0,1,0,0.])
-		
-		self.speed = 5
+
+		self.speed = 0
 		self.roll = 0
 		self.pitch = 0
 		self.yaw = 0
@@ -60,10 +78,10 @@ class Arwing(Drawable):
 		canv3d.compileMats()
 		
 	
-		canv3d.drawObj(self.model);
-		canv3d.setTexture(self.jetTex, self.jetTexWidth, self.jetTexHeight)
+		canv3d.drawObj(Arwing.MOD_ARWING);
+		canv3d.setTexture(Arwing.TEX_JET, Arwing.TEX_JET_WIDTH, Arwing.TEX_JET_HEIGHT)
 		
-		xs = 50 * (1 + .5*rnd()) 
+		xs = 50 * (1 + .5*rnd()) * (.25 + .75*self.speed / Arwing.SPD_BASE)
 		ys = xs * .8
 		up = 10
 		back = -80

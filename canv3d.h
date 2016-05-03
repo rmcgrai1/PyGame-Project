@@ -22,9 +22,7 @@ static double contain(double mi, double x, double ma);
 /******************************* RGBA INT FUNCTIONS ************************************/
 
 static int convertRGBA2Int(int r, int g, int b, int a) ;
-
 static int convertRGB2Int(int r, int g, int b);
-
 static void convertInt2RGBA(int argb, int *r, int *g, int *b, int *a);
 
 

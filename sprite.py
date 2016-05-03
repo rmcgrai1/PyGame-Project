@@ -34,6 +34,12 @@ class Sprite:
 		# Ensure frame is within bounds
 		frame %= self.frameNum
 		_frame = int(frame)
+		
+		if type(scale) == tuple:
+			xscale = scale[0]
+			yscale = scale[1]
+		else:
+			xscale = yscale = scale
 
 		# If frame is not already in _img, copy it into _img
 		if self.currentFrame != frame:
@@ -48,7 +54,7 @@ class Sprite:
 		
 		# Transform _img based on scale & angle, and put into img
 		oldCenter = self.rect.center
-		self.img = pygame.transform.smoothscale(self._img, (int(scale*self.w),int(scale*self.h)) )
+		self.img = pygame.transform.smoothscale(self._img, (int(xscale*self.w),int(yscale*self.h)) )
 		self.img = pygame.transform.rotate(self.img, angle)
 		self.rect = self.img.get_rect()
 		self.rect.center = (x, y)
