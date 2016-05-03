@@ -56,8 +56,9 @@ posDict = {};
 class ServerConn(LineReceiver):
 	def __init__(self, parent, id, addr):
 		self.parent = parent
-		self.id = id
+		self.id = int(id)
 		self.addr = addr
+		self.lost = False;
 		self.subpos = [0,0,0, 0,0,1, 0,1,0]
 		posDict[self.id] = self.subpos;
                 newLaserList[self.id] = [];
@@ -88,20 +89,28 @@ class ServerConn(LineReceiver):
                 elif type == 'laser':
 			#print "I'm a firing mah lazorz"
                         oriSpeed = jso['oriSpeed'];
-                        maxAge = jso['maxAge'];
+                        maxAge = int(jso['maxAge']);
                         laserList.append(Laser(self.id, maxAge, oriSpeed[:]));
                         for player in newLaserList.values():
                                 player.append([maxAge, oriSpeed]);
 				#print "Appending!"
                         
-		for laser in newLaserList[self.id]:
+		#print newLaserList;
+		if self.lost:
+			print "WTF, MATE"
+		playerLasers = [];
+		try:
+			playerLasers = newLaserList[self.id];
+		except:
+			print "DERRRR", self.addr;
+		for laser in playerLasers:
 			#print "This should really only happen once"
 			self.transport.write(json.dumps({
 						"type" : "laser",
 						"maxAge" : laser[0],
 						"oriSpeed" : laser[1],
 						}) + "\r\n");
-			del newLaserList[self.id][newLaserList[self.id].index(laser)];
+			del playerLasers[playerLasers.index(laser)];
 
 	def toClientCallback(self, data):
 		"""Callback that runs for each item in the 'toClientQueue'. Any data in the queue came from the server, and will automatically be passed along to the client."""		
@@ -130,21 +139,22 @@ class ServerConn(LineReceiver):
 			"id": self.id
 		})+"\r\n"
 
-		
-		try:
-			del posDict[self.id]
-			del newLaserList[self.id];
-		except KeyError:
-			print "Key error when deleting from posDict or newLaserList. Key was", self.id, "length of newLaserList was", len(newLaserList), "length of posDict was", len(posDict);
+#		self.lost = True;
+#		try:
+#			print "deleting", self.id
+		del posDict[self.id]
+		del newLaserList[self.id];
+#		except KeyError:
+#			print "Key error when deleting from posDict or newLaserList. Key was", self.id, "length of newLaserList was", len(newLaserList), "length of posDict was", len(posDict);
 
-		print "There are now ", len(newLaserList), "objects in newLaserList"
+#		print "There are now ", len(newLaserList), "objects in newLaserList"
 
-		for conn in self.parent.conns:
-			if not (conn == self):
-				if conn.id > self.id:
-					conn.id -= 1
-
-				conn.transport.write(s)
+#		for conn in self.parent.conns:
+#			if not (conn == self):
+#				if conn.id > self.id:
+#					conn.id -= 1
+#
+#				conn.transport.write(s)
 
 		self.parent.conns.remove(self)
 		self.parent = None

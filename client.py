@@ -90,6 +90,7 @@ class ClientConnection(LineReceiver):
 			}) + "\r\n");
 		elif type == 'pos':
 			all_dict = jso['all'] #all is a dictionary
+			
 #			le = len(all)
 #			leA = len(arwingInsts)
 			
@@ -100,10 +101,10 @@ class ClientConnection(LineReceiver):
 #			i = 0;
 			for player_id in all_dict:
 				if not(int(player_id) == gs.id):
-					if player_id not in all_dict.keys():
+					if int(player_id) not in arwingInsts.keys():
 						arwingInsts[int(player_id)] = (gs.instanceAppend(Arwing(gs, 0,0,0)))
 						#print "APPEND: gs id:", gs.id, "player_id", player_id;
-						#print "pos json:", jso
+						print "pos json:", jso
 					
 					inst = arwingInsts[int(player_id)];
 					allInst = all_dict[player_id]
