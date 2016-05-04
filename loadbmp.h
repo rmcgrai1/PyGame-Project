@@ -50,10 +50,10 @@ unsigned char *LoadBitmapFile(char *filename, BITMAPINFOHEADER *bitmapInfoHeader
     unsigned char *bitmapImage;  //store image data
     int imageIdx=0;  //image index counter
     unsigned char tempRGB;  //our swap variable
+    size_t read_result = 0;
 	
 	
-	
-	printf("Size of fileheader:%d, infoHeader:%d\n", sizeof(BITMAPFILEHEADER), sizeof(BITMAPINFOHEADER));
+	printf("Size of fileheader:%lu, infoHeader:%lu\n", sizeof(BITMAPFILEHEADER), sizeof(BITMAPINFOHEADER));
 
 	
 
@@ -65,7 +65,10 @@ unsigned char *LoadBitmapFile(char *filename, BITMAPINFOHEADER *bitmapInfoHeader
 	}
 
     //read the bitmap file header
-    fread(&bitmapFileHeader, sizeof(BITMAPFILEHEADER),1,filePtr);
+    read_result = fread(&bitmapFileHeader, sizeof(BITMAPFILEHEADER),1,filePtr);
+    if (read_result != 1) {
+      printf("Error reading from bitmapHeader of %s\n", filename);
+    }
 
     //verify that this is a bmp file by check bitmap id
     if (bitmapFileHeader.bfType !=0x4D42) {
@@ -75,7 +78,10 @@ unsigned char *LoadBitmapFile(char *filename, BITMAPINFOHEADER *bitmapInfoHeader
     }
 
     //read the bitmap info header
-    fread(bitmapInfoHeader, sizeof(BITMAPINFOHEADER),1,filePtr); // small edit. forgot to add the closing bracket at sizeof
+    read_result = fread(bitmapInfoHeader, sizeof(BITMAPINFOHEADER),1,filePtr); // small edit. forgot to add the closing bracket at sizeof
+    if (read_result != 1) {
+      printf("Error reading from bitmapHeader of %s\n", filename);
+    }
 	printf("\tsize (in bytes): %d\n", bitmapInfoHeader->biSizeImage);
 	printf("\tresolution: %d x %d\n", bitmapInfoHeader->biWidth, bitmapInfoHeader->biHeight);
 
@@ -87,18 +93,20 @@ unsigned char *LoadBitmapFile(char *filename, BITMAPINFOHEADER *bitmapInfoHeader
 
     //verify memory allocation
     if(!bitmapImage) {
-		printf("Failed to allocate memory!\n", filename);
+		printf("Failed to allocate memory for %s!\n", filename);
         free(bitmapImage);
         fclose(filePtr);
         return NULL;
     }
 
     //read in the bitmap image data
-    fread(bitmapImage, bitmapInfoHeader->biSizeImage,1, filePtr);
-
+    read_result = fread(bitmapImage, bitmapInfoHeader->biSizeImage,1, filePtr);
+    if (read_result != 1) {
+      printf("Error reading from bitmapHeader of %s\n", filename);
+    }
     //make sure bitmap image data was read
     if(bitmapImage == NULL) {
-		printf("Failed to read image!\n", filename);
+		printf("Failed to read image %s!\n", filename);
         fclose(filePtr);
         return NULL;
     }
