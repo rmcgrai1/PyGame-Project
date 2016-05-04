@@ -41,6 +41,7 @@ black = (0,0,0)
 white = (255,255,255)
 
 arwingInsts = {};
+laserInsts = {};
 
 class ClientConnection(LineReceiver):
 	def __init__(self, addr):
@@ -140,7 +141,8 @@ class ClientConnection(LineReceiver):
 		elif type == 'laser':
 			oriSpeed = jso["oriSpeed"];
 			maxAge = jso["maxAge"]
-			gs.instanceAppend(Laser(gs,oriSpeed[0], maxAge,
+			lid = jso["lid"];
+			laserInsts[lid] = gs.instanceAppend(Laser(gs, oriSpeed[0], maxAge,
 					oriSpeed[1],oriSpeed[2],oriSpeed[3],
 					oriSpeed[4]+oriSpeed[1],
 					oriSpeed[5]+oriSpeed[2],
@@ -148,11 +150,22 @@ class ClientConnection(LineReceiver):
 					oriSpeed[7],oriSpeed[8],oriSpeed[9]
 			))
 		elif type == 'takeDmg':
-			pid = int(jso['id'])
-			arwingInsts[pid].hurt();
-			if (pid == gs.id):
-				pass;
-				#print "I, player", gs.id, "took damage!"
+			damaged = int(jso['damaged'])
+			attacker = int(jso['attacker'])
+			lid = int(jso['lid'])
+			try:
+				arwingInsts[damaged].hurt();
+			except KeyError as ex:
+				print "The damaged ship left the game!"
+			try: 
+				arwingInsts[attacker];
+			except KeyError as ex:
+				print "The attacker has left the game!"
+			
+			las = laserInsts[lid];
+			gs.instanceRemove(las);
+			del laserInsts[lid];
+			print "Removed Laser"
 
 	def connectionMade(self):
 		print 'new connection made to ' + str(self.addr)

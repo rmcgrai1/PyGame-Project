@@ -45,12 +45,13 @@ posDict = {};
 
 class Laser(MovingObject):
         
-        def __init__(self, creator, maxAge, oriSpeed):
+        def __init__(self, lid, creator, maxAge, oriSpeed):
                 """oriSpeed is a list of [speed, x, y, z, dirX, dirY, dirZ, upX, upY, upZ]"""
                 super(Laser,self).__init__(oriSpeed);
                 self.creator = creator;
                 self.age = 0;
                 self.maxAge = maxAge;
+		self.lid = lid
 
         def tick(self):
 		super(Laser, self).tick();
@@ -85,6 +86,7 @@ class ServerConn(LineReceiver):
 		self.subpos = [0,0,0, 0,0,1, 0,1,0]
 		posDict[self.id] = self.subpos;
                 newLaserList[self.id] = [];
+		self.currentLaserID = 0;
 		
 	def lineReceived(self, data):
 		"""Overwrites Protocol's method for handling when data is received from the connected address. Any data received is put into the 'toServerQueue', and will be passed along to the server."""
@@ -113,25 +115,23 @@ class ServerConn(LineReceiver):
 			#print "I'm a firing mah lazorz"
                         oriSpeed = jso['oriSpeed'];
                         maxAge = int(jso['maxAge']);
-                        laserList.append(Laser(self.id, maxAge, oriSpeed[:]));
+                        laserList.append(Laser(self.currentLaserID, self.id, maxAge, oriSpeed[:]));
                         for player in newLaserList.values():
-                                player.append([maxAge, oriSpeed]);
+                                player.append([self.currentLaserID,maxAge, oriSpeed]);
+			self.currentLaserID += 1;
 				#print "Appending!"
                         
 		#print newLaserList;
-		if self.lost:
-			print "WTF, MATE"
 		playerLasers = [];
-		try:
-			playerLasers = newLaserList[self.id];
-		except:
-			print "DERRRR", self.addr;
+		playerLasers = newLaserList[self.id];
+		
 		for laser in playerLasers:
 			#print "This should really only happen once"
 			self.transport.write(json.dumps({
 						"type" : "laser",
-						"maxAge" : laser[0],
-						"oriSpeed" : laser[1],
+						"lid" : laser[0],
+						"maxAge" : laser[1],
+						"oriSpeed" : laser[2]
 						}) + "\r\n");
 			del playerLasers[playerLasers.index(laser)];
 
@@ -187,10 +187,12 @@ class ServerConnFactory(Factory):
 		serverDmgQueue.get().addCallback(self.sendDamage);
 
 	def sendDamage(self, data):
-		"""data is the id of the ship that was hit"""
+		"""data is a list of [damaged_id, attacker_id, lid]"""
 		s = json.dumps( {
 				'type' : 'takeDmg',
-				'id' : data
+				'damaged' : data[0],
+				'attacker' : data[1],
+				'lid' : data[2]
 				}) + "\r\n"
 		for conn in self.conns.values():
 			conn.transport.write(s)
