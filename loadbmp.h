@@ -65,8 +65,8 @@ unsigned char *LoadBitmapFile(char *filename, BITMAPINFOHEADER *bitmapInfoHeader
 
     //read the bitmap file header
     read_result = fread(&bitmapFileHeader, sizeof(BITMAPFILEHEADER),1,filePtr);
-    if (read_result != 1) {
-      printf("Error0 reading from bitmapHeader of %s\n", filename);
+    if(read_result != 1) {
+      printf("Error0 reading from bitmapHeader of %s, %s\n", filename, strerror(errno));
     }
 
     //verify that this is a bmp file by check bitmap id
@@ -79,8 +79,9 @@ unsigned char *LoadBitmapFile(char *filename, BITMAPINFOHEADER *bitmapInfoHeader
     //read the bitmap info header
     read_result = fread(bitmapInfoHeader, sizeof(BITMAPINFOHEADER),1,filePtr); // small edit. forgot to add the closing bracket at sizeof
     if (read_result != 1) {
-      printf("Error1 reading from bitmapHeader of %s\n", filename);
-    }
+		printf("Error1 reading from bitmapHeader of %s, %s\n", filename, strerror(errno));
+		return NULL;
+	}
 	printf("\tsize (in bytes): %d\n", bitmapInfoHeader->biSizeImage);
 	printf("\tresolution: %d x %d\n", bitmapInfoHeader->biWidth, bitmapInfoHeader->biHeight);
 
@@ -88,6 +89,7 @@ unsigned char *LoadBitmapFile(char *filename, BITMAPINFOHEADER *bitmapInfoHeader
     fseek(filePtr, bitmapFileHeader.bOffBits, SEEK_SET);
 
     //allocate enough memory for the bitmap image data
+	printf("\tAllocating %d bytes for the image.\n", bitmapInfoHeader->biSizeImage);
     bitmapImage = (unsigned char*) malloc(bitmapInfoHeader->biSizeImage);
 
     //verify memory allocation
@@ -100,6 +102,7 @@ unsigned char *LoadBitmapFile(char *filename, BITMAPINFOHEADER *bitmapInfoHeader
 
     //read in the bitmap image data
     read_result = fread(bitmapImage, bitmapInfoHeader->biSizeImage,1, filePtr);
+
     if (read_result != 1) {
       printf("Error2 reading from bitmapHeader of %s, read_result was %d, image: %s\n", filename, read_result, filename);
       fclose(filePtr);
