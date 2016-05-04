@@ -1,3 +1,7 @@
+# Jacob Kassman & Ryan McGrail
+# skybox.py
+# Defines class for drawing skyboxes.
+
 import sys
 import os
 import pygame
@@ -17,8 +21,10 @@ class Skybox(Drawable):
 	def __init__(self, gameSpace, leftName, rightName, frontName, backName, upName, downName):
 		super(Skybox, self).__init__(gameSpace, 0,0,0, 0,0,1, 0,1,0)
 
+		# Get max possible size based on far distance in canv3d
 		self.boxSize = gameSpace.canv3d_far / 2
-		
+
+		# Load all 6 sides of skyboz
 		self.imgSize = 512
 		self.lf = pygame.image.load(leftName).convert_alpha()
 		self.lfP = pygame.surfarray.pixels2d(self.lf)
@@ -36,29 +42,31 @@ class Skybox(Drawable):
 	def tick(self, input):
 		pass;
 		
-	def draw(self, screen):		
-		#Skybox
-		canv3d.setMatIdentity(MAT_T)
+	def draw(self, screen):
+		# Translate to position of camera
 		canv3d.setMatCameraPosition(MAT_T)
+		# Compile matrices into single matrix
 		canv3d.compileMats()
 
+		# Revert drawing color back to white if not already white
 		canv3d.setRGB(255,255,255)
 
+
+		# Draw top
 		canv3d.setTexture(self.upP, self.imgSize,self.imgSize);		
 		canv3d.draw3dFloor(-self.boxSize,self.boxSize,self.boxSize,-self.boxSize, self.boxSize)
-
+		# Draw front
 		canv3d.setTexture(self.ftP, self.imgSize,self.imgSize);		
 		canv3d.draw3dWall(self.boxSize,-self.boxSize,self.boxSize, self.boxSize,self.boxSize, -self.boxSize)
-
+		# Draw left
 		canv3d.setTexture(self.lfP, self.imgSize,self.imgSize);		
 		canv3d.draw3dWall(self.boxSize,self.boxSize,self.boxSize, -self.boxSize,self.boxSize, -self.boxSize)
-
+		# Draw right
 		canv3d.setTexture(self.rtP, self.imgSize,self.imgSize);		
 		canv3d.draw3dWall(-self.boxSize,-self.boxSize,self.boxSize, self.boxSize,-self.boxSize, -self.boxSize)
-
+		# Draw back
  		canv3d.setTexture(self.bkP, self.imgSize,self.imgSize);		
 		canv3d.draw3dWall(-self.boxSize,self.boxSize,self.boxSize, -self.boxSize,-self.boxSize, -self.boxSize)
-
+		# Draw bottom
 		canv3d.setTexture(self.dnP, self.imgSize,self.imgSize);
 		canv3d.draw3dFloor(-self.boxSize,-self.boxSize,self.boxSize,self.boxSize, -self.boxSize)
-		

@@ -64,15 +64,14 @@ static int
 	
 	
 static void setRGB(int r, int g, int b);
+static void clip(double w1, double w2, double w3, double x1,double y1,double z1,double u1,double v1,  double x2,double y2,double z2,double u2,double v2,  double x3,double y3,double z3,double u3,double v3);
+static void drawTriangle0(double x1,double y1,double z1,double u1,double v1,  double x2,double y2,double z2,double u2,double v2,  double x3,double y3,double z3,double u3,double v3);
+static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  double x2,double y2,double z2,double u2,double v2,  double x3,double y3,double z3,double u3,double v3, int tries);
+static void drawQuad0(double x1,double y1,double z1,double u1,double v1,	double x2,double y2,double z2,double u2,double v2,	double x3,double y3,double z3,double u3,double v3,	double x4,double y4,double z4,double u4,double v4);
+static void drawQuad(double x1,double y1,double z1,double u1,double v1,	double x2,double y2,double z2,double u2,double v2,	double x3,double y3,double z3,double u3,double v3,	double x4,double y4,double z4,double u4,double v4, int tries);
 
 
 
-/*********************
-********** RGBA INT FUNCTIONS ************************************/
-
-double calculateLength(double* vec4) {
-	return sqrt(vec4[0]*vec4[0] + vec4[1]*vec4[1] + vec4[2]*vec4[2] + vec4[3]*vec4[3]);
-}
 
 static double* getMat(int matType) {
 	switch(matType) {
@@ -320,7 +319,7 @@ static PyObject* pyAddMatLook(PyObject *self, PyObject *args) {
 
 
 static double* setMatAntiLook(double* mat, double x,double y,double z, double nx,double ny,double nz, double upx,double upy,double upz) {
-	transpose(setMatLook(mat, x,y,z, nx,ny,nz, upx,upy,upz));
+	return transpose(setMatLook(mat, x,y,z, nx,ny,nz, upx,upy,upz));
 }
 static PyObject* pySetMatAntiLook(PyObject *self, PyObject *args) {
 	int matType;
@@ -345,9 +344,6 @@ static PyObject* pyAddMatAntiLook(PyObject *self, PyObject *args) {
 	addMatAntiLook(getMat(matType), x,y,z, nx,ny,nz, upx,upy,upz);
 	Py_RETURN_NONE;
 }
-
-
-
 
 
 
@@ -693,6 +689,9 @@ static PyObject* pyUnsetTexture(PyObject *self) {
 }
 
 
+/************************  DRAWING FUNCTIONS  *****************************/
+
+// Loop through each pixel & clear screen
 static void clear(void) {
 	int i;
 	for(i = 0; i < PIXEL_NUMBER; i++) {
@@ -704,12 +703,6 @@ static PyObject* pyClear(PyObject *self) {
 	clear();
 	Py_RETURN_NONE;
 }
-
-static void clip(double w1, double w2, double w3, double x1,double y1,double z1,double u1,double v1,  double x2,double y2,double z2,double u2,double v2,  double x3,double y3,double z3,double u3,double v3);
-static void drawTriangle0(double x1,double y1,double z1,double u1,double v1,  double x2,double y2,double z2,double u2,double v2,  double x3,double y3,double z3,double u3,double v3);
-static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  double x2,double y2,double z2,double u2,double v2,  double x3,double y3,double z3,double u3,double v3, int tries);
-static void drawQuad0(double x1,double y1,double z1,double u1,double v1,	double x2,double y2,double z2,double u2,double v2,	double x3,double y3,double z3,double u3,double v3,	double x4,double y4,double z4,double u4,double v4);
-static void drawQuad(double x1,double y1,double z1,double u1,double v1,	double x2,double y2,double z2,double u2,double v2,	double x3,double y3,double z3,double u3,double v3,	double x4,double y4,double z4,double u4,double v4, int tries);
 
 
 static void clipTriangle(double x1,double y1,double z1,double u1,double v1,double w1,	double x2,double y2,double z2,double u2,double v2,double w2,  double x3,double y3,double z3,double u3,double v3, double w3) {
@@ -1157,250 +1150,16 @@ static PyObject* pyCompileMats(PyObject *self) {
 }
 
 
-static int createObj(void) {
-	int id = modelNum++;
-	
-	obj** oldModelArray = modelArray;
-	modelArray = (obj**) malloc(modelNum * sizeof(obj*));
-	
-	int i;
-	for(i = 0; i < modelNum-1; i++)
-		modelArray[i] = oldModelArray[i];
-	
-	modelArray[id] = (obj*) malloc(sizeof(obj));
-	
-	if(id > 0)
-		free(oldModelArray);
-	
-	return id;
-}
 
-static mtl** loadMtl(char* filename) {
-	int* tex;
-		
-	FILE *fp;
-	char lines[200][200], line[200], *type, *substr, c, cc[2];
-	int l = 0, lLen = 0, lNum = 0, mNum = 0;
-	
-	printf("\tLoading mtls from %s...\n", filename);
-       
-	if((fp = fopen(filename, "r")) == NULL) {
-	    printf("Invalid Filename %s\n", filename);
-	    return NULL;
-	}
-	cc[1] = '\0';
-	
-	lines[0][0] = '\0';
-	
-	// Load file into string array
-	while(!feof(fp)) {
-		cc[0] = fgetc(fp);
-		
-		if(cc[0] == '\r') {}
-		else if(cc[0] == '\n') {
-			if(lLen > 0) {
-				lines[++lNum][0] = '\0';
-				lLen = 0;
-			}
-		}
-		else {
-			strcat(lines[lNum], cc);
-			lLen++;
-		}
-	}
-	fclose(fp);
-
-	int i;
-	// Loop through File Once to Get # of each
-	for(l = 0; l < lNum; l++) {
-		strcpy(line, lines[l]);	
-		
-		// If type is "newmtl", another material to create!
-		if(!strcmp(strtok(line, " "), "newmtl"))
-			mNum++;
-	}
-
-	int mi = 0;
-	mtl *m = NULL,
-		**mtls = (mtl**) malloc(mNum * sizeof(mtl*));
-	
-	// Loop through File Second Time
-	for(l = 0; l < lNum; l++) {
-		strcpy(line, lines[l]);	
-		type = strtok(line, " ");
-				
-		if(!strcmp(type,"newmtl")) {
-			substr = strtok(NULL, " ");
-			
-			printf("\tAdding new material %s!\n", substr);
-			m = mtls[mi++] = (mtl*) malloc(sizeof(mtl));			
-			m->name = malloc((strlen(substr)+1) * sizeof(char));
-			strcpy(m->name, substr);
-
-			m->kd = (double*) malloc(3 * sizeof(double));
-		}
-		else if(!strcmp(type,"Kd")) {
-			for(i = 0; i < 3; i++) {
-				substr = strtok(NULL, " ");				
-				m->kd[i] = atof(substr);				
-			}
-		}
-		else if(!strcmp(type,"map_Kd")) {
-			substr = strtok(NULL, " ");
-			
-			printf("\tLoading .bmp from %s...\n", substr);
-		    m->map_Kd = loadBMP(substr, &m->map_Kd_width, &m->map_Kd_height);
-		}
-	}
-	
-	printf("\tDone loading mtls!\n");
-	
-	return mtls;
-}
-
-static void loadObj(char* filename, int id) {	
-	obj* o = modelArray[id];
-	
-	FILE *fp;
-	char lines[1000][150], line[150], *type, *substr, c, cc[2];
-	int l = 0, lNum = 0, mNum = 0, lLen = 0;
-	
-	printf("Loading \"%s\"...\n", filename);
-
-	if((fp = fopen(filename, "r")) == NULL) {
-	  printf("File %s does not exist!\n", filename);
-	  return;
-	}
-	
-	cc[1] = '\0';
-	
-	lines[0][0] = '\0';
-	
-	// Load file into string array
-	while(!feof(fp)) {
-		cc[0] = fgetc(fp);
-		
-		if(cc[0] == '\r') {}
-		else if(cc[0] == '\n') {
-			if(lLen > 0) {
-				lines[++lNum][0] = '\0';
-				lLen = 0;
-			}
-		}
-		else {
-			strcat(lines[lNum], cc);
-			lLen++;
-		}
-	}
-	fclose(fp);
-	
-	printf("\tDone reading file into memory!\n");
-
-	int i, vNum = 0, fNum = 0, uvNum = 0; //vnNum = 0, vtNum = 0;
-	// Loop through File Once to Get # of each
-	for(l = 0; l < lNum; l++) {
-		//printf("copying...\n");		
-		strcpy(line, lines[l]);	
-		//printf("%s\n", line);
-
-		type = strtok(line, " ");
-		
-		if(!strcmp(type,"v"))
-			vNum++;
-		else if(!strcmp(type,"vt"))
-			uvNum++;
-		else if(!strcmp(type, "f"))
-			fNum++;
-		else if(!strcmp(type, "usemtl")) {
-			fNum++;
-			mNum++;
-		}
-	}
-	
-	//printf("1st pass done! faces:%d mtls:%d\n", fNum-mNum, mNum);
-
-	int
-		ii, f = 0, v = 0, vt = 0,
-		*faces = (int*) malloc(9 * fNum * sizeof(int));
-	double
-		*vertices = (double*) malloc(3 * vNum * sizeof(double)),
-		*uvs = (double*) malloc(2 * uvNum * sizeof(double));
-
-	
-	mtl **mtls = NULL; // *m;
-	
-	// Loop through File Second Time
-	for(l = 0; l < lNum; l++) {
-		strcpy(line, lines[l]);	
-		type = strtok(line, " ");
-				
-		if(!strcmp(type,"v")) {
-			for(i = 0; i < 3; i++) {
-				substr = strtok(NULL, " ");
-				vertices[3*v + i] = atof(substr);
-			}
-			v++;
-		}
-		else if(!strcmp(type,"vt")) {
-			for(i = 0; i < 2; i++) {
-				substr = strtok(NULL, " ");
-								
-				uvs[2*vt + i] = atof(substr);
-			}
-			vt++;
-		}
-		else if(!strcmp(type,"mtllib"))
-			mtls = loadMtl(strtok(NULL, " "));
-		else if(!strcmp(type,"usemtl")) {
-			faces[9*f] = -1;
-			
-			ii = -1;
-			substr = strtok(NULL, " ");
-			for(i = 0; i < mNum; i++)
-				if(!strcmp(substr,mtls[i]->name)) {
-					ii = i;
-					break;
-				}
-				
-			if(ii == -1) {
-				printf("Invalid material name: %s\n", substr);
-			}
-			faces[9*f + 3] = ii;
-			
-			f++;
-		}
-		else if(!strcmp(type, "f")) {
-			for(ii = 0; ii < 3; ii++) {
-				for(i = 0; i < 3; i++) {
-					substr = strtok(NULL , (i<2)?"/":" ");
-					faces[9*f + 3*ii + i] = atoi(substr)-1;
-				}
-			}
-			f++;
-		}
-	}
-			
-	
-	o->vNum = vNum;
-	o->uvNum = uvNum;
-	o->fNum = fNum;
-	o->faces = faces;
-	o->uvs = uvs;
-	o->vertices = vertices;
-	o->mtls = mtls;
-	o->mNum = mNum;
-}
 static PyObject* pyLoadObj(PyObject *self, PyObject *args) {
-	char* filename;
-	
+	char* filename;	
 	if(!PyArg_ParseTuple(args, "s", &filename))
       return NULL;
 
+	// Load obj & print info
 	int id = createObj();
 	loadObj(filename, id);
-	
 	printf("Loaded: %i\n", id);
-	
 	return Py_BuildValue("i", id);
 }
 
@@ -1408,7 +1167,7 @@ static PyObject* pyLoadObj(PyObject *self, PyObject *args) {
 
 static void drawObj(obj* o) {	
 	int
-	  //*faces = o->faces,
+		*faces = o->faces,
 		f,
 		v1, v2, v3,
 		vt1, vt2, vt3,
@@ -1421,6 +1180,7 @@ static void drawObj(obj* o) {
 		*uvs = o->uvs;
 	mtl *currentMtl;
 	
+	// Backup drawing color for later
 	int 
 		tRGBA = RGBA,
 		tR = R,
@@ -1430,35 +1190,41 @@ static void drawObj(obj* o) {
 				
 	// Loop through Faces
 	for(f = 0; f < fNum; f++) {	
-		// Get vertices
-		v1 = o->faces[9*f];
-		vt1 = o->faces[9*f+1];		
-		v2 = o->faces[9*f+3];
-		vt2 = o->faces[9*f+4];		
-		v3 = o->faces[9*f+6];		
-		vt3 = o->faces[9*f+7];
+
+		// Get vertices & uvs
+		v1 = faces[9*f];
+		vt1 = faces[9*f+1];		
+		v2 = faces[9*f+3];
+		vt2 = faces[9*f+4];		
+		v3 = faces[9*f+6];		
+		vt3 = faces[9*f+7];
 				
+		// If v1 is -1, then v2 is a material index
 		if(v1 == -1) {
-			if(v2 != -1) {			
+			if(v2 != -1) {
+				
+				// Set current material
 				currentMtl = o->mtls[v2];
+
+				// Set material color
 				R = (int) (tR * currentMtl->kd[0]);
 				G = (int) (tG * currentMtl->kd[1]);
 				B = (int) (tB * currentMtl->kd[2]);
 				A = tA;
-				texture = currentMtl->map_Kd;
-				textureWidth = currentMtl->map_Kd_width;
-				textureHeight = currentMtl->map_Kd_height;
+				
+				// Set texture
+				setTexture(currentMtl->map_Kd, currentMtl->map_Kd_width, currentMtl->map_Kd_height);
 			}
 		}
-		else {
+		else
 			// Draw triangle btwn vertices
 			drawTriangle0(
 				vertices[3*v1],vertices[3*v1+1],vertices[3*v1+2],	uvs[2*vt1],uvs[2*vt1+1],
 				vertices[3*v2],vertices[3*v2+1],vertices[3*v2+2],	uvs[2*vt2],uvs[2*vt2+1],
 				vertices[3*v3],vertices[3*v3+1],vertices[3*v3+2],	uvs[2*vt3],uvs[2*vt3+1]);
-		}
 	}
-	
+
+	// Revert drawing color back to previous
 	RGBA = tRGBA;
 	R = tR;
 	G = tG;
@@ -1475,7 +1241,8 @@ static PyObject* pyDrawObj(PyObject *self, PyObject *args) {
 }
 
 		
-////////////////////////////////////////////////////////////////////////////////////////
+		
+/******************************  CREATE PYTHON METHODS *************************************/
 
 static PyMethodDef canv3d_funcs[47] = {
 	{"setMatIdentity", (PyCFunction) pySetMatIdentity, METH_VARARGS, NULL },
@@ -1534,5 +1301,3 @@ void initcanv3d(void) {
 	import_array();
     Py_InitModule3("canv3d", canv3d_funcs, "Extension module example!");
 }
-
-////////////////////////////////////////////////////////////////////////////////////////

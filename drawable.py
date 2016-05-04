@@ -1,3 +1,7 @@
+# Jacob Kassman & Ryan McGrail
+# drawable.py
+# Defines 3D drawable instances, which can also be updated.
+
 import sys
 import os
 import pygame
@@ -14,6 +18,7 @@ class Drawable(object):
 	def __init__(self, gameSpace, x,y,z, atX,atY,atZ, upX,upY,upZ):
 		self.gs = gameSpace
 
+		# Create orientation array (pos x 3, atPos x 3, upNorm x 3)
 		self.ori = [x+0.,y,z,  atX,atY,atZ,  upX,upY,upZ]
 		self.ori = numpy.array(self.ori)	
 		
@@ -28,9 +33,7 @@ class Drawable(object):
 		aY = -self.speed * (self.ori[4] - self.ori[1])
 		aZ = -self.speed * (self.ori[5] - self.ori[2])
 
-		if (input['brake']):
-			aX = aY = aZ = 0;
-		
+		# Move position in direction by speed
 		self.ori[0] += aX;
 		self.ori[1] += aY;
 		self.ori[2] += aZ;

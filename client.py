@@ -226,6 +226,10 @@ class GameSpace:
 		self.mouse_center_x = self.width/2;
 		self.mouse_center_y = self.height/2;
 		
+		# Initialize center of screen for mouse
+		self.mouse_center_x = self.width/2;
+		self.mouse_center_y = self.height/2;
+		
 		
 		# Intialize 3D canvas variables
 		self.canv3d_near = .1

@@ -23,6 +23,7 @@ class ArwingPlayer(Arwing):
 		# Loop engine sound
 		Arwing.SND_ENGINE.play(loops=-1)
 		
+		# Temp Array for Rotation
 		self.rotateAxis = numpy.array([0., 0., 0., 0.])
 		
 		self.deathAnimation = -1
@@ -57,6 +58,7 @@ class ArwingPlayer(Arwing):
 		self.rotateAxis[1] = upX*fZ - upZ*fX
 		self.rotateAxis[2] = upY*fX - upX*fY
 		
+		# Rotate 
 		canv3d.rotateVecAboutAxis(vec,offset, amt, self.rotateAxis)
 		
 		
@@ -97,8 +99,6 @@ class ArwingPlayer(Arwing):
 			sY = upX*fZ - upZ*fX
 			sZ = upY*fX - upX*fY
 			
-			
-			
 			self.laserOri[0] = x
 			self.laserOri[1] = y
 			self.laserOri[2] = z
@@ -108,7 +108,8 @@ class ArwingPlayer(Arwing):
 			self.laserOri[6] = upX
 			self.laserOri[7] = upY
 			self.laserOri[8] = upZ
-			
+
+			# Rotate laser to match pitch
 			self.pitch(self.laserOri,3, self.drawPitch)
 
 			
@@ -117,6 +118,7 @@ class ArwingPlayer(Arwing):
 			self.rotateAxis[1] = self.laserOri[7]
 			self.rotateAxis[2] = self.laserOri[8]
 
+			# Rotate laser to match yaw
 			canv3d.rotateVecAboutAxis(self.laserOri,3, self.drawYaw, self.rotateAxis)
 
 			if self.gs.isConnected:
@@ -130,10 +132,13 @@ class ArwingPlayer(Arwing):
 					self.laserOri[6],self.laserOri[7],self.laserOri[8]
 				));
 
+		# Update previous mouse down value
 		self.mDownPrev = input['mouse_down']
 		
+		# Find speed fraction
 		speedFrac = .6 + .4 * self.speed / Arwing.SPD_BASE
 
+		# Get input values
 		dx = input['mouse_dx'] * speedFrac
 		dy = input['mouse_dy'] * speedFrac
 		hDir = input['key_hdir']
@@ -145,20 +150,29 @@ class ArwingPlayer(Arwing):
 		self.roll(self.ori, 6, -2*hDir);
 
 
+		# If holding boost, speed up and play sound
 		if vDir == -1:
 			if self.vDirPrev != -1:
 				Arwing.SND_BRAKE.stop()
 				Arwing.SND_BOOST.play()
 			toSpeed = Arwing.SPD_MAX
+			
+		# If holding brake, slow down and play sound
 		elif vDir == 1:
 			if self.vDirPrev != 1:
 				Arwing.SND_BOOST.stop()
 				Arwing.SND_BRAKE.play()
 			toSpeed = Arwing.SPD_MIN
+			
+		# Otherwise, fly as normal
 		else:
 			toSpeed = Arwing.SPD_BASE
+			
+		# Update previous hold vertical direction
 		self.vDirPrev = vDir
 			
+			
+		# Smoothly interpolate values to new ones
 		self.speed += (toSpeed - self.speed)/20.;
 		
 		toRoll = -12*dx*adjust * 2
@@ -170,8 +184,11 @@ class ArwingPlayer(Arwing):
 		self.drawPitch += (toPitch - self.drawPitch)/5
 		
 		
+		# Rotate arwing based on mouse control
 		canv3d.turn(self.ori,0, self.ori,3, self.ori,6, -dx*adjust,-dy*adjust);
-		
+
+
+		# Determine camera position
 		x = self.ori[0]
 		y = self.ori[1]
 		z = self.ori[2]
@@ -200,5 +217,6 @@ class ArwingPlayer(Arwing):
 			self.cameraOri[6],self.cameraOri[7],self.cameraOri[8]);
 		
 	def draw(self, screen):
+		# If alive and well, draw arwing
 		if self.deathAnimation < 1:
 			super(ArwingPlayer, self).draw(screen)
