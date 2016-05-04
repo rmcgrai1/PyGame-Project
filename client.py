@@ -175,7 +175,12 @@ class ClientConnection(LineReceiver):
 		elif type == "colDmg":
 			damaged = int(jso['damaged']);
 			gs.arwingInsts[damaged].hurt();
+			if (damaged == gs.id):
+				if (gs.arwingInsts[damaged].hp <= 0):
+					self.transport.write(json.dumps(
+							{"type" : "destroyed" }) + "\r\n");
 
+			
 	def connectionMade(self):
 		print 'new connection made to ' + str(self.addr)
 		gs = GameSpace.instance
@@ -256,6 +261,7 @@ class GameSpace:
 		self.brake = False
 		self.brakeLock = False
 		self.respawn = False;
+		self.barrel_roll = False;
 
 		#2. Create game objects
 
@@ -352,7 +358,7 @@ class GameSpace:
 				elif(event.key == pygame.K_v):
 					if not self.brakeLock:
 						self.brake = False;
-				elif(event.key == pygame.K_b):
+				elif(event.key == pygame.K_c):
 					if not self.brakeLock:
 						self.brakeLock = True;
 						self.brake = True;
@@ -361,6 +367,8 @@ class GameSpace:
 						self.brake = False;
 				elif(event.key == pygame.K_r):
 					self.respawn = True;
+				elif(event.key == pygame.K_b):
+					self.barrel_roll = True;
 
 		#6. Tick updating and polling
 
@@ -373,9 +381,11 @@ class GameSpace:
 			"key_vdir": self.keyVDir,
 			"brake" : False,
 			"freeze_signal" : self.brake,
-			"respawn" : self.respawn
+			"respawn" : self.respawn,
+			"barrel_roll" : self.barrel_roll
 		}
 		self.respawn = False;
+		self.barrel_roll = False;
 			
 
 		for d in self.instanceList:
