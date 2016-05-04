@@ -2,6 +2,7 @@ import canv3d
 from mat import *
 
 class Asteroid(object):
+    """A very simple class that loads the object from the file and draws the asteroids at the same position and orientation every time."""
     MOD_ASTEROID = None;
     
 
