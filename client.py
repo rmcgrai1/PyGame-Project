@@ -67,8 +67,8 @@ class ClientConnection(LineReceiver):
 		if type == 'init':
 			gs.id = int(jso['id'])
 			player_ids = jso['all_ids']
+			gs.addMessage("Welcome, player " + str(gs.id) + "!")
 			temp_aster = jso['asteroids']
-			gs.addMessage("You are player " + str(gs.id) + ".")
 
 			for player_id in player_ids:
 				if not (player_id == gs.id):
@@ -183,18 +183,23 @@ class ClientConnection(LineReceiver):
 			
 	def connectionMade(self):
 		print 'new connection made to ' + str(self.addr)
-		GameSpace.instance.isConnected = True
+		gs = GameSpace.instance
+
+		gs.isConnected = True
+		gs.player.reset()
 		
 	def connectionLost(self, reason):
 		print 'lost connection to ' + str(self.addr)
 		GameSpace.instance.isConnected = False
 
 class ClientConnFactory(ClientFactory):
-
 	def buildProtocol(self, addr):
 		self.conn = ClientConnection(addr);
 		return self.conn
 
+		
+		
+		
 class GameSpace:			
 	def __init__(self):
 		GameSpace.instance = self
@@ -202,17 +207,32 @@ class GameSpace:
 		self.id = -1
 		self.mainQueue = DeferredQueue();
 		self.arwingInsts = {};
-
-		pygame.init()
-		pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=4096)		
 		
-		# Load music, and play it
+		self.isConnected = False
+		self.connectTimer = 0
+               
+		#Ryan is True, Jacob is False.
+		self.connectChoice = False;        
+		self.connectTimerMax = 75
+		self.connectDiv = 16
+		
+		#1. Initialize game space		
+		self.resolution = self.width,self.height = (640,480)
+		pygame.init()
+		self.screen = pygame.display.set_mode(self.resolution)
+		pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=4096)
+		pygame.mixer.set_num_channels(16)
+
+		gfx2d.init()
+
+		Arwing.init();
+		Laser.init();
+		
+			# Load music, and play it
 		self.musFight = pygame.mixer.Sound("snd/musicLoop.ogg")
 		self.musFight.set_volume(.35)
 		self.musFight.play(-1)
 
-				
-		Laser.preload();
 
 	def instanceAppend(self, inst):
 		self.instanceList.append(inst)
@@ -233,20 +253,6 @@ class GameSpace:
 		
 
 	def main(self):
-		self.isConnected = False
-		self.connectTimer = 0
-               
-		#Ryan is True, Jacob is False.
-		self.connectChoice = False;        
-		self.connectTimerMax = 75
-		self.connectDiv = 16
-		
-		#1. Initialize game space		
-		self.resolution = self.width,self.height = (640,480)
-		self.screen = pygame.display.set_mode(self.resolution)
-		gfx2d.init()
-
-
 		self.instanceList = []
 		
 		self.keyHDir = 0

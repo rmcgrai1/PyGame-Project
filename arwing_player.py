@@ -20,31 +20,78 @@ class ArwingPlayer(Arwing):
 		self.mDownPrev = False
 		self.vDirPrev = 0
 		
+		# Loop engine sound
 		Arwing.SND_ENGINE.play(loops=-1)
 		
 		self.rotateAxis = numpy.array([0., 0., 0., 0.])
 		
+		self.deathAnimation = -1
+		self.cameraOri = numpy.array([x+0.,y,z, x,y,z+1, 0,1,0])
+		
 		self.laserOri = self.ori.copy()
 		
+
+	def roll(self, vec, offset, amt):
+		# Calculate forward acis
+		self.rotateAxis[0] = vec[3]-vec[0]
+		self.rotateAxis[1] = vec[4]-vec[1]
+		self.rotateAxis[2] = vec[5]-vec[2]
+		
+		# Rotate about forward axis
+		canv3d.rotateVecAboutAxis(vec, offset, amt, self.rotateAxis);
+
+		
+	def pitch(self, vec, offset, amt):
+		# Calculate forward axis (and normalize)
+		vec[3] = fX = vec[3]-vec[0]
+		vec[4] = fY = vec[4]-vec[1]
+		vec[5] = fZ = vec[5]-vec[2]
+
+		# Get up axis (pre-normalized)
+		upX = vec[6]
+		upY = vec[7]
+		upZ = vec[8]
+		
+		# Rotate Laser w/ Pitch
+		self.rotateAxis[0] = upZ*fY - upY*fZ
+		self.rotateAxis[1] = upX*fZ - upZ*fX
+		self.rotateAxis[2] = upY*fX - upX*fY
+		
+		canv3d.rotateVecAboutAxis(vec,offset, amt, self.rotateAxis)
+		
+		
+		
 	def tick(self, input):
+		super(ArwingPlayer, self).tick(input)
+
+		if self.hp == 0:
+			if self.deathAnimation == -1:	
+				self.deathAnimation = 0
+				self.explode();
+			else:
+				self.deathAnimation = 1
+
+			return
+	
 		new_input = input;
 		if (input['freeze_signal']):
 			new_input = input.copy()
 			new_input['brake'] = True
 			
-		super(ArwingPlayer, self).tick(new_input)
 		
-		if (not self.mDownPrev) and (input['mouse_down']):
-			Arwing.SND_SINGLE_SHOT.play()
-			
+		if (not self.mDownPrev) and (input['mouse_down']):			
 			x = self.ori[0]
 			y = self.ori[1]
 			z = self.ori[2]
-						
+			
+			atX = self.ori[3]
+			atY = self.ori[4]
+			atZ = self.ori[5]
+			
 			# Calculate forward axis (pre-normalized)
-			fX = self.ori[3]-x
-			fY = self.ori[4]-y
-			fZ = self.ori[5]-z
+			fX = atX-x
+			fY = atY-y
+			fZ = atZ-z
 
 			# Get up axis (pre-normalized)
 			upX = self.ori[6]
@@ -61,20 +108,14 @@ class ArwingPlayer(Arwing):
 			self.laserOri[0] = x
 			self.laserOri[1] = y
 			self.laserOri[2] = z
-			self.laserOri[3] = fX
-			self.laserOri[4] = fY
-			self.laserOri[5] = fZ
+			self.laserOri[3] = atX
+			self.laserOri[4] = atY
+			self.laserOri[5] = atZ
 			self.laserOri[6] = upX
 			self.laserOri[7] = upY
 			self.laserOri[8] = upZ
-
 			
-			# Rotate Laser w/ Pitch
-			self.rotateAxis[0] = sX
-			self.rotateAxis[1] = sY
-			self.rotateAxis[2] = sZ
-			
-			canv3d.rotateVecAboutAxis(self.laserOri,3, self.pitch, self.rotateAxis)
+			self.pitch(self.laserOri,3, self.drawPitch)
 
 			
 			# Rotate Laser w/ Yaw
@@ -82,16 +123,16 @@ class ArwingPlayer(Arwing):
 			self.rotateAxis[1] = self.laserOri[7]
 			self.rotateAxis[2] = self.laserOri[8]
 
-			canv3d.rotateVecAboutAxis(self.laserOri,3, self.yaw, self.rotateAxis)
+			canv3d.rotateVecAboutAxis(self.laserOri,3, self.drawYaw, self.rotateAxis)
 
 			if self.gs.isConnected:
 				self.gs.mainQueue.put(self.laserOri);
 			else:
 				self.gs.instanceAppend( Laser(self.gs,30, 60*10,
 					self.laserOri[0],self.laserOri[1],self.laserOri[2],
-					self.laserOri[3]+self.laserOri[0],
-					self.laserOri[4]+self.laserOri[1],
-					self.laserOri[5]+self.laserOri[2],
+					self.laserOri[3],
+					self.laserOri[4],
+					self.laserOri[5],
 					self.laserOri[6],self.laserOri[7],self.laserOri[8]
 				));
 
@@ -105,10 +146,9 @@ class ArwingPlayer(Arwing):
 		vDir = input['key_vdir']
 		adjust = input['mouse_d_adjust']
 		
-		self.rotateAxis[0] = self.ori[3]-self.ori[0]
-		self.rotateAxis[1] = self.ori[4]-self.ori[1]
-		self.rotateAxis[2] = self.ori[5]-self.ori[2]
-		canv3d.rotateVecAboutAxis(self.ori,6, -2*hDir, self.rotateAxis);
+	
+		# Roll sideways when A/D held
+		self.roll(self.ori, 6, -2*hDir);
 
 
 		if vDir == -1:
@@ -131,9 +171,9 @@ class ArwingPlayer(Arwing):
 		toYaw = -12*dx*adjust  * 2
 		toPitch = 12*dy*adjust * 2
 		
-		self.roll += (toRoll - self.roll)/5
-		self.yaw += (toYaw - self.yaw)/5
-		self.pitch += (toPitch - self.pitch)/5
+		self.drawRoll += (toRoll - self.drawRoll)/5
+		self.drawYaw += (toYaw - self.drawYaw)/5
+		self.drawPitch += (toPitch - self.drawPitch)/5
 		
 		
 		canv3d.turn(self.ori,0, self.ori,3, self.ori,6, -dx*adjust,-dy*adjust);
@@ -151,14 +191,20 @@ class ArwingPlayer(Arwing):
 		aY = dis*(toY-y)
 		aZ = dis*(toZ-z)
 		
-		eyeX = x - aX
-		eyeY = y - aY
-		eyeZ = z - aZ
-		toX -= aX
-		toY -= aY
-		toZ -= aZ
-				
-		canv3d.camera(eyeX,eyeY,eyeZ,toX,toY,toZ,self.ori[6],self.ori[7],self.ori[8]);
+		self.cameraOri[0] = x - aX
+		self.cameraOri[1] = y - aY
+		self.cameraOri[2] = z - aZ
+		self.cameraOri[3] = toX - aX
+		self.cameraOri[4] = toY - aY
+		self.cameraOri[5] = toZ - aZ
+		self.cameraOri[6] = self.ori[6]
+		self.cameraOri[7] = self.ori[7]
+		self.cameraOri[8] = self.ori[8]
+
+		canv3d.camera(self.cameraOri[0],self.cameraOri[1],self.cameraOri[2],
+			self.cameraOri[3],self.cameraOri[4],self.cameraOri[5],
+			self.cameraOri[6],self.cameraOri[7],self.cameraOri[8]);
 		
 	def draw(self, screen):
-		super(ArwingPlayer, self).draw(screen)
+		if self.deathAnimation < 1:
+			super(ArwingPlayer, self).draw(screen)
