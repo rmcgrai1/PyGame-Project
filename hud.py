@@ -44,7 +44,7 @@ class Hud(Drawable):
 		self.staticTimeOut = self.staticTimeMax		
 		
 		self.talkInd = 0
-		self.text = "Welcome, new pilot! You can fly around with\nthe mouse, and shoot with the left mouse\nbutton. Use W to boost, and S to slow down.\n\nTry rolling with A/D--that's a neat trick!\n\nGood luck, and enjoy your flight!"
+		self.text = "Welcome, new pilot! You can fly around with\nthe mouse, and shoot with the left mouse\nbutton. Use W to boost, and S to slow down.\n\nTry spinning with A/D--that's a neat trick!\n\nGood luck, and enjoy your flight!"
 				
 		self.imgTalkBar = Sprite("img/talkbar.png", 1,1)
 		
@@ -58,9 +58,9 @@ class Hud(Drawable):
 		elif self.talkInd < len(self.text):
 			self.talkInd += .5
 			
-			#if random.random() > .25:
-			snd = self.sndFlynn[random.randrange(0,self.snds)]
-			snd.play()
+			if rnd() < .3:
+				snd = self.sndFlynn[random.randrange(0,self.snds)]
+				snd.play()
 			
 			self.sndInd = (self.sndInd + 1) % self.snds
 		elif self.liveTime > 0:
@@ -76,6 +76,11 @@ class Hud(Drawable):
 		pass
 		
 	def blitToScreen(self, screen):
+		pl = self.gs.player
+
+		if pl.deathAnimation > -1:
+			return
+		
 		w = 96
 		h = 96
 		xTB = 15+96+15
@@ -108,7 +113,6 @@ class Hud(Drawable):
 
 		
 		# Draw health bar
-		pl = self.gs.player
 		rFrac = pl.hurtAnimation
 		
 		if rFrac == -1 or rFrac > .8:
@@ -137,7 +141,7 @@ class Hud(Drawable):
 				z = -arwing.ori[2]
 				atX = arwing.ori[3]/radarScale
 				atY = -arwing.ori[4]/radarScale
-				dir = ptDir(-x,-y, -atX,-atY)+arwing.yaw
+				dir = ptDir(-x,-y, -atX,-atY)
 				
 				if arwing == pl:
 					self.imgPlayerShip.draw(screen, radarX+x,radarY+y, angle=dir, scale=.25)
@@ -151,7 +155,7 @@ class Hud(Drawable):
 			z = -arwing.ori[2]
 			atX = arwing.ori[3]/radarScale
 			atY = -arwing.ori[4]/radarScale
-			dir = ptDir(-x,-y, -atX,-atY)+arwing.yaw
+			dir = ptDir(-x,-y, -atX,-atY)
 	
 			self.imgPlayerShip.draw(screen, radarX+x,radarY+y, angle=dir, scale=.25)		
 		
@@ -166,6 +170,11 @@ class Hud(Drawable):
 		# Draw messages
 		y = gfx2d.fontHeight
 		for message in self.messageList:
+			message[1] -= 1
+			if message[1] < 0:
+				self.messageList.remove(message)
+				continue
+			
 			gfx2d.drawTextShadow(screen, message[0], 0, y)
 			y += gfx2d.fontHeight
 		
@@ -175,5 +184,5 @@ class Hud(Drawable):
 			gfx2d.drawText(screen, "Score: " + str(score), 640 - 200, 42, 3, 1, 2)
 		
 	def addMessage(self, txt):
-		self.messageList.append([txt])		
+		self.messageList.append([txt, 200])		
 

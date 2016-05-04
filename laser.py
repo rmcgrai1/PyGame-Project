@@ -12,17 +12,21 @@ import canv3d
 
 class Laser(Drawable):
 	MOD_LASER = None;
+	SND_SINGLE_SHOT = None
 	
 	@staticmethod
-	def preload():
-		if Laser.MOD_LASER == None:
-			Laser.MOD_LASER = canv3d.loadObj("laser.obj");
+	def init():
+		Laser.MOD_LASER = canv3d.loadObj("laser.obj");
+		Laser.SND_SINGLE_SHOT = pygame.mixer.Sound("snd/singleshot.ogg")
 	
 	def __init__(self, gameSpace, speed, maxAge, x,y,z, atX,atY,atZ, upX,upY,upZ):
 		super(Laser, self).__init__(gameSpace, x,y,z, atX,atY,atZ, upX,upY,upZ)
 		self.speed = speed
 		self.maxAge = maxAge;
 		self.age = 0;
+		
+		Laser.SND_SINGLE_SHOT.play()
+
 		
 		
 	def tick(self, input):

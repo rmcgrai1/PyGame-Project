@@ -24,7 +24,7 @@ static double
 	tempVert1[4] = 	{0,0,0,1},
 	tempVert2[4] = 	{0,0,0,1},
 	tempVert3[4] = 	{0,0,0,1},
-	modelviewMat[16] = 	        {1,0,0,0, 
+	modelviewMat[16] = {1,0,0,0, 
 					 0,1,0,0,	
 					 0,0,1,0, 
 					 0,0,0,1},
@@ -123,9 +123,11 @@ static PyObject* pySetMatScale(PyObject *self, PyObject *args) {
 static PyObject* pyAddMatScale(PyObject *self, PyObject *args) {
 	int matType;
 	double sx,sy,sz;
-	if(!PyArg_ParseTuple(args, "iddd", &matType, &sx, &sy, &sz))
-      return NULL;
-  
+	if(!PyArg_ParseTuple(args, "iddd", &matType, &sx, &sy, &sz)) {
+		printf("Failed to parse pyAddMatScale tuple!\n");
+		return NULL;
+	}
+	
 	addMatScale(getMat(matType), sx, sy, sz);
 	Py_RETURN_NONE;
 }
@@ -244,9 +246,7 @@ double * normalizeModify(double* vec, int length)
   double mag = magnitude(vec, length);
   int i;
   for (i = 0; i < length; i++)
-    {
       vec[i] = vec[i] / mag;
-    }
   return vec;
 }
 
@@ -418,11 +418,12 @@ static void rotateVecAboutAxis(double* vec, double angle, double* axis) {
 static PyObject* pyRotateVecAboutAxis(PyObject *self, PyObject *args) {	
 	int offset;
 	PyArrayObject *vecArray, *axisArray;
-	double angle;
-		
-	if(!PyArg_ParseTuple(args, "O!idO!", &PyArray_Type,&vecArray, &offset, &angle, &PyArray_Type,&axisArray))
+	double angle;		
+	if(!PyArg_ParseTuple(args, "O!idO!", &PyArray_Type,&vecArray, &offset, &angle, &PyArray_Type,&axisArray)) {
+		printf("Failed to parse pyRotateVecAboutAxis tuple!\n");
 		return NULL;
-
+	}
+	
 	rotateVecAboutAxis((double*)(vecArray->data)+offset, angle, (double*)(axisArray->data));
 	Py_RETURN_NONE;
 }
@@ -464,11 +465,12 @@ static void turn(double *eyeVec, double *atVec, double *upVec, double deltaX, do
 static PyObject* pyTurn(PyObject *self, PyObject *args) {
 	PyArrayObject *eyeArray, *atArray, *upArray;
 	double deltaX, deltaY;
-	int eyeOffset, atOffset, upOffset;
+	int eyeOffset, atOffset, upOffset;	
+	if(!PyArg_ParseTuple(args, "O!iO!iO!idd", &PyArray_Type,&eyeArray,&eyeOffset,  &PyArray_Type,&atArray,&atOffset,  &PyArray_Type,&upArray,&upOffset,  &deltaX, &deltaY)) {
+		printf("Failed to parse pyTurn tuple!\n");
+		return NULL;
+	}  
 	
-	if(!PyArg_ParseTuple(args, "O!iO!iO!idd", &PyArray_Type,&eyeArray,&eyeOffset,  &PyArray_Type,&atArray,&atOffset,  &PyArray_Type,&upArray,&upOffset,  &deltaX, &deltaY))
-	    return NULL;
-  
 	turn((double*)(eyeArray->data)+eyeOffset, (double*)(atArray->data)+atOffset, (double*)(upArray->data)+upOffset, deltaX, deltaY);
 	Py_RETURN_NONE;
 }
@@ -478,9 +480,11 @@ static double* setMatCamera(double* mat) {
 }
 static PyObject* pySetMatCamera(PyObject *self, PyObject *args) {
 	int matType;
-	if(!PyArg_ParseTuple(args, "i", &matType))
+	if(!PyArg_ParseTuple(args, "i", &matType)) {
+		printf("Failed to parse pySetMatCamera tuple!\n");
 		return NULL;
-
+	}
+	
 	setMatCamera(getMat(matType));
 	Py_RETURN_NONE;
 }
@@ -506,7 +510,7 @@ static PyObject* pyCamera(PyObject *self, PyObject *args) {
 		atX, atY, atZ,
 		upX, upY, upZ;
 	if(!PyArg_ParseTuple(args, "ddddddddd", &eyeX,&eyeY,&eyeZ, &atX,&atY,&atZ, &upX,&upY,&upZ)) {
-		//printf("Failed to parse pyCamera tuple!\n");
+		printf("Failed to parse pyCamera tuple!\n");
 		return NULL;
 	}
 

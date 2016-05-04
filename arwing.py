@@ -24,27 +24,28 @@ class Arwing(Drawable):
 	TEX_JET_HEIGHT = 128
 
 	SND_ENGINE = None
-	SND_SINGLE_SHOT = None
 	SND_BOOST = None
 	SND_BRAKE = None
 	SND_DAMAGE = None
+	SND_EXPLOSION = None
 	
 	SPD_BASE = 5
 	SPD_MAX = 10
 	SPD_MIN = 1
+	
+	
+	@staticmethod
+	def init():
+		Arwing.MOD_ARWING = canv3d.loadObj("arwing.obj")
+		Arwing.TEX_JET = pygame.surfarray.pixels2d(pygame.image.load("img/jet.png").convert_alpha())
+		Arwing.SND_ENGINE = pygame.mixer.Sound("snd/engine.ogg")
+		Arwing.SND_BOOST = pygame.mixer.Sound("snd/boost.ogg")
+		Arwing.SND_BRAKE = pygame.mixer.Sound("snd/brake.ogg")
+		Arwing.SND_DAMAGE = pygame.mixer.Sound("snd/damage.ogg")
+		Arwing.SND_EXPLOSION = pygame.mixer.Sound("snd/explosion.ogg")
 
 	def __init__(self, gameSpace, x,y,z):
 		super(Arwing, self).__init__(gameSpace, x,y,z, x,y,z+1, 0,1,0)
-		
-		# If Arwing sounds/model not loaded yet, do so now!
-		if not Arwing.hasLoaded:
-			Arwing.MOD_ARWING = canv3d.loadObj("arwing.obj")
-			Arwing.TEX_JET = pygame.surfarray.pixels2d(pygame.image.load("img/jet.png").convert_alpha())
-			Arwing.SND_ENGINE = pygame.mixer.Sound("snd/engine.ogg")
-			Arwing.SND_SINGLE_SHOT = pygame.mixer.Sound("snd/singleshot.ogg")
-			Arwing.SND_BOOST = pygame.mixer.Sound("snd/boost.ogg")
-			Arwing.SND_BRAKE = pygame.mixer.Sound("snd/brake.ogg")
-			Arwing.SND_DAMAGE = pygame.mixer.Sound("snd/damage.ogg")
 
 		# Get
 		self.dpos = numpy.array([x, y, z, 1.])		
@@ -52,15 +53,21 @@ class Arwing(Drawable):
 		self.dupNorm = numpy.array([0,1,0,0.])
 
 		self.speed = 0
-		self.roll = 0
-		self.pitch = 0
-		self.yaw = 0
+		self.drawRoll = 0
+		self.drawPitch = 0
+		self.drawYaw = 0
 		
 		self.drawHP = self.hp = 1
 		
 		self.hurtAnimation = -1
 		
 		self.drawPoints = self.points = 0;
+		
+	def reset(self):
+		self.drawHP = self.hp = 1;
+		self.drawPoints = self.points = 0;
+		self.hurtAnimation = -1;
+		self.deathAnimation = -1
 
 	def respawn(self):
 		self.ori[0] = 0;
@@ -73,16 +80,14 @@ class Arwing(Drawable):
 		self.ori[7] = 1;
 		self.ori[8] = 0;
 		
-		self.drawHP = self.hp = 1;
-		self.drawPoints = self.points = 0;
-		self.hurtAnimation = -1;
+		self.reset()
 		
 
 	def tick(self, input):
-		if self.hp == 0:
-			return
-	
 		super(Arwing, self).tick(input)
+		
+		if input['respawn']:
+			self.respawn();
 		
 		if self.hurtAnimation > -1:
 			self.hurtAnimation += .02
@@ -96,10 +101,9 @@ class Arwing(Drawable):
 			self.drawPoints -= 1
 			if self.drawPoints < self.points:
 				self.drawPoints = self.points
-
-		if (input['respawn']):
-			self.respawn();
-
+				
+		if self.hp == 0:
+			return
 			
 	def hurt(self):
 		if self.hp == 0:
@@ -107,21 +111,16 @@ class Arwing(Drawable):
 
 		Arwing.SND_DAMAGE.play()
 		self.hurtAnimation = 0
-		self.hp -= .1
+		self.hp = contain(0, self.hp-.1, 1)
 		
 	def addPoints(self, points):
 		self.points += points;
 	
 	def explode(self):
-		if self.hp == 0:
-			return
-
+		Arwing.SND_EXPLOSION.play()
 		self.gs.instanceAppend( Explosion(self.gs, self.ori[0],self.ori[1],self.ori[2]) )
 	
-	def draw(self, screen):
-		if self.hp == 0:
-			return
-			
+	def draw(self, screen):			
 		canv3d.setMatIdentity(MAT_T)
 		canv3d.addMatTranslation(MAT_T, self.ori[0],self.ori[1],self.ori[2])
 
@@ -137,8 +136,8 @@ class Arwing(Drawable):
 		
 		canv3d.addMatAntiLook(MAT_T, 0,0,0,		nX,nY,nZ,		self.dupNorm[0],self.dupNorm[1],self.dupNorm[2]);
 
-		canv3d.addMatRotationX(MAT_T, self.pitch)
-		canv3d.addMatRotationY(MAT_T, self.yaw)
+		canv3d.addMatRotationX(MAT_T, self.drawPitch)
+		canv3d.addMatRotationY(MAT_T, self.drawYaw)
 
 		if self.hurtAnimation > -1:
 			cR = 255
@@ -150,8 +149,8 @@ class Arwing(Drawable):
 			cR = cG = cB = 255
 
 		# Further transform model
-		canv3d.addMatRotationZ(MAT_T, self.roll)
-		canv3d.addMatTranslation(MAT_T, 0,-20,0)		
+		canv3d.addMatRotationZ(MAT_T, self.drawRoll)
+		canv3d.addMatTranslation(MAT_T, 0,-10,0)		
 		canv3d.addMatScale(MAT_T,.25,.25,.25);
 
 		# Compile matrices into completeMat before drawing
