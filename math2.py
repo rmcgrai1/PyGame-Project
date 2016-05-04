@@ -68,6 +68,9 @@ def epoch():
 
 def rnd():
 	return random.random()
+	
+def sqr(x):
+	return x * x
 
 
 # Containing value between min and max value

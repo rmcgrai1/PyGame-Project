@@ -87,7 +87,17 @@ class Hud(Drawable):
 		pygame.draw.rect(screen, (255,255,255), (int(15+48-w/2),int(480-48-15-h/2), int(w),int(h)), 1)
 
 		
-		gfx2d.drawHealthbar(screen, self.gs.player.drawHP, 640-15-195,15)
+		pl = self.gs.player
+		rFrac = pl.hurtAnimation
+		
+		if rFrac == -1 or rFrac > .8:
+			rX = rY = 0
+		else:
+			rFrac = sqr(1-rFrac)
+			rX = (1 - 2*random.random()) * rFrac * 8
+			rY = (1 - 2*random.random()) * rFrac * 8
+		gfx2d.drawHealthbar(screen, pl.drawHP, 640-15-195 + rX,15 + rY)
+		
 		
 		gfx2d.drawTextShadow(screen, self.text[:(int)(self.talkInd)], xTB+15,yTB+15)
 	
