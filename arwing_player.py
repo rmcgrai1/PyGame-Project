@@ -43,26 +43,23 @@ class ArwingPlayer(Arwing):
 		
 	def pitch(self, vec, offset, amt):
 		# Calculate forward axis (and normalize)
-		fX = vec[3]-vec[0]
-		fY = vec[4]-vec[1]
-		fZ = vec[5]-vec[2]
+		vec[3] = fX = vec[3]-vec[0]
+		vec[4] = fY = vec[4]-vec[1]
+		vec[5] = fZ = vec[5]-vec[2]
 
 		# Get up axis (pre-normalized)
 		upX = vec[6]
 		upY = vec[7]
 		upZ = vec[8]
-
-		# Calculate side axis
-		sX = upZ*fY - upY*fZ
-		sY = upX*fZ - upZ*fX
-		sZ = upY*fX - upX*fY
 		
 		# Rotate Laser w/ Pitch
-		self.rotateAxis[0] = sX
-		self.rotateAxis[1] = sY
-		self.rotateAxis[2] = sZ
+		self.rotateAxis[0] = upZ*fY - upY*fZ
+		self.rotateAxis[1] = upX*fZ - upZ*fX
+		self.rotateAxis[2] = upY*fX - upX*fY
 		
 		canv3d.rotateVecAboutAxis(vec,offset, amt, self.rotateAxis)
+		
+		
 		
 	def tick(self, input):
 		super(ArwingPlayer, self).tick(input)
@@ -86,11 +83,15 @@ class ArwingPlayer(Arwing):
 			x = self.ori[0]
 			y = self.ori[1]
 			z = self.ori[2]
-						
+			
+			atX = self.ori[3]
+			atY = self.ori[4]
+			atZ = self.ori[5]
+			
 			# Calculate forward axis (pre-normalized)
-			fX = self.ori[3]-x
-			fY = self.ori[4]-y
-			fZ = self.ori[5]-z
+			fX = atX-x
+			fY = atY-y
+			fZ = atZ-z
 
 			# Get up axis (pre-normalized)
 			upX = self.ori[6]
@@ -107,9 +108,9 @@ class ArwingPlayer(Arwing):
 			self.laserOri[0] = x
 			self.laserOri[1] = y
 			self.laserOri[2] = z
-			self.laserOri[3] = fX
-			self.laserOri[4] = fY
-			self.laserOri[5] = fZ
+			self.laserOri[3] = atX
+			self.laserOri[4] = atY
+			self.laserOri[5] = atZ
 			self.laserOri[6] = upX
 			self.laserOri[7] = upY
 			self.laserOri[8] = upZ
@@ -129,9 +130,9 @@ class ArwingPlayer(Arwing):
 			else:
 				self.gs.instanceAppend( Laser(self.gs,30, 60*10,
 					self.laserOri[0],self.laserOri[1],self.laserOri[2],
-					self.laserOri[3]+self.laserOri[0],
-					self.laserOri[4]+self.laserOri[1],
-					self.laserOri[5]+self.laserOri[2],
+					self.laserOri[3],
+					self.laserOri[4],
+					self.laserOri[5],
 					self.laserOri[6],self.laserOri[7],self.laserOri[8]
 				));
 

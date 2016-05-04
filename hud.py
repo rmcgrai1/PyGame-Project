@@ -79,8 +79,7 @@ class Hud(Drawable):
 		pl = self.gs.player
 
 		if pl.deathAnimation > -1:
-			gfx2d.drawTextShadow(screen, "Score: " + str(score), 640 - 200, 100, 1,5, FONT_WHITE)
-
+			gfx2d.drawTextShadow(screen, "YOU DIED.\nPress r to respawn.", 640 - 200, 100, 1,5, FONT_WHITE)
 			return
 		
 		w = 96
@@ -183,7 +182,7 @@ class Hud(Drawable):
 		#draw score:
 		if (self.gs.id in self.gs.arwingInsts):
 			score = self.gs.arwingInsts[self.gs.id].points;
-			gfx2d.drawTextShadow(screen, "Score: " + str(score), 640 - 200, 42, 3, 1, color=gfx2d.FONT_GREEN)
+			gfx2d.drawTextShadow(screen, "Score: " + str(score), 640 - 200, 42, gfx2d.FONT_GREEN, 1,2)
 		
 	def addMessage(self, txt):
 		self.messageList.append([txt, 200])		
