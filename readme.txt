@@ -1,8 +1,21 @@
 README
 
-To run on a computer in Fitzpatrick:
+To run on a Linux computer in Fitzpatrick:
+Navigate to the directory where you will be running this game. Type:
 git clone https://github.com/rmcgrai1/PyGame-Project.git
+(Alternatively, unzip the file we e-mailed)
+
+Now open another terminal. On that terminal:
+ssh student00.cse.nd.edu
+
+On student00, cd to the running directory. Once there, type:
+python server.py
+
+On the first terminal on the local fitz machine: 
 python client.py
+
+The game has now started!
+
 
 GAMEPLAY:
 Connect to the sever, and try to shoot down anyone else online!
