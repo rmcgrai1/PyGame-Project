@@ -8,7 +8,6 @@ import time
 import random
 from pygame.locals				import *
 from drawable					import *
-from player						import *
 from sprite						import *
 from math2						import *
 from mat						import *
