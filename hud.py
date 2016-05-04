@@ -140,3 +140,9 @@ class Hud(Drawable):
 		else:
 			dotStr = "." * (3 - self.gs.connectTimer/self.gs.connectDiv % 4)
 			gfx2d.drawTextShadow(screen, "Attempting to connect" + dotStr, 0,0)
+
+
+		#draw score:
+		if (self.gs.id in self.gs.arwingInsts):
+			score = self.gs.arwingInsts[self.gs.id].points;
+			gfx2d.drawTextShadow(screen, str(score), 640 - 200, 42, 3)
