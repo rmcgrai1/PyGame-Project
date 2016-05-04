@@ -486,36 +486,6 @@ static PyObject* pyCameraTurn(PyObject *self, PyObject *args) {
   Py_RETURN_NONE;
 }
 
-//distance is in...pixels?
-static void cameraForwards(double distance) {
-	double dirToMove[3];
-	double distToMove[3];
-	double dirToMoveMag;
-	int i;
-	for (i = 0; i < 3; i++) {
-		dirToMove[i] = gCameraAt[i] - gCameraEye[i];
-	}
-	dirToMoveMag = magnitude(dirToMove, 3);
-
-	distToMove[0] = distance * dirToMove[0] / dirToMoveMag;
-	distToMove[1] = distance * dirToMove[1] / dirToMoveMag;
-	distToMove[2] = distance * dirToMove[2] / dirToMoveMag;
-
-	for (i = 0; i < 3; i++) {
-		gCameraEye[i] = gCameraEye[i] + distToMove[i];
-		gCameraAt[i] = gCameraAt[i] + distToMove[i];
-	}
-}
-
-static PyObject* pyCameraForwards(PyObject *self, PyObject *args) {
-  double distance;
-  if(!PyArg_ParseTuple(args, "d", &distance))
-    return NULL;
-  
-  cameraForwards(distance);
-  Py_RETURN_NONE;
-}
-
 static double* setMatCamera(double* mat) {
 	return setMatLook(mat, gCameraEye[0], gCameraEye[1], gCameraEye[2], gCameraAt[0], gCameraAt[1], gCameraAt[2], gCameraUp[0], gCameraUp[1], gCameraUp[2]);
 }
@@ -998,16 +968,18 @@ static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  dou
 							up = ( u1 / w1 ) * b1 + ( u2 / w2 ) * b2 + ( u3 / w3 ) * b3;
 							vp = ( v1 / w1 ) * b1 + ( v2 / w2 ) * b2 + ( v3 / w3 ) * b3;
 							
-							if(!(up >= 0 && up < 1 && vp >= 0 && vp < 1)) {
-								up = fabs(fmod(up, 1));
-								vp = fabs(fmod(vp, 1));
-							}
+							if(up < 0 || up > 1)
+								up = fmod(fabs(up), 1);
+							if(vp < 0 || vp > 1)
+								vp = fmod(fabs(vp), 1);
 							
 							u = (int)(textureWidth * up / wp);
 							v = (int)(textureHeight * vp / wp);
 							
-							if(up < 0 || up > 1 || vp < 0 || vp > 1)
+							if(up < 0 || up > 1 || vp < 0 || vp > 1) {
+								printf("Point outside texture!\n");
 								continue;
+							}
 							
 							dRGBA = texture[textureHeight*v + u];
 							convertInt2RGBA(dRGBA, &dR,&dG,&dB,&dA);
@@ -1228,6 +1200,8 @@ static mtl** loadMtl(char* filename) {
 	FILE *fp;
 	char lines[200][200], line[200], *type, *substr, c, cc[2];
 	int l = 0, lLen = 0, lNum = 0, mNum = 0;
+	
+	printf("\tLoading mtls from %s...\n", filename);
        
 	if((fp = fopen(filename, "r")) == NULL) {
 	    printf("Invalid Filename %s\n", filename);
@@ -1253,7 +1227,6 @@ static mtl** loadMtl(char* filename) {
 			lLen++;
 		}
 	}
-	
 	fclose(fp);
 
 	int i;
@@ -1278,8 +1251,8 @@ static mtl** loadMtl(char* filename) {
 		if(!strcmp(type,"newmtl")) {
 			substr = strtok(NULL, " ");
 			
-			m = mtls[mi++] = (mtl*) malloc(sizeof(mtl));
-			
+			printf("\tAdding new material %s!\n", substr);
+			m = mtls[mi++] = (mtl*) malloc(sizeof(mtl));			
 			m->name = malloc((strlen(substr)+1) * sizeof(char));
 			strcpy(m->name, substr);
 
@@ -1291,9 +1264,16 @@ static mtl** loadMtl(char* filename) {
 				m->kd[i] = atof(substr);				
 			}
 		}
-		else if(!strcmp(type,"map_Kd"))
-		    m->map_Kd = loadBMP(strtok(NULL, " "), &m->map_Kd_width, &m->map_Kd_height);
+		else if(!strcmp(type,"map_Kd")) {
+			substr = strtok(NULL, " ");
+			
+			printf("\tLoading .bmp from %s...\n", substr);
+		    m->map_Kd = loadBMP(substr, &m->map_Kd_width, &m->map_Kd_height);
+		}
 	}
+	
+	printf("\tDone loading mtls!\n");
+	
 	return mtls;
 }
 
@@ -1516,7 +1496,7 @@ static PyObject* pyDrawObj(PyObject *self, PyObject *args) {
 		
 ////////////////////////////////////////////////////////////////////////////////////////
 
-static PyMethodDef canv3d_funcs[48] = {
+static PyMethodDef canv3d_funcs[47] = {
 	{"setMatIdentity", (PyCFunction) pySetMatIdentity, METH_VARARGS, NULL },
 	{"setMatTranslation", (PyCFunction) pySetMatTranslation, METH_VARARGS, NULL },
 	{"addMatTranslation", (PyCFunction) pyAddMatTranslation, METH_VARARGS, NULL },
@@ -1560,7 +1540,6 @@ static PyMethodDef canv3d_funcs[48] = {
 	{"turn", (PyCFunction) pyTurn, METH_VARARGS, NULL},
 	{"rotateVecAboutAxis", (PyCFunction) pyRotateVecAboutAxis, METH_VARARGS, NULL},
 	{"cameraTurn", (PyCFunction) pyCameraTurn, METH_VARARGS, NULL},
-	{"cameraForwards", (PyCFunction) pyCameraForwards, METH_VARARGS, NULL},
 	{"setMatCamera", (PyCFunction) pySetMatCamera, METH_VARARGS, NULL},
 	{"addMatCamera", (PyCFunction) pyAddMatCamera, METH_VARARGS, NULL},
 	{"setMatCameraPosition", (PyCFunction) pySetMatCameraPosition, METH_VARARGS, NULL},
