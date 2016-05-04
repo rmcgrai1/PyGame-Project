@@ -97,8 +97,10 @@ class ArwingPlayer(Arwing):
 
 		self.mDownPrev = input['mouse_down']
 		
-		dx = input['mouse_dx']
-		dy = input['mouse_dy']
+		speedFrac = .6 + .4 * self.speed / Arwing.SPD_BASE
+
+		dx = input['mouse_dx'] * speedFrac
+		dy = input['mouse_dy'] * speedFrac
 		hDir = input['key_hdir']
 		vDir = input['key_vdir']
 		adjust = input['mouse_d_adjust']
