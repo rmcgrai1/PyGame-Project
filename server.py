@@ -7,6 +7,7 @@ from twisted.internet.task 		import LoopingCall
 from sys			import *
 import time
 import json
+import random
 
 SERVER_HOST = "student00.cse.nd.edu"
 SERVER_PORT = 40064
@@ -43,6 +44,53 @@ newLaserList = {}
 laserList = []
 posDict = {};
 deathDict = {};
+
+#Asteroids have size, position, orientation
+asteroidList = [];
+
+class Asteroid(object):
+	def __init__(self, a_id, radius, posXYZ, rotXYZ):
+		self.a_id = a_id;
+		self.radius = radius;
+		self.x = posXYZ[0];
+		self.y = posXYZ[1];
+		self.z = posXYZ[2];
+		self.rotX = rotXYZ[0];
+		self.rotY = rotXYZ[1];
+		self.rotZ = rotXYZ[2];
+	
+	def checkCollide(self, otherXYZ):
+		dx = self.x - otherXYZ[0];
+		dy = self.y - otherXYZ[1];
+		dz = self.z - otherXYZ[2];
+		dist_squared = dx*dx + dy*dy + dz*dz;
+		if (dist_squared < (self.size * self.size)):
+			return True;
+		else:
+			return False;
+	def toList(self):
+		"""returns [a_id, radius, x, y, z, rotX, rotY, rotZ]"""
+		return [self.a_id, self.radius, self.x, self.y, self.z, self.rotX, self.rotY, self.rotZ]
+
+
+def generateAsteroids():
+	random.seed();
+	size_range = [100, 300]
+	pos_range = [-2000, 2000];
+	rot_range = [0, 360];
+	start_radius = 200;
+	for astero_id in xrange(42):
+		pos = [0, 0, 0];
+		while ((pos[0] <= start_radius) and (pos[1] <= start_radius) and (pos[2] <= start_radius)):
+			for size_iter in xrange(3):
+				pos[size_iter] = random.randint(pos_range[0], pos_range[1]);
+		rot = [0, 0, 0];
+		for rot_iter in xrange(3):
+			rot[rot_iter] = random.randint(rot_range[0], rot_range[1]);
+		asteroidList.append(Asteroid(astero_id, 
+				random.randint(size_range[0], size_range[1]),
+				pos, rot));
+				
 
 class Laser(MovingObject):
         
@@ -192,7 +240,9 @@ class ServerConnFactory(Factory):
 		self.currentID = 0;
 		self.conns = {}
 		serverDmgQueue.get().addCallback(self.sendDamage);
-
+		generateAsteroids();
+		for asteroid in asteroidList:
+			print asteroid.toList()
 	def sendDamage(self, data):
 		"""data is a list of [damaged_id, attacker_id, lid]"""
 		s = json.dumps( {

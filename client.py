@@ -29,6 +29,7 @@ from hud						import *
 from laser						import *
 import json
 import gfx2d
+from  asteroid import *
 
 SERVER_HOST = "student00.cse.nd.edu"
 SERVER_PORT_A = 40076
@@ -84,6 +85,8 @@ class ClientConnection(LineReceiver):
 #				gs.arwingInsts.append(  gs.instanceAppend(Arwing(gs, 0,0,0))  )
 			gs.arwingInsts[gs.id] = gs.player;
 			
+			gs.instanceAppend(Asteroid(1, 100, 100, 100, 65, 242, 234));
+
 			self.transport.write(json.dumps({
 				"type": type,
 				"result": "ok"
