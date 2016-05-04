@@ -6,6 +6,7 @@ int* loadBMP(char *fileName, int *w, int *h) {
 
 	int r, c,
 		width, height,
+		pR, pG, pB,
 		k = 0;
 
 	//Load BMP Image
@@ -18,29 +19,22 @@ int* loadBMP(char *fileName, int *w, int *h) {
 	////////////////////////////////////////////////////////////////////////////////
 
 	*w = width = bitmapInfoHeader.biWidth;
-	*h = height = bitmapInfoHeader.biHeight;
-	
-	int size =  bitmapInfoHeader.biSizeImage;
-	
+	*h = height = bitmapInfoHeader.biHeight;	
 	
 	//Allocate Space for Image
 	int* texPixels = (int *) malloc(height*width * sizeof(int));
 
-	int pR, pG, pB;
 	
 	printf("\ttop-left pixel: (%d, %d, %d)\n", bitmapData[0], bitmapData[1], bitmapData[2]);
-	
-	for(r = 0; r < height; r++) {
-		//Loop Through Each RGB Struct
-		
+
+	// Compress bitmap data into single ints
+	for(r = 0; r < height; r++)
 		for(c = 0; c < width; c++) {
-			//Copy RGB of Array to Matrix
 			texPixels[r*width + c] = convertRGB2Int(bitmapData[k], bitmapData[k+1], bitmapData[k+2]);
 			k += 3;
 		}
-	}
 	
-	//Free Space Taken Up by the Original Array
+	//Free original array and header
 	free(bitmapData);
 	
 	//Return Image Struct
@@ -52,14 +46,7 @@ int* loadBMP(char *fileName, int *w, int *h) {
 
 typedef struct mtl_ {
 	char* name;
-	
-	double ns;
-	double* ka;
 	double* kd;
-	double* ks;
-	double ni;
-	double d;
-	
 	int* map_Kd;
 	int map_Kd_width, map_Kd_height;
 } mtl;
@@ -67,16 +54,10 @@ typedef struct mtl_ {
 typedef struct obj_ {
 	double* vertices;
 	int vNum;
-
 	double* uvs;	
 	int uvNum;
-
-	double* normals;
-	int nNum;
-
 	int* faces;
 	int fNum;
-	
 	mtl **mtls;
 	int mNum;
 } obj;

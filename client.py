@@ -116,16 +116,7 @@ class ClientConnection(LineReceiver):
 					inst = gs.arwingInsts[int(player_id)];
 					allInst = all_dict[player_id]
 					for ii in range(0, 9):
-						inst.ori[ii] = allInst[ii];
-
-
-#			for i in range(0, le):
-#				if not (i == gs.id):
-#					for ii in range(0, 9):
-#						inst = gs.arwingInsts[i]
-#						allInst = all[i]
-#						inst.ori[ii] = allInst[ii]
-		
+						inst.ori[ii] = allInst[ii];		
 			self.transport.write(json.dumps({
 				"type": type,
 				"one": gs.player.ori.tolist()
@@ -138,14 +129,6 @@ class ClientConnection(LineReceiver):
 
 			gs.addMessage("Player " + str(pid) + " left the game.")
 			
-#			if id < len(gs.arwingInsts):				
-#				if id < gs.id:
-#					gs.id -= 1
-#					
-#				arw = gs.arwingInsts[id]
-#				
-#				gs.instanceRemove(arw)
-#				del gs.arwingInsts[id]
 		elif type == 'laser':
 			oriSpeed = jso["oriSpeed"];
 			maxAge = jso["maxAge"]
@@ -155,11 +138,11 @@ class ClientConnection(LineReceiver):
 				self.rogue_shot = -1;
 			else:
 				laserInsts[lid] = gs.instanceAppend(Laser(gs, oriSpeed[0], maxAge,
-				        oriSpeed[1],oriSpeed[2],oriSpeed[3],
-					oriSpeed[4]+oriSpeed[1],
-					oriSpeed[5]+oriSpeed[2],
-					oriSpeed[6]+oriSpeed[3],
-					oriSpeed[7],oriSpeed[8],oriSpeed[9]
+									oriSpeed[1],oriSpeed[2],oriSpeed[3],
+									oriSpeed[4]+oriSpeed[1],
+									oriSpeed[5]+oriSpeed[2],
+									oriSpeed[6]+oriSpeed[3],
+									oriSpeed[7],oriSpeed[8],oriSpeed[9]
 			))
 		elif type == 'takeDmg':
 			damaged = int(jso['damaged'])
@@ -214,6 +197,14 @@ class GameSpace:
 		self.mainQueue = DeferredQueue();
 		self.arwingInsts = {};
 
+		pygame.init()
+		pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=4096)		
+		
+		# Load music, and play it
+		self.musFight = pygame.mixer.Sound("snd/musicLoop.ogg")
+		self.musFight.set_volume(.35)
+		self.musFight.play(-1)
+
 				
 		Laser.preload();
 
@@ -233,21 +224,18 @@ class GameSpace:
 		if reactor.running:
 			reactor.stop()
 		pygame.mixer.quit()
+		
 
 	def main(self):
 		self.isConnected = False
 		self.connectTimer = 0
-                #Ryan is True, Jacob is False.
-		self.connectChoice = False;
-                
+               
+		#Ryan is True, Jacob is False.
+		self.connectChoice = False;        
 		self.connectTimerMax = 75
 		self.connectDiv = 16
 		
-		#1. Initialize game space
-
-		pygame.init()
-		pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=4096) #4096
-		
+		#1. Initialize game space		
 		self.resolution = self.width,self.height = (640,480)
 		self.screen = pygame.display.set_mode(self.resolution)
 		gfx2d.init()
@@ -402,7 +390,7 @@ class GameSpace:
 
 		canv3d.addMatTranslation(MAT_P, self.canv3d_width/2, self.canv3d_height/2,0)
 		canv3d.addMatScale(MAT_P, 1,1,-1)
-		canv3d.addMatPerspective(MAT_P, 1)
+		canv3d.addMatPerspective(MAT_P, .75)
 		canv3d.setMatCamera(MAT_MV);
 
 		canv3d.compileMats();

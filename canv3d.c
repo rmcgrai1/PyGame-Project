@@ -8,11 +8,7 @@
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
-#include "hashmap.h"
 #include "obj.h"
-
-
-//#include "canv3d.h"
 #include "linalg.h"
 
 #define MAT_MODELVIEW		0
@@ -44,7 +40,6 @@ static double
 				 0,1,0,0, 
 				 0,0,1,0,
 					 0,0,0,1},
-  globalUpDownAxis[4] = {1, 0, 0 , 0},
   gCameraEye[4] = {0, 0, 0, 1},
   gCameraAt[4] = {0, 0, -1, 1},
   gCameraUp[4] = {0, 1, 0, 0};
@@ -72,7 +67,8 @@ static void setRGB(int r, int g, int b);
 
 
 
-/******************************* RGBA INT FUNCTIONS ************************************/
+/*********************
+********** RGBA INT FUNCTIONS ************************************/
 
 double calculateLength(double* vec4) {
 	return sqrt(vec4[0]*vec4[0] + vec4[1]*vec4[1] + vec4[2]*vec4[2] + vec4[3]*vec4[3]);
@@ -195,43 +191,16 @@ static PyObject* pyAddMatRotationZ(PyObject *self, PyObject *args) {
 static double* setMatPerspective(double *mat, double fov) {
 	// http://stackoverflow.com/questions/6060169/is-this-a-correct-perspective-fov-matrix
 	
-	fov = .5;
 	double ys = 1. / tand(fov/2.);
 	double xs = ys*aspect;
 	
-	/*set16(mat,
-		xscale,0,0,0,  
-		0,yscale,0,0, 
-		0,0,(f+n)/(n-f),-1,
-		0,0,2*f*n/(n-f),0)
-	*/
-	
-	/*set16(mat,
-		xs,0,0,0,
-		0,ys,0,0,
-		0,0,(far+near)/(near-far),2*far*near/(near-far),
-		0,0,-1,0);*/
 	set16(mat,
 		xs,0,0,0,
 		0,ys,0,0,
 		0,0,(far+near)/(near-far),2*far*near/(near-far),
 		0,0,-1,0);
-		
-	/*set16(mat,
-		3.07292, 0.0, 0.0, 0.0, 
-		0.0, 4.5107083, 0.0, 0.0,
-		0.0, 0.0, -1.0100503, -1.0,
-		0.0, 0.0, -1.0050251, 0.0);*/
-		
-	//transpose(mat);
-	////printf("\n");
 	
 	return mat;	
-	/*return set16(mat,
-		sc,0,0,0,
-		0,sc,0,0,
-		0,0,(far+near)/(near-far),-1,
-		0,0,2*far*near/(near-far),0);*/
 }
 static PyObject* pySetMatPerspective(PyObject *self, PyObject *args) {
 	int matType;
@@ -279,44 +248,6 @@ double * normalizeModify(double* vec, int length)
       vec[i] = vec[i] / mag;
     }
   return vec;
-}
-
-double * normalizeCopy(double* vecSource, double* vecDest, int length)
-{
-  double mag = magnitude(vecSource, length);
-  int i;
-  for (i = 0; i < length; i++)
-    {
-      vecDest[i] = vecSource[i] / mag;
-    }
-  return vecDest;
-}
-
- double* subtractVecCopy(double *vec1, double *vec2, double* vecDest, int length)
- {
-   int i;
-   for (i = 0; i < length; i++)
-     {
-       vecDest[i] = vec1[i] - vec2[i];
-     }
-   return vecDest;
- }
-
-double* crossVec3Copy(double *u, double *v, double* vecDest) {
-	vecDest[0] = (u[1]*v[2]) - (u[2]*v[1]);
-	vecDest[1] = (u[2]*v[0]) - (u[0]*v[2]);
-	vecDest[2] = (u[0]*v[1]) - (u[1]*v[0]);
-	return vecDest;
-}
-
-//dot product
-double dot(double *u, double *v, int length) {
-	int i;
-	double sumTotal = 0;
-	for (i = 0; i < length; i++) {
-		sumTotal += (u[i] * v[i]);
-	}
-	return sumTotal;
 }
 
 	
@@ -515,7 +446,7 @@ static void turn(double *eyeVec, double *atVec, double *upVec, double deltaX, do
 		atVec[0]-eyeVec[0],atVec[1]-eyeVec[1],atVec[2]-eyeVec[2],
 		&sideAxis[0],&sideAxis[1],&sideAxis[2]);
   
-  rotateAboutAxis(upDownRotate, deltaY, sideAxis);
+	rotateAboutAxis(upDownRotate, deltaY, sideAxis);
     
 	setMatTranslation(toTransform, eyeVec[0],eyeVec[1],eyeVec[2]);
 	multMatMat(toTransform, upDownRotate, toTransform);
@@ -532,8 +463,6 @@ static void turn(double *eyeVec, double *atVec, double *upVec, double deltaX, do
 	multMatMat(toTransform, leftRightRotate, toTransform);
 	addMatTranslation(toTransform, -eyeVec[0],-eyeVec[1],-eyeVec[2]);
 	multMatVec3(toTransform, atVec, atVec, 1);
-	//mat4MultVec3(toTransform, upVec, upVec);
-	multMatVec(leftRightRotate, globalUpDownAxis, globalUpDownAxis);
 }
 static PyObject* pyTurn(PyObject *self, PyObject *args) {
 	PyArrayObject *eyeArray, *atArray, *upArray;
@@ -1113,11 +1042,9 @@ static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  dou
 							
 							u = (int)(textureWidth * up / wp);
 							v = (int)(textureHeight * vp / wp);
-
-							if(u == textureWidth)
-								u -= 1;
-							if(v == textureHeight)
-								v -= 1;
+							
+							if(up < 0 || up > 1 || vp < 0 || vp > 1)
+								continue;
 							
 							dRGBA = texture[textureHeight*v + u];
 							convertInt2RGBA(dRGBA, &dR,&dG,&dB,&dA);
@@ -1156,8 +1083,6 @@ static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  dou
 									pixels[index] = convertRGB2Int((int)(dR*val),(int)(dG*val),(int)(dB*val));
 								else {
 									convertInt2RGBA(pixels[index], &pR,&pG,&pB,&pA);
-									
-									
 									pixels[index] = convertRGB2Int((int)(dR*val),(int)(dG*val),(int)(dB*val));									
 								}									
 							}
@@ -1167,12 +1092,9 @@ static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  dou
 			}
 		}
 	}
-	
-	//printf("< drawTriangle()\n");
 }
 static PyObject* pyDrawTriangle(PyObject *self, PyObject *args) {
 	double x1,y1,z1,u1,v1,  x2,y2,z2,u2,v2,  x3,y3,z3,u3,v3;
-	
 	if(!PyArg_ParseTuple(args, "ddddddddddddddd", &x1,&y1,&z1,&u1,&v1,  &x2,&y2,&z2,&u2,&v2,  &x3,&y3,&z3,&u3,&v3))
       return NULL;
   
@@ -1192,9 +1114,7 @@ static PyObject* pyPrintMats(PyObject *self) {
 
 
 static void drawQuad(double x1,double y1,double z1,double u1,double v1,	double x2,double y2,double z2,double u2,double v2,	double x3,double y3,double z3,double u3,double v3,	double x4,double y4,double z4,double u4,double v4, int tries) {
-	//setRGB(255,0,0);
 	drawTriangle(x1,y1,z1,u1,u1,  x2,y2,z2,u2,v2,  x3,y3,z3,u3,v3, tries);
-	//setRGB(0,0,255);
 	drawTriangle(x3,y3,z3,u3,v3,  x4,y4,z4,u4,v4,  x1,y1,z1,u1,v1, tries);
 }
 static void drawQuad0(double x1,double y1,double z1,double u1,double v1,	double x2,double y2,double z2,double u2,double v2,	double x3,double y3,double z3,double u3,double v3,	double x4,double y4,double z4,double u4,double v4) {
@@ -1311,9 +1231,9 @@ static PyObject* pyDraw3dWall(PyObject *self, PyObject *args) {
 					
 static void compileMats(void) {
 	setMatIdentity(completeMat);
-	multMatMat(completeMat, projMat,	completeMat);
+	multMatMat(completeMat, projMat,		completeMat);
 	multMatMat(completeMat, modelviewMat,	completeMat);
-	multMatMat(completeMat, transMat,	completeMat);
+	multMatMat(completeMat, transMat,		completeMat);
 }
 static PyObject* pyCompileMats(PyObject *self) {
 	compileMats();
@@ -1344,15 +1264,12 @@ static mtl** loadMtl(char* filename) {
 		
 	FILE *fp;
 	char lines[200][200], line[200], *type, *substr, c, cc[2];
-	size_t len = 0;
-	ssize_t read;
 	int l = 0, lLen = 0, lNum = 0, mNum = 0;
        
-	if((fp = fopen(filename, "r")) == NULL)
-	  {
+	if((fp = fopen(filename, "r")) == NULL) {
 	    printf("Invalid Filename %s\n", filename);
 	    return NULL;
-	  }
+	}
 	cc[1] = '\0';
 	
 	lines[0][0] = '\0';
@@ -1381,9 +1298,8 @@ static mtl** loadMtl(char* filename) {
 	for(l = 0; l < lNum; l++) {
 		strcpy(line, lines[l]);	
 		
-		type = strtok(line, " ");
-		
-		if(!strcmp(type, "newmtl"))
+		// If type is "newmtl", another material to create!
+		if(!strcmp(strtok(line, " "), "newmtl"))
 			mNum++;
 	}
 
@@ -1398,8 +1314,6 @@ static mtl** loadMtl(char* filename) {
 				
 		if(!strcmp(type,"newmtl")) {
 			substr = strtok(NULL, " ");
-			//printf("Adding material: %s\n", substr);
-			//printf("%s\n", substr);
 			
 			m = mtls[mi++] = (mtl*) malloc(sizeof(mtl));
 			
@@ -1411,15 +1325,11 @@ static mtl** loadMtl(char* filename) {
 		else if(!strcmp(type,"Kd")) {
 			for(i = 0; i < 3; i++) {
 				substr = strtok(NULL, " ");				
-				m->kd[i] = atof(substr);
-				
-				//printf("kd: %lf\n", kd[i]);
+				m->kd[i] = atof(substr);				
 			}
 		}
 		else if(!strcmp(type,"map_Kd"))
-		  {
 		    m->map_Kd = loadBMP(strtok(NULL, " "), &m->map_Kd_width, &m->map_Kd_height);
-		  }
 	}
 	return mtls;
 }
@@ -1445,7 +1355,6 @@ static void loadObj(char* filename, int id) {
 	// Load file into string array
 	while(!feof(fp)) {
 		cc[0] = fgetc(fp);
-		//printf("%s", cc);
 		
 		if(cc[0] == '\r') {}
 		else if(cc[0] == '\n') {
@@ -1454,7 +1363,7 @@ static void loadObj(char* filename, int id) {
 				lLen = 0;
 			}
 		}
-		else  {
+		else {
 			strcat(lines[lNum], cc);
 			lLen++;
 		}
@@ -1516,22 +1425,23 @@ static void loadObj(char* filename, int id) {
 			}
 			vt++;
 		}
-		else if(!strcmp(type,"mtllib")) {
+		else if(!strcmp(type,"mtllib"))
 			mtls = loadMtl(strtok(NULL, " "));
-		}
 		else if(!strcmp(type,"usemtl")) {
 			faces[9*f] = -1;
 			
 			ii = -1;
 			substr = strtok(NULL, " ");
-			for(i = 0; i < mNum; i++) {
-				//printf("%s\n", mtls[i]->name);
+			for(i = 0; i < mNum; i++)
 				if(!strcmp(substr,mtls[i]->name)) {
 					ii = i;
 					break;
 				}
+				
+			if(ii == -1) {
+				printf("Invalid name! %s\n", substr);
+				return NULL;
 			}
-			//printf("Setting material: %d\n", ii);
 			faces[9*f + 3] = ii;
 			
 			f++;

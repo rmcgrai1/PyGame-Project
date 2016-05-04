@@ -52,10 +52,7 @@ unsigned char *LoadBitmapFile(char *filename, BITMAPINFOHEADER *bitmapInfoHeader
     unsigned char tempRGB;  //our swap variable
     size_t read_result = 0;
 	
-	
 	printf("Size of fileheader:%lu, infoHeader:%lu\n", sizeof(BITMAPFILEHEADER), sizeof(BITMAPINFOHEADER));
-
-	
 
     //open filename in read binary mode
     filePtr = fopen(filename,"rb");

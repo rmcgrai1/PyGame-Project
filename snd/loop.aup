@@ -1,0 +1,85 @@
+<?xml version="1.0" standalone="no" ?>
+<!DOCTYPE project PUBLIC "-//audacityproject-1.3.0//DTD//EN" "http://audacity.sourceforge.net/xml/audacityproject-1.3.0.dtd" >
+<project xmlns="http://audacity.sourceforge.net/xml/" projname="loop_data" version="1.3.0" audacityversion="2.1.1" sel0="54.1921305645" sel1="54.1921305645" vpos="0" h="0.0000000000" zoom="22.7339324087" rate="44100.0" snapto="off" selectionformat="hh:mm:ss + milliseconds" frequencyformat="Hz" bandwidthformat="octaves">
+	<tags>
+		<tag name="major_brand" value="mp42"/>
+		<tag name="Software" value="Lavf53.32.100"/>
+		<tag name="compatible_brands" value="isomavc1mp42"/>
+		<tag name="minor_version" value="0"/>
+		<tag name="Encoding time" value="2008-02-18 03:21:33"/>
+	</tags>
+	<wavetrack name="Star Fox 64 Soundtrack - Starwolf Theme" channel="0" linked="1" mute="0" solo="0" height="150" minimized="0" isSelected="1" rate="44100" gain="1.0" pan="0.0">
+		<waveclip offset="0.00000000">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="2454493">
+				<waveblock start="0">
+					<simpleblockfile filename="e0000c31.au" len="156235" min="-0.377041" max="0.406125" rms="0.070632"/>
+				</waveblock>
+				<waveblock start="156235">
+					<simpleblockfile filename="e000068a.au" len="262144" min="-0.348551" max="0.433939" rms="0.079745"/>
+				</waveblock>
+				<waveblock start="418379">
+					<simpleblockfile filename="e0000160.au" len="262144" min="-0.381757" max="0.416756" rms="0.075319"/>
+				</waveblock>
+				<waveblock start="680523">
+					<simpleblockfile filename="e0000a5d.au" len="262144" min="-0.356055" max="0.393867" rms="0.051747"/>
+				</waveblock>
+				<waveblock start="942667">
+					<simpleblockfile filename="e0000405.au" len="262144" min="-0.359634" max="0.314957" rms="0.070276"/>
+				</waveblock>
+				<waveblock start="1204811">
+					<simpleblockfile filename="e0000c07.au" len="262144" min="-0.311624" max="0.289675" rms="0.060613"/>
+				</waveblock>
+				<waveblock start="1466955">
+					<simpleblockfile filename="e0000073.au" len="262144" min="-0.339367" max="0.424829" rms="0.064138"/>
+				</waveblock>
+				<waveblock start="1729099">
+					<simpleblockfile filename="e0000e56.au" len="262144" min="-0.313549" max="0.330951" rms="0.075376"/>
+				</waveblock>
+				<waveblock start="1991243">
+					<simpleblockfile filename="e00001f8.au" len="262144" min="-0.383657" max="0.382211" rms="0.081054"/>
+				</waveblock>
+				<waveblock start="2253387">
+					<simpleblockfile filename="e000044c.au" len="201106" min="-0.389214" max="0.422525" rms="0.081844"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="0"/>
+		</waveclip>
+	</wavetrack>
+	<wavetrack name="Star Fox 64 Soundtrack - Starwolf Theme" channel="1" linked="0" mute="0" solo="0" height="150" minimized="0" isSelected="1" rate="44100" gain="1.0" pan="0.0">
+		<waveclip offset="0.00000000">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="2454493">
+				<waveblock start="0">
+					<simpleblockfile filename="e0000a42.au" len="156235" min="-0.377041" max="0.406125" rms="0.070632"/>
+				</waveblock>
+				<waveblock start="156235">
+					<simpleblockfile filename="e0000a8e.au" len="262144" min="-0.348551" max="0.433939" rms="0.079745"/>
+				</waveblock>
+				<waveblock start="418379">
+					<simpleblockfile filename="e0000aaf.au" len="262144" min="-0.381757" max="0.416756" rms="0.075319"/>
+				</waveblock>
+				<waveblock start="680523">
+					<simpleblockfile filename="e00001d3.au" len="262144" min="-0.356055" max="0.393867" rms="0.051747"/>
+				</waveblock>
+				<waveblock start="942667">
+					<simpleblockfile filename="e000076c.au" len="262144" min="-0.359634" max="0.314957" rms="0.070276"/>
+				</waveblock>
+				<waveblock start="1204811">
+					<simpleblockfile filename="e0000372.au" len="262144" min="-0.311624" max="0.289675" rms="0.060613"/>
+				</waveblock>
+				<waveblock start="1466955">
+					<simpleblockfile filename="e0000ecc.au" len="262144" min="-0.339367" max="0.424829" rms="0.064138"/>
+				</waveblock>
+				<waveblock start="1729099">
+					<simpleblockfile filename="e0000802.au" len="262144" min="-0.313549" max="0.330951" rms="0.075376"/>
+				</waveblock>
+				<waveblock start="1991243">
+					<simpleblockfile filename="e00007a9.au" len="262144" min="-0.383657" max="0.382211" rms="0.081054"/>
+				</waveblock>
+				<waveblock start="2253387">
+					<simpleblockfile filename="e0000d34.au" len="201106" min="-0.389214" max="0.422525" rms="0.081844"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="0"/>
+		</waveclip>
+	</wavetrack>
+</project>
