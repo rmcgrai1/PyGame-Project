@@ -19,6 +19,8 @@ class Hud(Drawable):
 		self.imgRadar = Sprite("img/radar.png", 1,1)
 		self.imgShip = Sprite("img/ship.png", 1,1)
 		
+		self.messageList = []
+
 		self.sndInd = 0
 		self.snds = 6
 		
@@ -82,7 +84,7 @@ class Hud(Drawable):
 			else:
 				self.imgFlynn.draw(screen, 15+48, 480-48-15, frame=self.ind, scale=.75)
 		
-			gfx2d.drawTextShadow(screen, "FLYNN", xTB+2,yTB+2, gfx2d.FONT_YELLOW)
+			gfx2d.drawTextShadow(screen, "FLYNN", xTB+2,yTB+2, color=gfx2d.FONT_YELLOW)
 
 		# Draw Outline
 		pygame.draw.rect(screen, (255,255,255), (int(15+48-w/2),int(480-48-15-h/2), int(w),int(h)), 1)
@@ -118,7 +120,7 @@ class Hud(Drawable):
 				z = -arwing.ori[2]
 				atX = arwing.ori[3]/radarScale
 				atY = -arwing.ori[4]/radarScale
-				dir = ptDir(-x,-y, -atX,-atY)
+				dir = ptDir(-x,-y, -atX,-atY)+arwing.yaw
 				
 				self.imgShip.draw(screen, radarX+x,radarY+y, angle=dir, scale=.25)
 		else:
@@ -129,14 +131,24 @@ class Hud(Drawable):
 			z = -arwing.ori[2]
 			atX = arwing.ori[3]/radarScale
 			atY = -arwing.ori[4]/radarScale
-			dir = ptDir(-x,-y, -atX,-atY)
+			dir = ptDir(-x,-y, -atX,-atY)+arwing.yaw
 	
 			self.imgShip.draw(screen, radarX+x,radarY+y, angle=dir, scale=.25)		
 		
-		gfx2d.drawTextShadow(screen, self.text[:(int)(self.talkInd)], xTB+15,yTB+15)
+		gfx2d.drawTextShadow(screen, self.text[:(int)(self.talkInd)], xTB+15,yTB+15, color=gfx2d.FONT_WHITE, xscale=1,yscale=1.5)
 	
 		if self.gs.isConnected:
-			gfx2d.drawTextShadow(screen, "Successfully connected!", 0,0)
+			gfx2d.drawTextShadow(screen, "Successfully connected!", 0,0, color=gfx2d.FONT_GREEN)
 		else:
 			dotStr = "." * (3 - self.gs.connectTimer/self.gs.connectDiv % 4)
-			gfx2d.drawTextShadow(screen, "Attempting to connect" + dotStr, 0,0)
+			gfx2d.drawTextShadow(screen, "Attempting to connect" + dotStr, 0,0, color=gfx2d.FONT_RED)
+
+		# Draw messages
+		y = gfx2d.fontHeight
+		for message in self.messageList:
+			gfx2d.drawTextShadow(screen, message[0], 0, y)
+			y += gfx2d.fontHeight
+		
+		
+	def addMessage(self, txt):
+		self.messageList.append([txt])		

@@ -7,24 +7,13 @@ import random
 from pygame.locals				import *
 from src						import *
 from drawable					import *
-from deathstar					import *
-from earth						import *
 from player						import *
-from earthchunk					import *
 from sprite						import *
 from math2						import *
-from explosion					import *
 from mat						import *
-from skybox						import *
 from arwing						import *
 from arwing_player				import *
-from twisted.internet.protocol	import Protocol, ClientFactory, Factory
-from twisted.internet.task 		import LoopingCall
-from twisted.internet			import reactor
-from twisted.protocols.basic	import LineReceiver
-from twisted.internet.tcp		import Port
 from sys						import *
-import json
 
 COLOR_BLACK = (0,0,0)
 COLOR_WHITE = (255,255,255)
@@ -47,8 +36,10 @@ fontHeight = 8
 
 def init():
 	global IMG_FONT
-	global fontCharList
 	global IMG_HPBAR
+	global fontCharList
+	global messageList
+	
 	
 	SPR_FONT = Sprite("img/font.png", 16,16)
 	SPR_HPBAR = Sprite("img/hpBar.png", 1,1)
@@ -89,12 +80,17 @@ def init():
 			
 	subCharList = fontCharList[FONT_WHITE]
 			
-def drawChar(surf, c, x,y):
-	surf.blit(subCharList[ord(c)], (x,y, fontWidth,fontHeight))
+def drawChar(surf, c, x,y, xscale=1,yscale=1):
+	img = subCharList[ord(c)]
+
+	if xscale != 1 or yscale != 1:
+		img = pygame.transform.smoothscale(img, (int(xscale*fontWidth),int(yscale*fontHeight)) )
+
+	surf.blit(img, (x,y, fontWidth,fontHeight))
 	pass
 
 	
-def drawText(surf, txt, x,y, color=FONT_WHITE):
+def drawText(surf, txt, x,y, color=FONT_WHITE, xscale=1,yscale=1):
 	global subCharList
 	subCharList = fontCharList[color]
 	
@@ -103,18 +99,17 @@ def drawText(surf, txt, x,y, color=FONT_WHITE):
 	for c in txt:	
 		if c == '\n':
 			x = oriX
-			y += fontHeight
+			y += fontHeight*yscale
 		elif c == ' ':
-			x += fontWidth
+			x += fontWidth*xscale
 		else:
-			drawChar(surf, c, x,y)
-			x += fontWidth
+			drawChar(surf, c, x,y, xscale, yscale)
+			x += fontWidth*xscale
 
-def drawTextShadow(surf, txt, x,y, color=FONT_WHITE):
-	drawText(surf, txt, x+2,y+1, FONT_BLACK);
-	drawText(surf, txt, x,y, color);
+def drawTextShadow(surf, txt, x,y, color=FONT_WHITE, xscale=1,yscale=1):
+	drawText(surf, txt, x+2,y+1, FONT_BLACK, xscale, yscale);
+	drawText(surf, txt, x,y, color, xscale, yscale);
 	
 def drawHealthbar(surf, frac, x,y):
 	surf.blit(IMG_HPBAR, (x+2,y+2), (0,0,192*contain(0,frac,1),19))
 	pygame.draw.rect(surf, COLOR_WHITE, (x,y,195,20), 1)
-

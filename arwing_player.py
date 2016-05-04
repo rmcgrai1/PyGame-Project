@@ -108,8 +108,7 @@ class ArwingPlayer(Arwing):
 		self.rotateAxis[0] = self.ori[3]-self.ori[0]
 		self.rotateAxis[1] = self.ori[4]-self.ori[1]
 		self.rotateAxis[2] = self.ori[5]-self.ori[2]
-				
-		#canv3d.rotateVecAboutAxis(self.ori,6, hDir, self.forwardAxis);
+		canv3d.rotateVecAboutAxis(self.ori,6, hDir, self.rotateAxis);
 
 		
 		if hDir != 0:

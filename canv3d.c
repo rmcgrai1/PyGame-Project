@@ -501,13 +501,21 @@ static PyObject* pyRotateVecAboutAxis(PyObject *self, PyObject *args) {
 
 //deltaX and deltaY are in degrees
 static void turn(double *eyeVec, double *atVec, double *upVec, double deltaX, double deltaY) {
-  double upDownRotate[16];
-  double leftRightRotate[16];
-  double toTransform[16];
+	double upDownRotate[16];
+	double leftRightRotate[16];
+	double toTransform[16];
 
-  int i;
+	double sideAxis[4] = {0,0,0,0};
+
+	int i;
+
+
+	mcross(
+		upVec[0],upVec[1],upVec[2],
+		atVec[0]-eyeVec[0],atVec[1]-eyeVec[1],atVec[2]-eyeVec[2],
+		&sideAxis[0],&sideAxis[1],&sideAxis[2]);
   
-  rotateAboutAxis(upDownRotate, deltaY, globalUpDownAxis);
+  rotateAboutAxis(upDownRotate, deltaY, sideAxis);
     
 	setMatTranslation(toTransform, eyeVec[0],eyeVec[1],eyeVec[2]);
 	multMatMat(toTransform, upDownRotate, toTransform);
