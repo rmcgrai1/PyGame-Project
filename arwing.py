@@ -51,6 +51,8 @@ class Arwing(Drawable):
 		self.pitch = 0
 		self.yaw = 0
 		
+		self.drawHP = self.hp = 1
+		
 		self.hurtAnimation = -1
 		
 	
@@ -63,10 +65,13 @@ class Arwing(Drawable):
 			if self.hurtAnimation > 1:
 				self.hurtAnimation = -1
 				
+		self.drawHP += (self.hp - self.drawHP)/5
+				
 	def hurt(self):
 		if self.hurtAnimation == -1:
 			Arwing.SND_DAMAGE.play()
 			self.hurtAnimation = 0
+			self.hp -= .1
 		
 	def draw(self, screen):
 		canv3d.setMatIdentity(MAT_T)

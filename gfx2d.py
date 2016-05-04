@@ -27,6 +27,8 @@ from sys						import *
 from radar						import *
 import json
 
+COLOR_BLACK = (0,0,0)
+COLOR_WHITE = (255,255,255)
 
 FONT_WHITE = 0
 FONT_BLACK = 1
@@ -37,17 +39,21 @@ FONT_YELLOW = 5
 FONT_CYAN = 6
 FONT_MAGENTA = 7
 
-fontSprite = None
+SPR_FONT = None
+SPR_HPBAR = None
 fontCharList = None
 subCharList = None
 fontWidth = 8
 fontHeight = 8
 
 def init():
-	global fontSprite
+	global IMG_FONT
 	global fontCharList
+	global IMG_HPBAR
 	
-	fontSprite = Sprite("img/font.png", 16,16)	
+	SPR_FONT = Sprite("img/font.png", 16,16)
+	SPR_HPBAR = Sprite("img/hpBar.png", 1,1)
+	IMG_HPBAR = SPR_HPBAR.get(0,0)[0]
 	
 	# Create list of lists to store each letter in a different color
 	fontCharList = []
@@ -58,7 +64,7 @@ def init():
 		for x in range(0,16):
 			c = y*16 + x
 			
-			white = fontCharList[FONT_WHITE][c] = fontSprite.get(0,0, frame=c)[0].copy()			
+			white = fontCharList[FONT_WHITE][c] = SPR_FONT.get(0,0, frame=c)[0].copy()			
 			
 			black = fontCharList[FONT_BLACK][c] = white.copy()
 			black.fill((0,0,0,255), special_flags=BLEND_RGB_MULT)
@@ -109,6 +115,7 @@ def drawTextShadow(surf, txt, x,y, color=FONT_WHITE):
 	drawText(surf, txt, x+2,y+1, FONT_BLACK);
 	drawText(surf, txt, x,y, color);
 	
-def drawHealthbar(surf, frac, x,y, w,h):
-	surf.blit(IMG_HPBAR, (0,0), subRect)
+def drawHealthbar(surf, frac, x,y):
+	surf.blit(IMG_HPBAR, (x+2,y+2), (0,0,192*contain(0,frac,1),19))
+	pygame.draw.rect(surf, COLOR_WHITE, (x,y,195,20), 1)
 

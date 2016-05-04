@@ -37,9 +37,6 @@ SERVER_PORT_B = 40064
 
 #toServerQueue = DeferredQueue()
 
-black = (0,0,0)
-white = (255,255,255)
-
 arwingInsts = {};
 laserInsts = {};
 
@@ -360,7 +357,7 @@ class GameSpace:
 
 		#7. Display
 
-		self.screen.fill(white)
+		self.screen.fill(gfx2d.COLOR_WHITE)
 		canv3d.clear();
 
 
