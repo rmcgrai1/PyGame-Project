@@ -158,6 +158,7 @@ class ClientConnection(LineReceiver):
 			except KeyError as ex:
 				print "The damaged ship left the game!"
 			try: 
+				#Update points here
 				arwingInsts[attacker];
 			except KeyError as ex:
 				print "The attacker has left the game!"
@@ -165,7 +166,7 @@ class ClientConnection(LineReceiver):
 			las = laserInsts[lid];
 			gs.instanceRemove(las);
 			del laserInsts[lid];
-			print "Removed Laser"
+			#print "Removed Laser"
 
 	def connectionMade(self):
 		print 'new connection made to ' + str(self.addr)

@@ -62,8 +62,8 @@ class Laser(MovingObject):
 	def remove(self):
 		del laserList[laserList.index(self)];
 
-	def checkCollide(self, otherXYZ, radius, player_id):
-		if not (player_id == self.creator):
+	def checkCollide(self, otherXYZ, radius, attacker_id):
+		if not (attacker_id == self.creator):
 			return super(Laser, self).checkCollide(otherXYZ, radius)
                 
 def serverLoop():
@@ -71,9 +71,8 @@ def serverLoop():
                 laser.tick();
 		for player in posDict:
 			if laser.checkCollide(posDict[player][:3], 50, player):
-				print 'You hit player', player;
-				#print posDict[player][:3]
-				serverDmgQueue.put(player);
+				#print 'You hit player', player;
+				serverDmgQueue.put([player, laser.creator, laser.lid]);
 				laser.remove();
 				
 
