@@ -24,7 +24,6 @@ from twisted.internet			import reactor
 from twisted.protocols.basic	import LineReceiver
 from twisted.internet.tcp		import Port
 from sys						import *
-from radar						import *
 import json
 
 COLOR_BLACK = (0,0,0)

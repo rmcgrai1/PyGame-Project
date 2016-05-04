@@ -25,7 +25,6 @@ from twisted.protocols.basic	import LineReceiver
 from twisted.internet.tcp		import Port
 from twisted.internet.defer import DeferredQueue
 from sys						import *
-from radar						import *
 from hud						import *
 from laser						import *
 import json
@@ -265,7 +264,6 @@ class GameSpace:
 		self.clock = pygame.time.Clock()	
 		self.skybox = self.instanceAppend(Skybox(self, "img/orbital-element_lf.jpg","img/orbital-element_rt.jpg","img/orbital-element_ft.jpg","img/orbital-element_bk.jpg","img/orbital-element_up.jpg","img/orbital-element_dn.jpg"))
 		self.reticle = self.instanceAppend(Reticle(self.mouse_center_x, self.mouse_center_y));
-		self.radar = self.instanceAppend(Radar(self));
 		self.player = self.instanceAppend(ArwingPlayer(self, 0,0,0))
 		self.hud = self.instanceAppend(Hud(self))
 
@@ -366,7 +364,7 @@ class GameSpace:
 			"key_hdir": self.keyHDir,
 			"key_vdir": self.keyVDir,
 			"brake" : False,
-			"freeze_signal" : self.brake
+			"freeze_signal" : self.brake,
 			"respawn" : self.respawn
 		}
 		self.respawn = False;
@@ -407,7 +405,6 @@ class GameSpace:
 		# Blit 3d canvas to screen
 		self.screen.blit(self.canv3d_img, self.rect);
 		self.reticle.blitToScreen(self.screen);
-		self.radar.blitToScreen(self.screen);
 		self.hud.blitToScreen(self.screen)
 		
 		pygame.display.flip()
