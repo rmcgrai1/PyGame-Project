@@ -28,6 +28,9 @@ class Drawable(object):
 		aY = -self.speed * (self.ori[4] - self.ori[1])
 		aZ = -self.speed * (self.ori[5] - self.ori[2])
 
+		if (input['brake']):
+			aX = aY = aZ = 0;
+		
 		self.ori[0] += aX;
 		self.ori[1] += aY;
 		self.ori[2] += aZ;

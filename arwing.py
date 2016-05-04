@@ -69,7 +69,17 @@ class Arwing(Drawable):
 		self.ori[7] = 1;
 		self.ori[8] = 0;
 		self.drawHP = self.hp = 1;
-		
+		self.points = 0;
+		self.hurtAnimation = -1;
+
+		#self.dpos = numpy.array([0, 0, 0, 1.])		
+		#self.dtoPos = numpy.array([0, 0, 0-1, 1.])		
+		#self.dupNorm = numpy.array([0,1,0,0.])
+
+		#self.speed = 0
+		#self.roll = 0
+		#self.pitch = 0
+		#self.yaw = 0
 		
 
 	def tick(self, input):
