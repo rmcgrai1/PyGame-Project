@@ -1,3 +1,7 @@
+# Jacob Kassman & Ryan McGrail
+# client.py
+# Controls connection with server and game loop.
+
 import sys
 import os
 import pygame
@@ -27,11 +31,11 @@ import json
 import gfx2d
 from  asteroid import *
 
-SERVER_HOST = "student00.cse.nd.edu"
-SERVER_PORT_A = 40076
-SERVER_PORT_B = 40064
 
-#toServerQueue = DeferredQueue()
+# Define server host & ports
+SERVER_HOST = "student00.cse.nd.edu"
+SERVER_PORT_A = 40076	# Ryan
+SERVER_PORT_B = 40064	# Jacob
 
 laserInsts = {};
 
@@ -53,9 +57,7 @@ class ClientConnection(LineReceiver):
 		})+ "\r\n");
 		self.gs.mainQueue.get().addCallback(self.sendLaser);
 
-	def lineReceived(self, data):
-		#print 'received, ', data
-		
+	def lineReceived(self, data):		
 		try:
 			jso = json.loads(data)
 		except:
@@ -73,9 +75,6 @@ class ClientConnection(LineReceiver):
 			for player_id in player_ids:
 				if not (player_id == gs.id):
 					gs.arwingInsts[player_id] = gs.instanceAppend(Arwing(gs, 0,0,0))
-					#print "INIT APPEND", player_id
-#			for i in range(0, jso['num_players']):
-#				gs.arwingInsts.append(  gs.instanceAppend(Arwing(gs, 0,0,0))  )
 			gs.arwingInsts[gs.id] = gs.player;
 			
 			for asteroid in temp_aster:
@@ -203,35 +202,62 @@ class ClientConnFactory(ClientFactory):
 class GameSpace:			
 	def __init__(self):
 		GameSpace.instance = self
-		self.clientConnFactory = ClientConnFactory()
-		self.id = -1
 		self.mainQueue = DeferredQueue();
 		self.arwingInsts = {};
 		
-		self.isConnected = False
-		self.connectTimer = 0
                
-		#Ryan is True, Jacob is False.
-		self.connectChoice = False;        
+		# Initialize connection variables
+		self.clientConnFactory = ClientConnFactory()
+		self.id = -1
+		self.isConnected = False
+		self.connectChoice = False;        		#Ryan is True, Jacob is False.
 		self.connectTimerMax = 75
+		self.connectTimer = 0
 		self.connectDiv = 16
+		
+        
+		# Initialize center of screen for mouse
+		self.mouse_center_x = self.width/2;
+		self.mouse_center_y = self.height/2;
+		
 		
 		#1. Initialize game space		
 		self.resolution = self.width,self.height = (640,480)
 		pygame.init()
 		self.screen = pygame.display.set_mode(self.resolution)
+		
+		
+		# Intialize 3D canvas variables
+		self.canv3d_near = .1
+		self.canv3d_far = 5000
+		self.canv3d_width = 320
+		self.canv3d_height = 240
+		self.canv3d_aspect = self.canv3d_width/self.canv3d_height
+		self.canv3d_doFog = 0
+		
+		# Create 3d Canvas; make surface, and pass its pixels directly to canv3d in a numPy array
+		self.canv3d_img_ = pygame.Surface((self.canv3d_width,self.canv3d_height)).convert_alpha()
+		canv3d.init(self.canv3d_width,self.canv3d_height, self.canv3d_near, self.canv3d_far, self.canv3d_doFog, pygame.surfarray.pixels2d(self.canv3d_img_))
+		
+		
+		# Initialize pygame music
 		pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=4096)
 		pygame.mixer.set_num_channels(16)
-
-		gfx2d.init()
-
-		Arwing.init();
-		Laser.init();
 		
-			# Load music, and play it
+		# Load music, and play it
 		self.musFight = pygame.mixer.Sound("snd/musicLoop.ogg")
 		self.musFight.set_volume(.35)
 		self.musFight.play(-1)
+		
+		
+		# Preload models/sounds for various classes
+		gfx2d.init()
+		Arwing.init()
+		Laser.init()
+	
+		
+		
+		
 
 
 	def instanceAppend(self, inst):
@@ -263,17 +289,9 @@ class GameSpace:
 		self.respawn = False;
 		self.barrel_roll = False;
 
+		
 		#2. Create game objects
 
-		self.canv3d_near = .1
-		self.canv3d_far = 5000
-		self.canv3d_width = 320
-		self.canv3d_height = 240
-		self.canv3d_aspect = self.canv3d_width/self.canv3d_height
-		self.canv3d_doFog = 0
-                
-		self.mouse_center_x = self.width/2;
-		self.mouse_center_y = self.height/2;
 		
 		self.clock = pygame.time.Clock()	
 		self.skybox = self.instanceAppend(Skybox(self, "img/orbital-element_lf.jpg","img/orbital-element_rt.jpg","img/orbital-element_ft.jpg","img/orbital-element_bk.jpg","img/orbital-element_up.jpg","img/orbital-element_dn.jpg"))
@@ -281,9 +299,7 @@ class GameSpace:
 		self.player = self.instanceAppend(ArwingPlayer(self, 0,0,0))
 		self.hud = self.instanceAppend(Hud(self))
 
-		# Create 3d Canvas
-		self.canv3d_img_ = pygame.Surface((self.canv3d_width,self.canv3d_height)).convert_alpha()
-		canv3d.init(self.canv3d_width,self.canv3d_height, self.canv3d_near, self.canv3d_far, self.canv3d_doFog, pygame.surfarray.pixels2d(self.canv3d_img_));
+		
 		
 		self.cameraMethod = 2;
 		if (self.cameraMethod == 1):
@@ -394,6 +410,8 @@ class GameSpace:
 
 		#7. Display
 
+
+		# Clear screen & 3d canvas
 		self.screen.fill(gfx2d.COLOR_WHITE)
 		canv3d.clear();
 
@@ -401,15 +419,24 @@ class GameSpace:
 		# PROJECTION
 
 
+		# Clear transformation matrices
 		canv3d.setMatIdentity(MAT_MV)
 		canv3d.setMatIdentity(MAT_P)
 		canv3d.setMatIdentity(MAT_T)		
 
+		
+		# Translate perspective matrix to center of screen
 		canv3d.addMatTranslation(MAT_P, self.canv3d_width/2, self.canv3d_height/2,0)
-		canv3d.addMatScale(MAT_P, 1,1,-1)
+		# Reverse scale perspective matrix along normal of camera to fix depths
+		canv3d.addMatScale(MAT_P, 1,1,-1)		
+		# Append 3d view to perspective matrix
 		canv3d.addMatPerspective(MAT_P, .75)
+		
+		# Translate camera matrix to camera position/rotation
 		canv3d.setMatCamera(MAT_MV);
 
+		
+		# Precompile matrices (just in case)
 		canv3d.compileMats();
 
 		for d in self.instanceList:
@@ -455,8 +482,9 @@ class Reticle:
                 screen.blit(self.large, self.largeRect);
 
 if __name__ == '__main__':
+	# Create GameSpace object
 	gs = GameSpace()
-	
+
 	gs.main()
 	lc = LoopingCall(gs.gameLoop)
 	lc.start(1./60)

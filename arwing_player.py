@@ -72,13 +72,7 @@ class ArwingPlayer(Arwing):
 				self.deathAnimation = 1
 
 			return
-	
-		new_input = input;
-		if (input['freeze_signal']):
-			new_input = input.copy()
-			new_input['brake'] = True
 			
-		
 		if (not self.mDownPrev) and (input['mouse_down']):			
 			x = self.ori[0]
 			y = self.ori[1]

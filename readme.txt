@@ -30,5 +30,5 @@ To run, you must:
 
 
 Known Bugs:
-- client seg faults randomly??
-- shots multiply
+- lasers occasionally appear behind player (due to latency over connection)
+- seg-faults occasionally occur as game is closed (uncertain cause)
