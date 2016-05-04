@@ -4,13 +4,20 @@ To run on a computer in Fitzpatrick:
 git clone https://github.com/rmcgrai1/PyGame-Project.git
 python client.py
 
+GAMEPLAY:
+Connect to the sever, and try to shoot down anyone else online!
+Don't get yourself shot, though.
+And do lots of barrel rolls! (press b)
+
 CONTROLS:
 w is boost forwards, s is brakes
 a and d spin the view
 r is respawn
+b is BARREL ROLL
 click to fire
 Mouse to move around the screen
 Don't run into the asteroids, you will take damage!
+
 
 To run, you must:
 - have pip

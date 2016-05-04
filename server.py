@@ -86,7 +86,7 @@ def generateAsteroids():
 	pos_range = [-2000, 2000];
 	rot_range = [0, 360];
 	start_radius = 200;
-	for astero_id in xrange(10):
+	for astero_id in xrange(5):
 		pos = [0, 0, 0];
 		while ((pos[0] <= start_radius) and (pos[1] <= start_radius) and (pos[2] <= start_radius)):
 			for size_iter in xrange(3):
@@ -123,7 +123,7 @@ class Laser(MovingObject):
 			return super(Laser, self).checkCollide(otherXYZ, radius)
                 
 def serverLoop():
-"""All collision detection goes here; the server is in charge of synced events like this"""
+	"""All collision detection goes here; the server is in charge of synced events like this"""
         for laser in laserList:
                 laser.tick();
 		for player in posDict:

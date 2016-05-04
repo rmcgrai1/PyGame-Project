@@ -55,7 +55,11 @@ class Arwing(Drawable):
 		self.roll = 0
 		self.pitch = 0
 		self.yaw = 0
-		
+
+		self.barrelRoll = 0;
+		self.barrelTime = 0;
+		self.barrelMaxTime = 15;
+
 		self.drawHP = self.hp = 1
 		
 		self.hurtAnimation = -1
@@ -81,7 +85,17 @@ class Arwing(Drawable):
 	def tick(self, input):
 		if self.hp == 0:
 			return
-	
+		
+		if (input['barrel_roll']):
+			self.barrelTime += 1;
+		if (self.barrelTime > 0):
+			if (self.barrelTime <= self.barrelMaxTime):
+				self.barrelRoll += 360/self.barrelMaxTime;
+				self.barrelTime += 1;
+			else:
+				self.barrelTime = 0;
+		else:
+			self.barrelRoll = 0;
 		super(Arwing, self).tick(input)
 		
 		if self.hurtAnimation > -1:
@@ -150,8 +164,8 @@ class Arwing(Drawable):
 			cR = cG = cB = 255
 
 		# Further transform model
-		canv3d.addMatRotationZ(MAT_T, self.roll)
-		canv3d.addMatTranslation(MAT_T, 0,-20,0)		
+		canv3d.addMatRotationZ(MAT_T, self.roll+ self.barrelRoll)
+		canv3d.addMatTranslation(MAT_T, 0,-10,0)		
 		canv3d.addMatScale(MAT_T,.25,.25,.25);
 
 		# Compile matrices into completeMat before drawing
