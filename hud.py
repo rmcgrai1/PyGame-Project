@@ -157,7 +157,7 @@ class Hud(Drawable):
 		#draw score:
 		if (self.gs.id in self.gs.arwingInsts):
 			score = self.gs.arwingInsts[self.gs.id].points;
-			gfx2d.drawTextShadow(screen, str(score), 640 - 200, 42, 3)
+			gfx2d.drawText(screen, "Score: " + str(score), 640 - 200, 42, 3, 1, 2)
 		
 	def addMessage(self, txt):
 		self.messageList.append([txt])		
