@@ -32,36 +32,45 @@ class Hud(Drawable):
 		self.ind = 0
 		
 		self.sndRadioStart = pygame.mixer.Sound("snd/radioStart.ogg")
+		self.sndRadioEnd = pygame.mixer.Sound("snd/radioEnd.ogg")
 		self.sndRadioStart.play()
 
-		self.staticTimeMax = 20
-		self.staticTime = self.staticTimeMax
 		
+		self.staticTimeMax = 20
+		self.staticTimeIn = self.staticTimeMax
 		self.scaredTime = 50
 		
+		self.liveTime = 250
+		self.staticTimeOut = self.staticTimeMax		
+		
 		self.talkInd = 0
-		self.text = "Do a barrel roll!\n\nTry a somersault!\n\nPress V to brake!"
+		self.text = "Welcome, new pilot! You can fly around with\nthe mouse, and shoot with the left mouse\nbutton. Use W to boost, and S to slow down.\n\nTry rolling with A/D--that's a neat trick!\n\nGood luck, and enjoy your flight!"
 				
 		self.imgTalkBar = Sprite("img/talkbar.png", 1,1)
 		
 	def tick(self, input):
 		self.ind = (self.ind + .4) % 2
 		
-		if self.staticTime > 0:
-			self.staticTime -= 1
+		if self.staticTimeIn > 0:
+			self.staticTimeIn -= 1
 		elif self.scaredTime > 0:
 			self.scaredTime -= 1
-		else:
-			if self.talkInd < len(self.text):
-				self.talkInd += .5
+		elif self.talkInd < len(self.text):
+			self.talkInd += .5
+			
+			#if random.random() > .25:
+			snd = self.sndFlynn[random.randrange(0,self.snds)]
+			snd.play()
+			
+			self.sndInd = (self.sndInd + 1) % self.snds
+		elif self.liveTime > 0:
+			self.ind = 0
+			self.liveTime -= 1
+		elif self.staticTimeOut > 0:
+			if self.staticTimeOut == self.staticTimeMax:
+				self.sndRadioEnd.play()
 				
-				#if random.random() > .25:
-				snd = self.sndFlynn[random.randrange(0,self.snds)]
-				snd.play()
-				
-				self.sndInd = (self.sndInd + 1) % self.snds
-			else:
-				self.ind = 0
+			self.staticTimeOut -= 1
 
 	def draw(self, screen):
 		pass
@@ -72,23 +81,30 @@ class Hud(Drawable):
 		xTB = 15+96+15
 		yTB = 480-15-96
 
-		# Draw Talk Bar
-		self.imgTalkBar.draw(screen, int(xTB+373/2),yTB+48)
+		if self.staticTimeOut > 0:	
+			# Draw talk bar
+			self.imgTalkBar.draw(screen, int(xTB+373/2),yTB+48)
+			
+			# Draw spoken text
+			gfx2d.drawTextShadow(screen, self.text[:(int)(self.talkInd)], xTB+15,yTB+15, color=gfx2d.FONT_WHITE, xscale=1,yscale=1.25)
 
-		
-		if self.staticTime > 0:
-			h = int(h * (self.staticTimeMax-self.staticTime)/self.staticTimeMax)
-			self.imgStatic.draw(screen, 15+48, 480-48-15, frame=self.ind, scale=(.75, .75*(self.staticTimeMax-self.staticTime)/self.staticTimeMax))	
-		else:	
-			if self.scaredTime > 0:
-				self.imgFlynn.draw(screen, 15+48, 480-48-15, frame=2, scale=.75)
+			if self.staticTimeIn > 0:
+				h = int(h * (self.staticTimeMax-self.staticTimeIn)/self.staticTimeMax)
+				self.imgStatic.draw(screen, 15+48, 480-48-15, frame=self.ind, scale=(.75, .75*(self.staticTimeMax-self.staticTimeIn)/self.staticTimeMax))	
+			elif self.liveTime > 0:	
+				if self.scaredTime > 0:
+					self.imgFlynn.draw(screen, 15+48, 480-48-15, frame=2, scale=.75)
+				else:
+					self.imgFlynn.draw(screen, 15+48, 480-48-15, frame=self.ind, scale=.75)
+			
+				gfx2d.drawTextShadow(screen, "FLYNN", xTB+2,yTB+2, color=gfx2d.FONT_YELLOW)
 			else:
-				self.imgFlynn.draw(screen, 15+48, 480-48-15, frame=self.ind, scale=.75)
-		
-			gfx2d.drawTextShadow(screen, "FLYNN", xTB+2,yTB+2, color=gfx2d.FONT_YELLOW)
+				h = int(h * (self.staticTimeOut)/self.staticTimeMax)
+				self.imgStatic.draw(screen, 15+48, 480-48-15, frame=self.ind, scale=(.75, .75*(self.staticTimeOut)/self.staticTimeMax))	
 
-		# Draw Outline
-		pygame.draw.rect(screen, (255,255,255), (int(15+48-w/2),int(480-48-15-h/2), int(w),int(h)), 1)
+
+			# Draw Outline
+			pygame.draw.rect(screen, (255,255,255), (int(15+48-w/2),int(480-48-15-h/2), int(w),int(h)), 1)
 
 		
 		# Draw health bar
@@ -139,7 +155,6 @@ class Hud(Drawable):
 	
 			self.imgPlayerShip.draw(screen, radarX+x,radarY+y, angle=dir, scale=.25)		
 		
-		gfx2d.drawTextShadow(screen, self.text[:(int)(self.talkInd)], xTB+15,yTB+15, color=gfx2d.FONT_WHITE, xscale=1,yscale=1.5)
 	
 		if self.gs.isConnected:
 			gfx2d.drawTextShadow(screen, "Successfully connected!", 0,0, color=gfx2d.FONT_GREEN)

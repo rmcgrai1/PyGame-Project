@@ -15,6 +15,8 @@ import canv3d
 
 
 class Arwing(Drawable):
+	hasLoaded = False
+
 	MOD_ARWING = None
 	
 	TEX_JET = None
@@ -34,15 +36,17 @@ class Arwing(Drawable):
 	def __init__(self, gameSpace, x,y,z):
 		super(Arwing, self).__init__(gameSpace, x,y,z, x,y,z+1, 0,1,0)
 		
-		if Arwing.TEX_JET == None:
-			Arwing.MOD_ARWING = canv3d.loadObj("Arwing.obj")
+		# If Arwing sounds/model not loaded yet, do so now!
+		if not Arwing.hasLoaded:
+			Arwing.MOD_ARWING = canv3d.loadObj("arwing.obj")
 			Arwing.TEX_JET = pygame.surfarray.pixels2d(pygame.image.load("img/jet.png").convert_alpha())
 			Arwing.SND_ENGINE = pygame.mixer.Sound("snd/engine.ogg")
 			Arwing.SND_SINGLE_SHOT = pygame.mixer.Sound("snd/singleshot.ogg")
 			Arwing.SND_BOOST = pygame.mixer.Sound("snd/boost.ogg")
 			Arwing.SND_BRAKE = pygame.mixer.Sound("snd/brake.ogg")
 			Arwing.SND_DAMAGE = pygame.mixer.Sound("snd/damage.ogg")
-						
+
+		# Get
 		self.dpos = numpy.array([x, y, z, 1.])		
 		self.dtoPos = numpy.array([x, y, z-1, 1.])		
 		self.dupNorm = numpy.array([0,1,0,0.])
@@ -56,7 +60,7 @@ class Arwing(Drawable):
 		
 		self.hurtAnimation = -1
 		
-		self.points = 0;
+		self.drawPoints = self.points = 0;
 
 	def respawn(self):
 		self.ori[0] = 0;
@@ -68,21 +72,16 @@ class Arwing(Drawable):
 		self.ori[6] = 0;
 		self.ori[7] = 1;
 		self.ori[8] = 0;
+		
 		self.drawHP = self.hp = 1;
-		self.points = 0;
+		self.drawPoints = self.points = 0;
 		self.hurtAnimation = -1;
-
-		#self.dpos = numpy.array([0, 0, 0, 1.])		
-		#self.dtoPos = numpy.array([0, 0, 0-1, 1.])		
-		#self.dupNorm = numpy.array([0,1,0,0.])
-
-		#self.speed = 0
-		#self.roll = 0
-		#self.pitch = 0
-		#self.yaw = 0
 		
 
 	def tick(self, input):
+		if self.hp == 0:
+			return
+	
 		super(Arwing, self).tick(input)
 		
 		if self.hurtAnimation > -1:
@@ -90,26 +89,39 @@ class Arwing(Drawable):
 		
 			if self.hurtAnimation > 1:
 				self.hurtAnimation = -1
-				
+		
+		# Smoothly move drawn values to true values
 		self.drawHP += (self.hp - self.drawHP)/5
+		if self.drawPoints > self.points:
+			self.drawPoints -= 1
+			if self.drawPoints < self.points:
+				self.drawPoints = self.points
+
 		if (input['respawn']):
 			self.respawn();
-				
-	def hurt(self):
-		if self.hurtAnimation == -1:
-			Arwing.SND_DAMAGE.play()
-			self.hurtAnimation = 0
-			self.hp -= .1			
-			self.gs.instanceAppend( Explosion(self.gs, self.ori[0],self.ori[1],self.ori[2]) )
 
+			
+	def hurt(self):
+		if self.hp == 0:
+			return
+
+		Arwing.SND_DAMAGE.play()
+		self.hurtAnimation = 0
+		self.hp -= .1
 		
 	def addPoints(self, points):
 		self.points += points;
 	
 	def explode(self):
-		pass
+		if self.hp == 0:
+			return
+
+		self.gs.instanceAppend( Explosion(self.gs, self.ori[0],self.ori[1],self.ori[2]) )
 	
 	def draw(self, screen):
+		if self.hp == 0:
+			return
+			
 		canv3d.setMatIdentity(MAT_T)
 		canv3d.addMatTranslation(MAT_T, self.ori[0],self.ori[1],self.ori[2])
 
@@ -137,30 +149,24 @@ class Arwing(Drawable):
 		else:
 			cR = cG = cB = 255
 
+		# Further transform model
 		canv3d.addMatRotationZ(MAT_T, self.roll)
-		
-		canv3d.addMatTranslation(MAT_T, 0,-20,0)
-		
+		canv3d.addMatTranslation(MAT_T, 0,-20,0)		
 		canv3d.addMatScale(MAT_T,.25,.25,.25);
-		canv3d.compileMats()
-		
-		canv3d.setRGB(cR,cG,cB)	
 
-		canv3d.drawObj(Arwing.MOD_ARWING);
+		# Compile matrices into completeMat before drawing
+		canv3d.compileMats()
+
 		
+		# Draw Arwing, modifying color if damage animation is playing
+		canv3d.setRGB(cR,cG,cB)	
+		canv3d.drawObj(Arwing.MOD_ARWING);
 		canv3d.setRGB(255,255,255)
 		
-		canv3d.setTexture(Arwing.TEX_JET, Arwing.TEX_JET_WIDTH, Arwing.TEX_JET_HEIGHT)
-		
+		# Draw exhaust behind ship
 		xs = 50 * (1 + .5*rnd()) * (.25 + .75*self.speed / Arwing.SPD_BASE)
 		ys = xs * .8
 		up = 10
 		back = -80
+		canv3d.setTexture(Arwing.TEX_JET, Arwing.TEX_JET_WIDTH, Arwing.TEX_JET_HEIGHT)
 		canv3d.draw3dFloor(-xs,up-ys,xs,up+ys,back);
-
-		#s = 25 * (1 + .5*rnd()) 
-		#spc = 35
-		#up = 10
-		#back = -55
-		#canv3d.draw3dFloor(-spc-s,up-s,-spc+s,up+s,back);
-		#canv3d.draw3dFloor(spc-s,up-s,spc+s,up+s,back);
