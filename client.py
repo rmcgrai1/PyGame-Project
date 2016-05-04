@@ -67,13 +67,8 @@ class ClientConnection(LineReceiver):
 		if type == 'init':
 			gs.id = int(jso['id'])
 			player_ids = jso['all_ids']
-<<<<<<< HEAD
-			
 			gs.addMessage("Welcome, player " + str(gs.id) + "!")
-=======
 			temp_aster = jso['asteroids']
-			gs.addMessage("You are player " + str(gs.id) + ".")
->>>>>>> origin/master
 
 			for player_id in player_ids:
 				if not (player_id == gs.id):
