@@ -473,19 +473,6 @@ static PyObject* pyTurn(PyObject *self, PyObject *args) {
 	Py_RETURN_NONE;
 }
 
-
-static void cameraTurn(double deltaX, double deltaY) {
-  turn(gCameraEye, gCameraAt, gCameraUp, deltaX, deltaY);
-}
-static PyObject* pyCameraTurn(PyObject *self, PyObject *args) {
-  double mouse_dx, mouse_dy;
-  if(!PyArg_ParseTuple(args, "dd", &mouse_dx, &mouse_dy))
-    return NULL;
-  
-  cameraTurn(mouse_dx, mouse_dy);
-  Py_RETURN_NONE;
-}
-
 static double* setMatCamera(double* mat) {
 	return setMatLook(mat, gCameraEye[0], gCameraEye[1], gCameraEye[2], gCameraAt[0], gCameraAt[1], gCameraAt[2], gCameraUp[0], gCameraUp[1], gCameraUp[2]);
 }
@@ -965,23 +952,19 @@ static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  dou
 						}
 						else {
 							wp = ( 1 / w1 ) * b1 + ( 1 / w2 ) * b2 + ( 1 / w3 ) * b3;
-							up = ( u1 / w1 ) * b1 + ( u2 / w2 ) * b2 + ( u3 / w3 ) * b3;
-							vp = ( v1 / w1 ) * b1 + ( v2 / w2 ) * b2 + ( v3 / w3 ) * b3;
-							
+							up = ( ( u1 / w1 ) * b1 + ( u2 / w2 ) * b2 + ( u3 / w3 ) * b3 ) / wp;
+							vp = ( ( v1 / w1 ) * b1 + ( v2 / w2 ) * b2 + ( v3 / w3 ) * b3 ) / wp;
+						
 							if(up < 0 || up > 1)
-								up = fmod(fabs(up), 1);
+								up = fabs(fmod(up,1));
 							if(vp < 0 || vp > 1)
-								vp = fmod(fabs(vp), 1);
+								vp = fabs(fmod(vp,1));
+						
+							u = (int)(textureWidth * up);
+							v = (int)(textureHeight * vp);
+
 							
-							u = (int)(textureWidth * up / wp);
-							v = (int)(textureHeight * vp / wp);
-							
-							if(up < 0 || up > 1 || vp < 0 || vp > 1) {
-								printf("Point outside texture!\n");
-								continue;
-							}
-							
-							dRGBA = texture[textureHeight*v + u];
+							dRGBA = texture[textureWidth*v + u];
 							convertInt2RGBA(dRGBA, &dR,&dG,&dB,&dA);
 							
 							dR = (int) (dR/255. * R);
@@ -1034,16 +1017,6 @@ static PyObject* pyDrawTriangle(PyObject *self, PyObject *args) {
       return NULL;
   
 	drawTriangle0(x1,y1,z1,u1,v1,  x2,y2,z2,u2,v2,  x3,y3,z3,u3,v3);		
-	Py_RETURN_NONE;
-}
-
-
-static PyObject* pyPrintMats(PyObject *self) {
-	printMat(transMat);
-	printMat(modelviewMat);
-	printMat(projMat);
-	printMat(completeMat);
-
 	Py_RETURN_NONE;
 }
 
@@ -1532,14 +1505,10 @@ static PyMethodDef canv3d_funcs[47] = {
 	{"setRGB", (PyCFunction) pySetRGB, METH_VARARGS, NULL },
 	{"setRGBA", (PyCFunction) pySetRGBA, METH_VARARGS, NULL },
 	{"getXY", (PyCFunction) pyGetXY, METH_VARARGS, NULL },
-
-	{"printMats", (PyCFunction) pyPrintMats, METH_NOARGS, NULL },
-
-
+	
 	{"camera", (PyCFunction) pyCamera, METH_VARARGS, NULL},
 	{"turn", (PyCFunction) pyTurn, METH_VARARGS, NULL},
 	{"rotateVecAboutAxis", (PyCFunction) pyRotateVecAboutAxis, METH_VARARGS, NULL},
-	{"cameraTurn", (PyCFunction) pyCameraTurn, METH_VARARGS, NULL},
 	{"setMatCamera", (PyCFunction) pySetMatCamera, METH_VARARGS, NULL},
 	{"addMatCamera", (PyCFunction) pyAddMatCamera, METH_VARARGS, NULL},
 	{"setMatCameraPosition", (PyCFunction) pySetMatCameraPosition, METH_VARARGS, NULL},
