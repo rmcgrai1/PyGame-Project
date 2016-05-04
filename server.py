@@ -197,10 +197,14 @@ class ServerConn(LineReceiver):
 	def connectionMade(self):
 		"""Overwrites Protocol's method for handling when a connection is made. It prints a line about the connected address, and then attaches the callback to 'toClientQueue'. Lastly, the connection to the server is started!"""
 		print "connection received from", self.addr
+		tempAsteroids = [];
+		for asteroid in asteroidList:
+			tempAsteroids.append(asteroid.toList())
 		self.transport.write(json.dumps({
 			"type":	"init",
 			"id" : self.id,
-			"all_ids":  posDict.keys()
+			"all_ids":  posDict.keys(),
+			"asteroids" : tempAsteroids 
 		}) + "\r\n")
 
 		print "id: " + str(self.id)
@@ -241,8 +245,6 @@ class ServerConnFactory(Factory):
 		self.conns = {}
 		serverDmgQueue.get().addCallback(self.sendDamage);
 		generateAsteroids();
-		for asteroid in asteroidList:
-			print asteroid.toList()
 	def sendDamage(self, data):
 		"""data is a list of [damaged_id, attacker_id, lid]"""
 		s = json.dumps( {

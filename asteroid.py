@@ -8,7 +8,7 @@ class Asteroid(object):
     def __init__(self, size, x, y, z, rotX, rotY, rotZ):
         if Asteroid.MOD_ASTEROID == None:
             Asteroid.MOD_ASTEROID = canv3d.loadObj("asteroid.obj")
-        self.size = size;
+        self.scale = size * 0.005;
         self.x = x;
         self.y = y;
         self.z = z;
@@ -23,7 +23,7 @@ class Asteroid(object):
         canv3d.addMatRotationX(MAT_T, self.rotX)
         canv3d.addMatRotationX(MAT_T, self.rotY)
         canv3d.addMatRotationX(MAT_T, self.rotZ) 
-        canv3d.addMatScale(MAT_T, 1, 1, 1)
+        canv3d.addMatScale(MAT_T, self.scale, self.scale, self.scale)
         canv3d.compileMats()
         canv3d.drawObj(Asteroid.MOD_ASTEROID)
 

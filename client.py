@@ -6,10 +6,7 @@ import time
 import random
 from pygame.locals				import *
 from drawable					import *
-from deathstar					import *
-from earth						import *
 from player						import *
-from earthchunk					import *
 from sprite						import *
 from math2						import *
 from explosion					import *
@@ -84,7 +81,7 @@ class ClientConnection(LineReceiver):
 #				gs.arwingInsts.append(  gs.instanceAppend(Arwing(gs, 0,0,0))  )
 			gs.arwingInsts[gs.id] = gs.player;
 			
-			gs.instanceAppend(Asteroid(1, 100, 100, 100, 65, 242, 234));
+			gs.instancePrepend(Asteroid(50, 100, 100, 100, 65, 242, 234));
 
 			self.transport.write(json.dumps({
 				"type": type,
