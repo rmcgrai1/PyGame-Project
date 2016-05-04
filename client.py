@@ -343,14 +343,14 @@ class GameSpace:
 				md_adjust = 1.0/128;
 
 		for event in pygame.event.get():
-			if (event.type == pygame.MOUSEMOTION):
+			if (event.type == pygame.MOUSEMOTION):			# Capture mouse motion
 				if (self.cameraMethod == 1):
 					mdx, mdy = event.rel;
 					md_adjust = 1.0/6;
-			elif event.type == QUIT:
+			elif event.type == QUIT:						# Click [X] button, quit
 				self.quitGame()
-			elif event.type == KEYDOWN:
-				if(event.key == pygame.K_a):
+			elif event.type == KEYDOWN:						
+				if(event.key == pygame.K_a):				# WASD keys pressed (rolling and boosting)
 					self.keyHDir -= 1
 				elif(event.key == pygame.K_d):
 					self.keyHDir += 1
@@ -358,12 +358,12 @@ class GameSpace:
 					self.keyVDir -= 1
 				elif(event.key == pygame.K_s):
 					self.keyVDir += 1
-				elif(event.key == pygame.K_v):
+				elif(event.key == pygame.K_v):				
 					self.brake = True;
-				elif(event.key == pygame.K_ESCAPE):
+				elif(event.key == pygame.K_ESCAPE):			# Escape key, quit 
 					self.quitGame()
-			elif event.type == KEYUP:
-				if(event.key == pygame.K_a):
+			elif event.type == KEYUP:				
+				if(event.key == pygame.K_a):				# WASD keys released (rolling and boosting)
 					self.keyHDir += 1
 				elif(event.key == pygame.K_d):
 					self.keyHDir -= 1
@@ -386,8 +386,9 @@ class GameSpace:
 				elif(event.key == pygame.K_b):
 					self.barrel_roll = True;
 
-		#6. Tick updating and polling
+		#6. Tick updating and polling ########################################################
 
+		# Build input dictionary
 		input = {
 			"mouse_down": self.mDown,
 			"mouse_dy": mdy,
@@ -400,15 +401,16 @@ class GameSpace:
 			"respawn" : self.respawn,
 			"barrel_roll" : self.barrel_roll
 		}
+		
 		self.respawn = False;
 		self.barrel_roll = False;
 			
-
+		# Tick all updatable instances & pass input along
 		for d in self.instanceList:
 			d.tick(input)
 
 
-		#7. Display
+		# 7. Display ##########################################################################
 
 
 		# Clear screen & 3d canvas
