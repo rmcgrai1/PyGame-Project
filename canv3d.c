@@ -1296,8 +1296,6 @@ static mtl** loadMtl(char* filename) {
 	ssize_t read;
 	int l = 0, lLen = 0, lNum = 0, mNum = 0;
        
-	printf("In loadMTL\n");
-
 	if((fp = fopen(filename, "r")) == NULL)
 	  {
 	    printf("Invalid Filename %s\n", filename);
@@ -1368,7 +1366,6 @@ static mtl** loadMtl(char* filename) {
 		}
 		else if(!strcmp(type,"map_Kd"))
 		  {
-		    printf("CALLING loadBMP!\n");
 		    m->map_Kd = loadBMP(strtok(NULL, " "), &m->map_Kd_width, &m->map_Kd_height);
 		  }
 	}
