@@ -1,3 +1,5 @@
+#include "errno.h"
+
 //http://stackoverflow.com/questions/14279242/read-bitmap-file-into-structure
 
 typedef char			INT8;
@@ -64,7 +66,7 @@ unsigned char *LoadBitmapFile(char *filename, BITMAPINFOHEADER *bitmapInfoHeader
     //read the bitmap file header
     read_result = fread(&bitmapFileHeader, sizeof(BITMAPFILEHEADER),1,filePtr);
     if (read_result != 1) {
-      printf("Error reading from bitmapHeader of %s\n", filename);
+      printf("Error0 reading from bitmapHeader of %s\n", filename);
     }
 
     //verify that this is a bmp file by check bitmap id
@@ -77,7 +79,7 @@ unsigned char *LoadBitmapFile(char *filename, BITMAPINFOHEADER *bitmapInfoHeader
     //read the bitmap info header
     read_result = fread(bitmapInfoHeader, sizeof(BITMAPINFOHEADER),1,filePtr); // small edit. forgot to add the closing bracket at sizeof
     if (read_result != 1) {
-      printf("Error reading from bitmapHeader of %s\n", filename);
+      printf("Error1 reading from bitmapHeader of %s\n", filename);
     }
 	printf("\tsize (in bytes): %d\n", bitmapInfoHeader->biSizeImage);
 	printf("\tresolution: %d x %d\n", bitmapInfoHeader->biWidth, bitmapInfoHeader->biHeight);
@@ -99,13 +101,9 @@ unsigned char *LoadBitmapFile(char *filename, BITMAPINFOHEADER *bitmapInfoHeader
     //read in the bitmap image data
     read_result = fread(bitmapImage, bitmapInfoHeader->biSizeImage,1, filePtr);
     if (read_result != 1) {
-      printf("Error reading from bitmapHeader of %s\n", filename);
-    }
-    //make sure bitmap image data was read
-    if(bitmapImage == NULL) {
-		printf("Failed to read image %s!\n", filename);
-        fclose(filePtr);
-        return NULL;
+      printf("Error2 reading from bitmapHeader of %s, read_result was %d, image: %s\n", filename, read_result, filename);
+      fclose(filePtr);
+      return NULL;
     }
 
     //swap the r and b values to get RGB (bitmap is BGR)
