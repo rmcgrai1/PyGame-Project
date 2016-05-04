@@ -216,15 +216,15 @@ class GameSpace:
 		self.connectDiv = 16
 		
         
-		# Initialize center of screen for mouse
-		self.mouse_center_x = self.width/2;
-		self.mouse_center_y = self.height/2;
-		
 		
 		#1. Initialize game space		
 		self.resolution = self.width,self.height = (640,480)
 		pygame.init()
 		self.screen = pygame.display.set_mode(self.resolution)
+
+		# Initialize center of screen for mouse
+		self.mouse_center_x = self.width/2;
+		self.mouse_center_y = self.height/2;
 		
 		
 		# Intialize 3D canvas variables
