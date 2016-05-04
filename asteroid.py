@@ -19,13 +19,13 @@ class Asteroid(object):
 
     def draw(self, screen):
         #canv3d.setMatIdentity(MAT_T)
-        canv3d.setMatTranslation(MAT_T, self.x, self.y, self.z)
-        canv3d.addMatRotationX(MAT_T, self.rotX)
-        canv3d.addMatRotationX(MAT_T, self.rotY)
-        canv3d.addMatRotationX(MAT_T, self.rotZ) 
-        canv3d.addMatScale(MAT_T, 1, 1, 1)
-        canv3d.compileMats()
-        canv3d.drawObj(Asteroid.MOD_ASTEROID)
+		canv3d.setMatTranslation(MAT_T, self.x, self.y, self.z)
+		canv3d.addMatRotationX(MAT_T, self.rotX)
+		canv3d.addMatRotationX(MAT_T, self.rotY)
+		canv3d.addMatRotationX(MAT_T, self.rotZ) 
+		canv3d.addMatScale(MAT_T, 1, 1, 1)
+		canv3d.compileMats()
+		canv3d.drawObj(Asteroid.MOD_ASTEROID)
 
     def tick(self, input):
         pass;
