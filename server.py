@@ -12,7 +12,7 @@ SERVER_HOST = "student00.cse.nd.edu"
 SERVER_PORT = 40064
 
 #toServerQueue = DeferredQueue()
-
+serverDmgQueue = DeferredQueue()
 
 class MovingObject(object):
         def __init__(self, oriSpeed):
@@ -71,10 +71,10 @@ def serverLoop():
 		for player in posDict:
 			if laser.checkCollide(posDict[player][:3], 50, player):
 				print 'You hit player', player;
-				print posDict[player][:3]
+				#print posDict[player][:3]
+				serverDmgQueue.put(player);
 				laser.remove();
 				
-
 
 class ServerConn(LineReceiver):
 	def __init__(self, parent, id, addr):
@@ -85,7 +85,7 @@ class ServerConn(LineReceiver):
 		self.subpos = [0,0,0, 0,0,1, 0,1,0]
 		posDict[self.id] = self.subpos;
                 newLaserList[self.id] = [];
-
+		
 	def lineReceived(self, data):
 		"""Overwrites Protocol's method for handling when data is received from the connected address. Any data received is put into the 'toServerQueue', and will be passed along to the server."""
 		#toServerQueue.put(data)
@@ -172,22 +172,34 @@ class ServerConn(LineReceiver):
 
 #		print "There are now ", len(newLaserList), "objects in newLaserList"
 
-		for conn in self.parent.conns:
+		for conn in self.parent.conns.values():
 			if not (conn == self):
 				conn.transport.write(s)
-
-		self.parent.conns.remove(self)
+		
+		del self.parent.conns[self.id]
+		#self.parent.conns.remove(self)
 		self.parent = None
 
 class ServerConnFactory(Factory):
 	def __init__(self):
 		self.currentID = 0;
-		self.conns = []
+		self.conns = {}
+		serverDmgQueue.get().addCallback(self.sendDamage);
+
+	def sendDamage(self, data):
+		"""data is the id of the ship that was hit"""
+		s = json.dumps( {
+				'type' : 'takeDmg',
+				'id' : data
+				}) + "\r\n"
+		for conn in self.conns.values():
+			conn.transport.write(s)
+		serverDmgQueue.get().addCallback(self.sendDamage);
 
 	def buildProtocol(self, addr):
 		"""Overwrites ClientFactory's method for building Protocols. It creates a ProxyToClientConn Protocol and adds it to the factory object so the other factory can access it."""
 		conn = ServerConn(self, self.currentID, addr)
-		self.conns.append(conn)
+		self.conns[self.currentID] = conn
 		self.currentID = self.currentID + 1;
 		return conn
 

@@ -103,7 +103,7 @@ class ClientConnection(LineReceiver):
 					if int(player_id) not in arwingInsts.keys():
 						arwingInsts[int(player_id)] = (gs.instanceAppend(Arwing(gs, 0,0,0)))
 						#print "APPEND: gs id:", gs.id, "player_id", player_id;
-						print "pos json:", jso
+						#print "pos json:", jso
 					
 					inst = arwingInsts[int(player_id)];
 					allInst = all_dict[player_id]
@@ -146,6 +146,12 @@ class ClientConnection(LineReceiver):
 					oriSpeed[6]+oriSpeed[3],
 					oriSpeed[7],oriSpeed[8],oriSpeed[9]
 			))
+		elif type == 'takeDmg':
+			pid = int(jso['id'])
+			if (pid == gs.id):
+				print "I, player", gs.id, "took damage!"
+			else:
+				print "I saw player", gs.id, "take damage!"
 	def connectionMade(self):
 		print 'new connection made to ' + str(self.addr)
 		GameSpace.instance.isConnected = True
