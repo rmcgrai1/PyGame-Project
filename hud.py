@@ -18,6 +18,7 @@ class Hud(Drawable):
 		self.imgFlynn = Sprite("img/flynn.png", 3,1)
 		self.imgRadar = Sprite("img/radar.png", 1,1)
 		self.imgShip = Sprite("img/ship.png", 1,1)
+		self.imgPlayerShip = Sprite("img/pship.png", 1,1)
 		
 		self.messageList = []
 
@@ -122,7 +123,10 @@ class Hud(Drawable):
 				atY = -arwing.ori[4]/radarScale
 				dir = ptDir(-x,-y, -atX,-atY)+arwing.yaw
 				
-				self.imgShip.draw(screen, radarX+x,radarY+y, angle=dir, scale=.25)
+				if arwing == pl:
+					self.imgPlayerShip.draw(screen, radarX+x,radarY+y, angle=dir, scale=.25)
+				else:
+					self.imgShip.draw(screen, radarX+x,radarY+y, angle=dir, scale=.25)
 		else:
 			arwing = pl
 			
@@ -133,7 +137,7 @@ class Hud(Drawable):
 			atY = -arwing.ori[4]/radarScale
 			dir = ptDir(-x,-y, -atX,-atY)+arwing.yaw
 	
-			self.imgShip.draw(screen, radarX+x,radarY+y, angle=dir, scale=.25)		
+			self.imgPlayerShip.draw(screen, radarX+x,radarY+y, angle=dir, scale=.25)		
 		
 		gfx2d.drawTextShadow(screen, self.text[:(int)(self.talkInd)], xTB+15,yTB+15, color=gfx2d.FONT_WHITE, xscale=1,yscale=1.5)
 	
