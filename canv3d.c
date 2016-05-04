@@ -1054,13 +1054,19 @@ static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  dou
 							up = ( u1 / w1 ) * b1 + ( u2 / w2 ) * b2 + ( u3 / w3 ) * b3;
 							vp = ( v1 / w1 ) * b1 + ( v2 / w2 ) * b2 + ( v3 / w3 ) * b3;
 							
+							if(!(up >= 0 && up < 1 && vp >= 0 && vp < 1)) {
+								up = fabs(fmod(up, 1));
+								vp = fabs(fmod(vp, 1));
+							}
+							
 							u = (int)(textureWidth * up / wp);
 							v = (int)(textureHeight * vp / wp);
-														
-							if(!(u >= 0 && u < textureWidth && v >= 0 && v < textureHeight)) {
-								u = fabs(fmod(u, 1));
-								v = fabs(fmod(v, 1));
-							}
+
+							if(u == textureWidth)
+								u -= 1;
+							if(v == textureHeight)
+								v -= 1;
+							
 							dRGBA = texture[textureHeight*v + u];
 							convertInt2RGBA(dRGBA, &dR,&dG,&dB,&dA);
 							
@@ -1373,7 +1379,7 @@ static void loadObj(char* filename, int id) {
 	obj* o = modelArray[id];
 	
 	FILE *fp;
-	char lines[400][200], line[200], *type, *substr, c, cc[2];
+	char lines[1000][150], line[150], *type, *substr, c, cc[2];
 	int l = 0, lNum = 0, mNum = 0, lLen = 0;
 	
 	printf("Loading \"%s\"...\n", filename);
@@ -1406,7 +1412,7 @@ static void loadObj(char* filename, int id) {
 	}
 	fclose(fp);
 	
-	//printf("Done reading!\n");
+	printf("\tDone reading file into memory!\n");
 
 	int i, vNum = 0, fNum = 0, uvNum = 0; //vnNum = 0, vtNum = 0;
 	// Loop through File Once to Get # of each

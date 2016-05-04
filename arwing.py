@@ -24,6 +24,7 @@ class Arwing(Drawable):
 	SND_SINGLE_SHOT = None
 	SND_BOOST = None
 	SND_BRAKE = None
+	SND_DAMAGE = None
 	
 	SPD_BASE = 5
 	SPD_MAX = 10
@@ -39,8 +40,8 @@ class Arwing(Drawable):
 			Arwing.SND_SINGLE_SHOT = pygame.mixer.Sound("snd/singleshot.ogg")
 			Arwing.SND_BOOST = pygame.mixer.Sound("snd/boost.ogg")
 			Arwing.SND_BRAKE = pygame.mixer.Sound("snd/brake.ogg")
-			
-			
+			Arwing.SND_DAMAGE = pygame.mixer.Sound("snd/damage.ogg")
+						
 		self.dpos = numpy.array([x, y, z, 1.])		
 		self.dtoPos = numpy.array([x, y, z-1, 1.])		
 		self.dupNorm = numpy.array([0,1,0,0.])
@@ -50,9 +51,22 @@ class Arwing(Drawable):
 		self.pitch = 0
 		self.yaw = 0
 		
+		self.hurtAnimation = -1
+		
 	
 	def tick(self, input):
 		super(Arwing, self).tick(input)
+		
+		if self.hurtAnimation > -1:
+			self.hurtAnimation += .02
+		
+			if self.hurtAnimation > 1:
+				self.hurtAnimation = -1
+				
+	def hurt(self):
+		if self.hurtAnimation == -1:
+			Arwing.SND_DAMAGE.play()
+			self.hurtAnimation = 0
 		
 	def draw(self, screen):
 		canv3d.setMatIdentity(MAT_T)
@@ -69,16 +83,32 @@ class Arwing(Drawable):
 		nZ = self.dtoPos[2]-self.dpos[2]
 		
 		canv3d.addMatAntiLook(MAT_T, 0,0,0,		nX,nY,nZ,		self.dupNorm[0],self.dupNorm[1],self.dupNorm[2]);
+
 		canv3d.addMatRotationX(MAT_T, self.pitch)
 		canv3d.addMatRotationY(MAT_T, self.yaw)
+
+		if self.hurtAnimation > -1:
+			cR = 255
+			cG = cB = int(255 * abs(cosd(720 * self.hurtAnimation)))
+			canv3d.addMatRotationY(MAT_T, -45)
+			canv3d.addMatRotationZ(MAT_T, 45 * cosd(360*4 * self.hurtAnimation) * (1 - self.hurtAnimation) )
+			canv3d.addMatRotationY(MAT_T, 45)
+		else:
+			cR = cG = cB = 255
+
 		canv3d.addMatRotationZ(MAT_T, self.roll)
-		canv3d.addMatTranslation(MAT_T, 0,-5,0)
+		
+		canv3d.addMatTranslation(MAT_T, 0,-20,0)
 		
 		canv3d.addMatScale(MAT_T,.25,.25,.25);
 		canv3d.compileMats()
 		
-	
+		canv3d.setRGB(cR,cG,cB)	
+
 		canv3d.drawObj(Arwing.MOD_ARWING);
+		
+		canv3d.setRGB(255,255,255)
+		
 		canv3d.setTexture(Arwing.TEX_JET, Arwing.TEX_JET_WIDTH, Arwing.TEX_JET_HEIGHT)
 		
 		xs = 50 * (1 + .5*rnd()) * (.25 + .75*self.speed / Arwing.SPD_BASE)

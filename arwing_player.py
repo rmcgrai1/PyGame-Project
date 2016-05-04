@@ -30,8 +30,8 @@ class ArwingPlayer(Arwing):
 		new_input = input;
 		if (input['freeze_signal']):
 			new_input = input.copy()
-			#print new_input;
-			new_input['brake'] = True;
+			new_input['brake'] = True
+			
 		super(ArwingPlayer, self).tick(new_input)
 		
 		if (not self.mDownPrev) and (input['mouse_down']):
@@ -110,6 +110,10 @@ class ArwingPlayer(Arwing):
 		self.rotateAxis[2] = self.ori[5]-self.ori[2]
 				
 		#canv3d.rotateVecAboutAxis(self.ori,6, hDir, self.forwardAxis);
+
+		
+		if hDir != 0:
+			self.hurt()
 
 		
 		if vDir == -1:

@@ -27,6 +27,7 @@ from twisted.internet.defer import DeferredQueue
 from sys						import *
 from radar						import *
 from hud						import *
+from laser						import *
 import json
 import gfx2d
 
@@ -171,7 +172,9 @@ class GameSpace:
 		GameSpace.instance = self
 		self.clientConnFactory = ClientConnFactory()
 		self.id = -1
-                self.mainQueue = DeferredQueue();
+		self.mainQueue = DeferredQueue();
+				
+		Laser.preload();
 
 	def instanceAppend(self, inst):
 		self.instanceList.append(inst)
