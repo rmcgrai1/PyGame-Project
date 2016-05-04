@@ -148,10 +148,11 @@ class ClientConnection(LineReceiver):
 			))
 		elif type == 'takeDmg':
 			pid = int(jso['id'])
+			arwingInsts[pid].hurt();
 			if (pid == gs.id):
-				print "I, player", gs.id, "took damage!"
-			else:
-				print "I saw player", gs.id, "take damage!"
+				pass;
+				#print "I, player", gs.id, "took damage!"
+
 	def connectionMade(self):
 		print 'new connection made to ' + str(self.addr)
 		GameSpace.instance.isConnected = True
