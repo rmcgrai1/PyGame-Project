@@ -438,9 +438,6 @@ static void turn(double *eyeVec, double *atVec, double *upVec, double deltaX, do
 
 	double sideAxis[4] = {0,0,0,0};
 
-	int i;
-
-
 	mcross(
 		upVec[0],upVec[1],upVec[2],
 		atVec[0]-eyeVec[0],atVec[1]-eyeVec[1],atVec[2]-eyeVec[2],
@@ -743,22 +740,6 @@ static PyObject* pyClear(PyObject *self) {
 	Py_RETURN_NONE;
 }
 
-//JACOB CHANGED SELF TO VOID
-static void clearStatic(void) {
-	int i, val;
-	for(i = 0; i < PIXEL_NUMBER; i++) {
-		val = rand() % 255;
-		
-		pixels[i] = convertRGB2Int(val,val,val);
-		depths[i] = near;
-	}
-}
-static PyObject* pyClearStatic(PyObject *self) {  
-	clearStatic();
-	Py_RETURN_NONE;
-}
-
-
 static void clip(double w1, double w2, double w3, double x1,double y1,double z1,double u1,double v1,  double x2,double y2,double z2,double u2,double v2,  double x3,double y3,double z3,double u3,double v3);
 static void drawTriangle0(double x1,double y1,double z1,double u1,double v1,  double x2,double y2,double z2,double u2,double v2,  double x3,double y3,double z3,double u3,double v3);
 static void drawTriangle(double x1,double y1,double z1,double u1,double v1,  double x2,double y2,double z2,double u2,double v2,  double x3,double y3,double z3,double u3,double v3, int tries);
@@ -793,9 +774,6 @@ static void clipTriangle(double x1,double y1,double z1,double u1,double v1,doubl
 static void clipQuad(double x1,double y1,double z1,double u1,double v1,double w1,	double x2,double y2,double z2,double u2,double v2,double w2,  double x3,double y3,double z3,double u3,double v3, double w3) {
 	//http://www.cubic.org/docs/3dclip.htm
 	
-	////printf("quad: %lf %lf %lf\n", w1, w2, w3);
-
-	
 	double 
 		s12 = w1/(w1-w2),
 		s13 = w1/(w1-w3),
@@ -812,18 +790,6 @@ static void clipQuad(double x1,double y1,double z1,double u1,double v1,double w1
 		u02 = u1 + s13 * (u3 - u1),
 		v02 = v1 + s13 * (v3 - v1);
 	
-	/*//printf("quad: s12:%lf s13:%lf\n", s12, s13);
-	//printf("X: <%lf %lf %lf>\n", x1, y1, z1);
-	//printf("01: <%lf %lf %lf>\n", x01, y01, z01);
-	//printf("02: <%lf %lf %lf>\n", x02, y02, z02);
-	//printf("2: <%lf %lf %lf>\n", x2, y2, z2);
-	//printf("3: <%lf %lf %lf>\n", x3, y3, z3);*/
-	
-	/*drawQuad(
-		x01,y01,z01,u01,v01,
-		x2,y2,z2,u2,v2,
-		x3,y3,z3,u3,v3, 
-		x02,y02,z02,u02,v02,1);*/
 	drawTriangle(
 		x01,y01,z01,u01,v01,
 		x2,y2,z2,u2,v2,
@@ -836,9 +802,6 @@ static void clipQuad(double x1,double y1,double z1,double u1,double v1,double w1
 
 static void clip(double x1,double y1,double z1,double u1,double v1,double w1,  double x2,double y2,double z2,double u2,double v2,double w2,  double x3,double y3,double z3,double u3,double v3,double w3) {
 	//TODO: FIX CLIPPING ERROR
-
-
-	////printf("clip: %lf %lf %lf\n", w1, w2, w3);
 
 	int w1N = w1 < pseudoNear,
 		w2N = w2 < pseudoNear,
@@ -1439,8 +1402,7 @@ static void loadObj(char* filename, int id) {
 				}
 				
 			if(ii == -1) {
-				printf("Invalid name! %s\n", substr);
-				return NULL;
+				printf("Invalid material name: %s\n", substr);
 			}
 			faces[9*f + 3] = ii;
 			
@@ -1587,7 +1549,6 @@ static PyMethodDef canv3d_funcs[48] = {
 	{"draw3dFloor", (PyCFunction) pyDraw3dFloor, METH_VARARGS, NULL },
 	{"compileMats", (PyCFunction) pyCompileMats, METH_NOARGS, NULL },
 	{"clear", (PyCFunction) pyClear, METH_NOARGS, NULL },
-	{"clearStatic", (PyCFunction) pyClearStatic, METH_NOARGS, NULL },
 	{"setRGB", (PyCFunction) pySetRGB, METH_VARARGS, NULL },
 	{"setRGBA", (PyCFunction) pySetRGBA, METH_VARARGS, NULL },
 	{"getXY", (PyCFunction) pyGetXY, METH_VARARGS, NULL },

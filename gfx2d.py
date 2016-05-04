@@ -5,7 +5,6 @@ import math
 import time
 import random
 from pygame.locals				import *
-from src						import *
 from drawable					import *
 from player						import *
 from sprite						import *
