@@ -123,6 +123,7 @@ class Laser(MovingObject):
 			return super(Laser, self).checkCollide(otherXYZ, radius)
                 
 def serverLoop():
+"""All collision detection goes here; the server is in charge of synced events like this"""
         for laser in laserList:
                 laser.tick();
 		for player in posDict:

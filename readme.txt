@@ -1,5 +1,16 @@
 README
 
+To run on a computer in Fitzpatrick:
+git clone https://github.com/rmcgrai1/PyGame-Project.git
+python client.py
+
+CONTROLS:
+w is boost forwards, s is brakes
+a and d spin the view
+r is respawn
+click to fire
+Mouse to move around the screen
+Don't run into the asteroids, you will take damage!
 
 To run, you must:
 - have pip
