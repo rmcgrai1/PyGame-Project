@@ -55,7 +55,22 @@ class Arwing(Drawable):
 		
 		self.hurtAnimation = -1
 		
-	
+		self.points = 0;
+
+	def respawn(self):
+		self.ori[0] = 0;
+		self.ori[1] = 0;
+		self.ori[2] = 0;
+		self.ori[3] = 0;
+		self.ori[4] = 0;
+		self.ori[5] = 1;
+		self.ori[6] = 0;
+		self.ori[7] = 1;
+		self.ori[8] = 0;
+		self.drawHP = self.hp = 1;
+		
+		
+
 	def tick(self, input):
 		super(Arwing, self).tick(input)
 		
@@ -66,6 +81,8 @@ class Arwing(Drawable):
 				self.hurtAnimation = -1
 				
 		self.drawHP += (self.hp - self.drawHP)/5
+		if (input['respawn']):
+			self.respawn();
 				
 	def hurt(self):
 		if self.hurtAnimation == -1:
@@ -73,6 +90,9 @@ class Arwing(Drawable):
 			self.hurtAnimation = 0
 			self.hp -= .1
 		
+	def addPoints(self, points):
+		self.points += points;
+
 	def draw(self, screen):
 		canv3d.setMatIdentity(MAT_T)
 		canv3d.addMatTranslation(MAT_T, self.ori[0],self.ori[1],self.ori[2])

@@ -42,6 +42,7 @@ class MovingObject(object):
 newLaserList = {}
 laserList = []
 posDict = {};
+deathDict = {};
 
 class Laser(MovingObject):
         
@@ -70,10 +71,12 @@ def serverLoop():
         for laser in laserList:
                 laser.tick();
 		for player in posDict:
-			if laser.checkCollide(posDict[player][:3], 50, player):
-				#print 'You hit player', player;
-				serverDmgQueue.put([player, laser.creator, laser.lid]);
-				laser.remove();
+			if not deathDict[player]:
+				if laser.checkCollide(posDict[player][:3], 50, player):
+				        #print 'You hit player', player;
+				        #print posDict[player][:3]
+					serverDmgQueue.put([player, laser.creator, laser.lid]);
+					laser.remove();
 				
 
 class ServerConn(LineReceiver):
@@ -84,6 +87,7 @@ class ServerConn(LineReceiver):
 		self.lost = False;
 		self.subpos = [0,0,0, 0,0,1, 0,1,0]
 		posDict[self.id] = self.subpos;
+		deathDict[self.id] = False;
                 newLaserList[self.id] = [];
 		self.currentLaserID = 0;
 		
@@ -119,7 +123,10 @@ class ServerConn(LineReceiver):
                                 player.append([self.currentLaserID,maxAge, oriSpeed]);
 			self.currentLaserID += 1;
 				#print "Appending!"
-                        
+			
+		elif type == "destroyed":
+			deathDict[self.id] = True;
+
 		#print newLaserList;
 		playerLasers = [];
 		playerLasers = newLaserList[self.id];
@@ -165,6 +172,7 @@ class ServerConn(LineReceiver):
 #		try:
 #			print "deleting", self.id
 		del posDict[self.id]
+		del deathDict[self.id];
 		del newLaserList[self.id];
 #		except KeyError:
 #			print "Key error when deleting from posDict or newLaserList. Key was", self.id, "length of newLaserList was", len(newLaserList), "length of posDict was", len(posDict);

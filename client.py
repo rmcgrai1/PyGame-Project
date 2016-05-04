@@ -73,12 +73,12 @@ class ClientConnection(LineReceiver):
 		if type == 'init':
 			gs.id = int(jso['id'])
 			player_ids = jso['all_ids']
-			print "converted json:", jso;
+			#print "converted json:", jso;
 
 			for player_id in player_ids:
 				if not (player_id == gs.id):
 					arwingInsts[player_id] = gs.instanceAppend(Arwing(gs, 0,0,0))
-					print "INIT APPEND", player_id
+					#print "INIT APPEND", player_id
 #			for i in range(0, jso['num_players']):
 #				arwingInsts.append(  gs.instanceAppend(Arwing(gs, 0,0,0))  )
 			arwingInsts[gs.id] = gs.player;
@@ -157,11 +157,20 @@ class ClientConnection(LineReceiver):
 			lid = int(jso['lid'])
 			try:
 				arwingInsts[damaged].hurt();
+						
 			except KeyError as ex:
-				print "The damaged ship left the game!"
+				print "The damaged ship has left the game!"
 			try: 
 				#Update points here
-				arwingInsts[attacker];
+				arwingInsts[attacker].addPoints(10);
+				if (arwingInsts[damaged].hp <= 0):
+					arwingInsts[attacker].addPoints(50);
+					if (damaged == gs.id):
+						self.transport.write(json.dumps(
+						{
+							"type" : "destroyed"
+						}) + "\r\n");
+						#send message to server
 			except KeyError as ex:
 				print "The attacker has left the game!"
 			
@@ -216,7 +225,7 @@ class GameSpace:
 	def main(self):
 		self.isConnected = False
 		self.connectTimer = 0
-                #Ryan is True, Jacob is False. (Never trust a Jacob, for it is False)
+                #Ryan is True, Jacob is False.
 		self.connectChoice = False;
                 
 		self.connectTimerMax = 75
@@ -239,6 +248,7 @@ class GameSpace:
 		self.mDown = False
 		self.brake = False
 		self.brakeLock = False
+		self.respawn = False;
 
 		#2. Create game objects
 
@@ -322,7 +332,6 @@ class GameSpace:
 					self.keyVDir += 1
 				elif(event.key == pygame.K_v):
 					self.brake = True;
-					print "Braking"
 				elif(event.key == pygame.K_ESCAPE):
 					self.quitGame()
 			elif event.type == KEYUP:
@@ -344,7 +353,8 @@ class GameSpace:
 					else:
 						self.brakeLock = False;
 						self.brake = False;
-
+				elif(event.key == pygame.K_r):
+					self.respawn = True;
 
 		#6. Tick updating and polling
 
@@ -357,7 +367,9 @@ class GameSpace:
 			"key_vdir": self.keyVDir,
 			"brake" : False,
 			"freeze_signal" : self.brake
+			"respawn" : self.respawn
 		}
+		self.respawn = False;
 			
 
 		for d in self.instanceList:
