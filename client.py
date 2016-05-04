@@ -42,6 +42,7 @@ laserInsts = {};
 
 class ClientConnection(LineReceiver):
 	def __init__(self, addr):
+		self.rogue_shot = -1;
 		self.addr = addr;
 		self.gs = GameSpace.instance
 		self.gs.mainQueue.get().addCallback(self.sendLaser);
@@ -139,8 +140,12 @@ class ClientConnection(LineReceiver):
 			oriSpeed = jso["oriSpeed"];
 			maxAge = jso["maxAge"]
 			lid = jso["lid"];
-			laserInsts[lid] = gs.instanceAppend(Laser(gs, oriSpeed[0], maxAge,
-					oriSpeed[1],oriSpeed[2],oriSpeed[3],
+			if (self.rogue_shot == lid):
+				print "Stopped Rogue Shot from firing"
+				self.rogue_shot = -1;
+			else:
+				laserInsts[lid] = gs.instanceAppend(Laser(gs, oriSpeed[0], maxAge,
+				        oriSpeed[1],oriSpeed[2],oriSpeed[3],
 					oriSpeed[4]+oriSpeed[1],
 					oriSpeed[5]+oriSpeed[2],
 					oriSpeed[6]+oriSpeed[3],
@@ -160,9 +165,13 @@ class ClientConnection(LineReceiver):
 			except KeyError as ex:
 				print "The attacker has left the game!"
 			
-			las = laserInsts[lid];
-			gs.instanceRemove(las);
-			del laserInsts[lid];
+			try:
+				las = laserInsts[lid];
+				gs.instanceRemove(las);
+				del laserInsts[lid];
+			except KeyError as ex:
+				print "Rogue Shot Created, lid:", lid
+				self.rogue_shot = lid;
 			#print "Removed Laser"
 
 	def connectionMade(self):
