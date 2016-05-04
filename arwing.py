@@ -58,7 +58,7 @@ class Arwing(Drawable):
 		super(Arwing, self).tick(input)
 		
 		if self.hurtAnimation > -1:
-			self.hurtAnimation += .025
+			self.hurtAnimation += .02
 		
 			if self.hurtAnimation > 1:
 				self.hurtAnimation = -1

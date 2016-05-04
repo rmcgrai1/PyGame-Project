@@ -108,3 +108,7 @@ def drawText(surf, txt, x,y, color=FONT_WHITE):
 def drawTextShadow(surf, txt, x,y, color=FONT_WHITE):
 	drawText(surf, txt, x+2,y+1, FONT_BLACK);
 	drawText(surf, txt, x,y, color);
+	
+def drawHealthbar(surf, frac, x,y, w,h):
+	surf.blit(IMG_HPBAR, (0,0), subRect)
+

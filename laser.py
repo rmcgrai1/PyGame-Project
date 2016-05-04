@@ -15,15 +15,18 @@ import canv3d
 class Laser(Drawable):
 	MOD_LASER = None;
 	
+	@staticmethod
+	def preload():
+		if Laser.MOD_LASER == None:
+			Laser.MOD_LASER = canv3d.loadObj("laser.obj");
+	
 	def __init__(self, gameSpace, speed, maxAge, x,y,z, atX,atY,atZ, upX,upY,upZ):
 		super(Laser, self).__init__(gameSpace, x,y,z, atX,atY,atZ, upX,upY,upZ)
 		self.speed = speed
 		self.maxAge = maxAge;
 		self.age = 0;
 		
-		if Laser.MOD_LASER == None:
-			Laser.MOD_LASER = canv3d.loadObj("laser.obj");
-
+		
 	def tick(self, input):
 		super(Laser, self).tick(input)
 		self.age = self.age + 1;
