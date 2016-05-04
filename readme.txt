@@ -17,6 +17,13 @@ python client.py
 The game has now started!
 
 
+If you have any problems, type:
+python setup.py build
+cp buid/lib.linux-YOUR_COMPUTER_SPECS/canv3d.so ./
+
+Your computer specs should be the last thing printed out after running python setup.py build. We pre-built for build/lib.linux-x86_64-2.6, but some machines in the library are 2.7
+
+
 GAMEPLAY:
 Connect to the sever, and try to shoot down anyone else online!
 Don't get yourself shot, though.

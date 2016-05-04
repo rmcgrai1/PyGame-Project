@@ -353,6 +353,7 @@ static PyObject* pyAddMatAntiLook(PyObject *self, PyObject *args) {
 
 //axis is an array of length 3
 //angle is in degrees
+//code adapted from Fall 2015 Computer Graphics
 static double* rotateAboutAxis(double *mat, double angle, double* axis) {
   double x, y, z, c, omc, s;
   double normAxis[3];
@@ -433,12 +434,15 @@ static PyObject* pyRotateVecAboutAxis(PyObject *self, PyObject *args) {
 
 //deltaX and deltaY are in degrees
 static void turn(double *eyeVec, double *atVec, double *upVec, double deltaX, double deltaY) {
+  //The idea is to have the camera swivel left when you move the mouse left, and swivel up and down when you move the mouse up and down, without gimbol locking.
+  //We accomplish this by having at-eye and up be perpendicular to each other, and keep track of the up orientation outside of this function.
 	double upDownRotate[16];
 	double leftRightRotate[16];
 	double toTransform[16];
 
 	double sideAxis[4] = {0,0,0,0};
 
+	//get sideAxis from up and at (all three should be perpendicular)
 	mcross(
 		upVec[0],upVec[1],upVec[2],
 		atVec[0]-eyeVec[0],atVec[1]-eyeVec[1],atVec[2]-eyeVec[2],
