@@ -16,6 +16,8 @@ class Hud(Drawable):
 	
 		self.imgStatic = Sprite("img/static.png", 2,1)
 		self.imgFlynn = Sprite("img/flynn.png", 3,1)
+		self.imgRadar = Sprite("img/radar.png", 1,1)
+		self.imgShip = Sprite("img/ship.png", 1,1)
 		
 		self.sndInd = 0
 		self.snds = 6
@@ -37,9 +39,8 @@ class Hud(Drawable):
 		self.talkInd = 0
 		self.text = "Do a barrel roll!\n\nTry a somersault!\n\nPress V to brake!"
 				
-		self.imgTalkBar = Surface((640-15-126,96)).convert_alpha()
-		self.imgTalkBar.fill((0,0,128,128))
-
+		self.imgTalkBar = Sprite("img/talkbar.png", 1,1)
+		
 	def tick(self, input):
 		self.ind = (self.ind + .4) % 2
 		
@@ -69,7 +70,7 @@ class Hud(Drawable):
 		yTB = 480-15-96
 
 		# Draw Talk Bar
-		screen.blit(self.imgTalkBar, (xTB, yTB))
+		self.imgTalkBar.draw(screen, int(xTB+373/2),yTB+48)
 
 		
 		if self.staticTime > 0:
@@ -87,6 +88,7 @@ class Hud(Drawable):
 		pygame.draw.rect(screen, (255,255,255), (int(15+48-w/2),int(480-48-15-h/2), int(w),int(h)), 1)
 
 		
+		# Draw health bar
 		pl = self.gs.player
 		rFrac = pl.hurtAnimation
 		
@@ -97,7 +99,39 @@ class Hud(Drawable):
 			rX = (1 - 2*random.random()) * rFrac * 8
 			rY = (1 - 2*random.random()) * rFrac * 8
 		gfx2d.drawHealthbar(screen, pl.drawHP, 640-15-195 + rX,15 + rY)
+
 		
+		# Draw Radar
+		radarX = 640-15-48
+		radarY = 480-48-15
+		radarScale = 100
+
+		self.imgRadar.draw(screen, radarX, radarY, frame=0, scale=.75)
+		
+		arwingList = self.gs.arwingInsts
+		if self.gs.isConnected and len(arwingList) > 0:
+			for arwingID in arwingList:	
+				arwing = arwingList[arwingID]
+			
+				x = arwing.ori[0]/radarScale
+				y = -arwing.ori[1]/radarScale
+				z = -arwing.ori[2]
+				atX = arwing.ori[3]/radarScale
+				atY = -arwing.ori[4]/radarScale
+				dir = ptDir(-x,-y, -atX,-atY)
+				
+				self.imgShip.draw(screen, radarX+x,radarY+y, angle=dir, scale=.25)
+		else:
+			arwing = pl
+			
+			x = arwing.ori[0]/radarScale
+			y = -arwing.ori[1]/radarScale
+			z = -arwing.ori[2]
+			atX = arwing.ori[3]/radarScale
+			atY = -arwing.ori[4]/radarScale
+			dir = ptDir(-x,-y, -atX,-atY)
+	
+			self.imgShip.draw(screen, radarX+x,radarY+y, angle=dir, scale=.25)		
 		
 		gfx2d.drawTextShadow(screen, self.text[:(int)(self.talkInd)], xTB+15,yTB+15)
 	

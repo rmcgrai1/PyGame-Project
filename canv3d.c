@@ -388,8 +388,21 @@ static PyObject* pyAddMatLook(PyObject *self, PyObject *args) {
 
 
 
+static double* setMatAntiLook(double* mat, double x,double y,double z, double nx,double ny,double nz, double upx,double upy,double upz) {
+	transpose(setMatLook(mat, x,y,z, nx,ny,nz, upx,upy,upz));
+}
+static PyObject* pySetMatAntiLook(PyObject *self, PyObject *args) {
+	int matType;
+	double x,y,z, nx,ny,nz, upx,upy,upz;
+	if(!PyArg_ParseTuple(args, "iddddddddd", &matType, &x,&y,&z, &nx,&ny,&nz, &upx,&upy,&upz))
+		return NULL;
+
+	setMatAntiLook(getMat(matType), x,y,z, nx,ny,nz, upx,upy,upz);
+	Py_RETURN_NONE;
+}
+
 static double* addMatAntiLook(double* mat, double x,double y,double z, double nx,double ny,double nz, double upx,double upy,double upz) {
-	transpose(setMatLook(tempMatAdd, x,y,z, nx,ny,nz, upx,upy,upz));
+	setMatAntiLook(tempMatAdd, x,y,z, nx,ny,nz, upx,upy,upz);
 	return multMatMat(mat, tempMatAdd, mat);
 }
 static PyObject* pyAddMatAntiLook(PyObject *self, PyObject *args) {
@@ -659,7 +672,7 @@ static PyObject* pyAddMatCameraPosition(PyObject *self, PyObject *args) {
 
 static double* setMatCameraRotation(double *mat) {
 	setMatIdentity(mat);
-	setMatLook(mat, 0,0,0, (gCameraAt[0]-gCameraEye[0]),(gCameraAt[1]-gCameraEye[1]),-(gCameraAt[2]-gCameraEye[2]), gCameraUp[0],gCameraUp[1],-gCameraUp[2]);
+	setMatLook(mat, 0,0,0, (gCameraAt[0]-gCameraEye[0]),(gCameraAt[1]-gCameraEye[1]),(gCameraAt[2]-gCameraEye[2]), gCameraUp[0],gCameraUp[1],gCameraUp[2]);
 	return mat;
 }
 static PyObject* pySetMatCameraRotation(PyObject *self, PyObject *args) {
@@ -681,6 +694,37 @@ static PyObject* pyAddMatCameraRotation(PyObject *self, PyObject *args) {
     return NULL;
   
   addMatCameraRotation(getMat(matType));
+  Py_RETURN_NONE;
+}
+
+
+
+
+static double* setMatCameraAntiRotation(double *mat) {
+	setMatIdentity(mat);
+	setMatAntiLook(mat, 0,0,0, (gCameraAt[0]-gCameraEye[0]),(gCameraAt[1]-gCameraEye[1]),(gCameraAt[2]-gCameraEye[2]), gCameraUp[0],gCameraUp[1],gCameraUp[2]);
+	return mat;
+}
+static PyObject* pySetMatCameraAntiRotation(PyObject *self, PyObject *args) {
+  int matType;
+  if(!PyArg_ParseTuple(args, "i", &matType))
+    return NULL;
+  
+  setMatCameraAntiRotation(getMat(matType));
+  Py_RETURN_NONE;
+}
+
+
+static double* addMatCameraAntiRotation(double *mat) {
+	setMatCameraAntiRotation(tempMatAdd);
+	return multMatMat(mat,tempMatAdd, mat);
+}
+static PyObject* pyAddMatCameraAntiRotation(PyObject *self, PyObject *args) {
+  int matType;
+  if(!PyArg_ParseTuple(args, "i", &matType))
+    return NULL;
+  
+  addMatCameraAntiRotation(getMat(matType));
   Py_RETURN_NONE;
 }
 
@@ -1592,39 +1636,10 @@ static PyObject* pyDrawObj(PyObject *self, PyObject *args) {
 	Py_RETURN_NONE;
 }
 
-	
-
-static PyObject* pyTest(PyObject *self, PyObject *args) {
-	PyArrayObject *arrayin;
-	
-	if(!PyArg_ParseTuple(args, "O!", &PyArray_Type,&arrayin)) {
-		//printf("FAILED TO PARSE!\n");
-	    return NULL;
-	}    
-	//init(resW,resH,n,f,doFog, (int*) (pixs->data));
-	Py_RETURN_NONE;
-
-
-	/*setMatIdentity(modelMat);
-	//setMatIdentity(viewMat);
-	//setMatIdentity(projMat);
-	setMatIdentity(completeMat);
-	clear();
-	
-	addMatTranslation(modelMat, 200,100,-30);
-	addMatTranslation(modelMat, 0,20*cosd(10*(timer++)),0);
-	addMatRotationZ(modelMat, 20*cosd(8*(timer++)));
-	
-	compileArrays();
-	
-	drawPolygon(0,0, 100, 10, 0);*/
-	
-    //Py_RETURN_NONE;
-}		
 		
 ////////////////////////////////////////////////////////////////////////////////////////
 
-static PyMethodDef canv3d_funcs[46] = {
+static PyMethodDef canv3d_funcs[48] = {
 	{"setMatIdentity", (PyCFunction) pySetMatIdentity, METH_VARARGS, NULL },
 	{"setMatTranslation", (PyCFunction) pySetMatTranslation, METH_VARARGS, NULL },
 	{"addMatTranslation", (PyCFunction) pyAddMatTranslation, METH_VARARGS, NULL },
@@ -1640,6 +1655,7 @@ static PyMethodDef canv3d_funcs[46] = {
 	{"setMatPerspective", (PyCFunction) pySetMatPerspective, METH_VARARGS, NULL },
 	{"addMatPerspective", (PyCFunction) pyAddMatPerspective, METH_VARARGS, NULL },
 	{"setMatLook", (PyCFunction) pySetMatLook, METH_VARARGS, NULL },
+	{"setMatAntiLook", (PyCFunction) pySetMatAntiLook, METH_VARARGS, NULL },
 	{"addMatLook", (PyCFunction) pyAddMatLook, METH_VARARGS, NULL },
 	{"addMatAntiLook", (PyCFunction) pyAddMatAntiLook, METH_VARARGS, NULL },
 
@@ -1664,8 +1680,6 @@ static PyMethodDef canv3d_funcs[46] = {
 	{"printMats", (PyCFunction) pyPrintMats, METH_NOARGS, NULL },
 
 
-	
-	{"test", (PyCFunction) pyTest, METH_VARARGS, NULL },
 	{"camera", (PyCFunction) pyCamera, METH_VARARGS, NULL},
 	{"turn", (PyCFunction) pyTurn, METH_VARARGS, NULL},
 	{"rotateVecAboutAxis", (PyCFunction) pyRotateVecAboutAxis, METH_VARARGS, NULL},
@@ -1677,6 +1691,10 @@ static PyMethodDef canv3d_funcs[46] = {
 	{"addMatCameraPosition", (PyCFunction) pyAddMatCameraPosition, METH_VARARGS, NULL},
 	{"setMatCameraRotation", (PyCFunction) pySetMatCameraRotation, METH_VARARGS, NULL},
 	{"addMatCameraRotation", (PyCFunction) pyAddMatCameraRotation, METH_VARARGS, NULL},
+
+	{"setMatCameraAntiRotation", (PyCFunction) pySetMatCameraAntiRotation, METH_VARARGS, NULL},
+	{"addMatCameraAntiRotation", (PyCFunction) pyAddMatCameraAntiRotation, METH_VARARGS, NULL},
+
     {NULL}
 };
 

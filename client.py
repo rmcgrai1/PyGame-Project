@@ -37,7 +37,6 @@ SERVER_PORT_B = 40064
 
 #toServerQueue = DeferredQueue()
 
-arwingInsts = {};
 laserInsts = {};
 
 class ClientConnection(LineReceiver):
@@ -77,11 +76,11 @@ class ClientConnection(LineReceiver):
 
 			for player_id in player_ids:
 				if not (player_id == gs.id):
-					arwingInsts[player_id] = gs.instanceAppend(Arwing(gs, 0,0,0))
+					gs.arwingInsts[player_id] = gs.instanceAppend(Arwing(gs, 0,0,0))
 					print "INIT APPEND", player_id
 #			for i in range(0, jso['num_players']):
-#				arwingInsts.append(  gs.instanceAppend(Arwing(gs, 0,0,0))  )
-			arwingInsts[gs.id] = gs.player;
+#				gs.arwingInsts.append(  gs.instanceAppend(Arwing(gs, 0,0,0))  )
+			gs.arwingInsts[gs.id] = gs.player;
 			
 			self.transport.write(json.dumps({
 				"type": type,
@@ -91,21 +90,21 @@ class ClientConnection(LineReceiver):
 			all_dict = jso['all'] #all is a dictionary
 			
 #			le = len(all)
-#			leA = len(arwingInsts)
+#			leA = len(gs.arwingInsts)
 			
 #			while leA < le:
-#				arwingInsts.append(  gs.instanceAppend(Arwing(gs, 0,0,0))  )
+#				gs.arwingInsts.append(  gs.instanceAppend(Arwing(gs, 0,0,0))  )
 #				leA += 1
 			
 #			i = 0;
 			for player_id in all_dict:
 				if not(int(player_id) == gs.id):
-					if int(player_id) not in arwingInsts.keys():
-						arwingInsts[int(player_id)] = (gs.instanceAppend(Arwing(gs, 0,0,0)))
+					if int(player_id) not in gs.arwingInsts.keys():
+						gs.arwingInsts[int(player_id)] = (gs.instanceAppend(Arwing(gs, 0,0,0)))
 						#print "APPEND: gs id:", gs.id, "player_id", player_id;
 						#print "pos json:", jso
 					
-					inst = arwingInsts[int(player_id)];
+					inst = gs.arwingInsts[int(player_id)];
 					allInst = all_dict[player_id]
 					for ii in range(0, 9):
 						inst.ori[ii] = allInst[ii];
@@ -114,7 +113,7 @@ class ClientConnection(LineReceiver):
 #			for i in range(0, le):
 #				if not (i == gs.id):
 #					for ii in range(0, 9):
-#						inst = arwingInsts[i]
+#						inst = gs.arwingInsts[i]
 #						allInst = all[i]
 #						inst.ori[ii] = allInst[ii]
 		
@@ -124,18 +123,18 @@ class ClientConnection(LineReceiver):
 			}) + "\r\n");
 		elif type == 'del':
 			pid = int(jso['id'])
-			arw = arwingInsts[pid];
+			arw = gs.arwingInsts[pid];
 			gs.instanceRemove(arw);
-			del arwingInsts[pid];				  
+			del gs.arwingInsts[pid];				  
 
-#			if id < len(arwingInsts):				
+#			if id < len(gs.arwingInsts):				
 #				if id < gs.id:
 #					gs.id -= 1
 #					
-#				arw = arwingInsts[id]
+#				arw = gs.arwingInsts[id]
 #				
 #				gs.instanceRemove(arw)
-#				del arwingInsts[id]
+#				del gs.arwingInsts[id]
 		elif type == 'laser':
 			oriSpeed = jso["oriSpeed"];
 			maxAge = jso["maxAge"]
@@ -156,12 +155,12 @@ class ClientConnection(LineReceiver):
 			attacker = int(jso['attacker'])
 			lid = int(jso['lid'])
 			try:
-				arwingInsts[damaged].hurt();
+				gs.arwingInsts[damaged].hurt();
 			except KeyError as ex:
 				print "The damaged ship left the game!"
 			try: 
 				#Update points here
-				arwingInsts[attacker];
+				gs.arwingInsts[attacker];
 			except KeyError as ex:
 				print "The attacker has left the game!"
 			
@@ -193,6 +192,8 @@ class GameSpace:
 		self.clientConnFactory = ClientConnFactory()
 		self.id = -1
 		self.mainQueue = DeferredQueue();
+		self.arwingInsts = {};
+
 				
 		Laser.preload();
 

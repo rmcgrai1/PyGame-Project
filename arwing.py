@@ -5,11 +5,12 @@ import math
 import time
 import random
 from pygame.locals	import *
-from math2		import *
-from sprite 		import Sprite
+from math2			import *
+from sprite 		import *
 from drawable		import *
-from mat		import *
+from mat			import *
 from laser			import *
+from explosion		import *
 import canv3d
 
 
@@ -72,7 +73,12 @@ class Arwing(Drawable):
 			Arwing.SND_DAMAGE.play()
 			self.hurtAnimation = 0
 			self.hp -= .1
-		
+			
+			self.gs.instanceAppend( Explosion(self.gs, self.ori[0],self.ori[1],self.ori[2]) )
+	
+	def explode(self):
+		pass
+	
 	def draw(self, screen):
 		canv3d.setMatIdentity(MAT_T)
 		canv3d.addMatTranslation(MAT_T, self.ori[0],self.ori[1],self.ori[2])
