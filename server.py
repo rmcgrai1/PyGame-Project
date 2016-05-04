@@ -16,19 +16,22 @@ SERVER_PORT = 40064
 serverDmgQueue = DeferredQueue()
 
 class MovingObject(object):
+	"""The basic class for any moving objects that the server has to keep track of"""
         def __init__(self, oriSpeed):
                 """dirX, dirY, dirZ should create a unit vector. oriSpeed is a list of [speed, x, y, z, dirX, dirY, dirZ, upX, upY, upZ]"""
                 #self.ori = {'x': x, 'y': y, 'z': z, 'dirX': dirX, 
                 self.oriSpeed = oriSpeed;
                 
         def tick(self):
+
+		#xyz -= dirXYZ*speed
                 self.oriSpeed[1] -= self.oriSpeed[4]*self.oriSpeed[0];
                 self.oriSpeed[2] -= self.oriSpeed[5]*self.oriSpeed[0];
                 self.oriSpeed[3] -= self.oriSpeed[6]*self.oriSpeed[0];
 
         def checkCollide(self, otherXYZ, radius):
 		"""OtherXYZ is a list of [x, y, z]. Checks if otherXYZ is within radius of this object's center"""
-		#1 vs 0 , 2 vs 1, 3 vs 2 is intentional.
+		#1 based vs 0 based offset is intentional
 		dx = self.oriSpeed[1] - otherXYZ[0];
 		dy = self.oriSpeed[2] - otherXYZ[1];
 		dz = self.oriSpeed[3] - otherXYZ[2];
@@ -45,10 +48,11 @@ laserList = []
 posDict = {};
 deathDict = {};
 
-#Asteroids have size, position, orientation
+
 asteroidList = [];
 
 class Asteroid(object):
+	"""Asteroids' key defining features are size, position, and orientation. They also have an asteroid_id to keep track of which is which"""
 	def __init__(self, a_id, radius, posXYZ, rotXYZ):
 		self.a_id = a_id;
 		self.radius = radius;
@@ -61,6 +65,7 @@ class Asteroid(object):
 		self.cooldown = 0;
 
 	def tick(self):
+		"""Have a cooldown so the ship doesn't get instantly destroyed when flying into it"""
 		if (self.cooldown > 0):
 			self.cooldown -= 1;
 	
@@ -81,6 +86,7 @@ class Asteroid(object):
 
 
 def generateAsteroids():
+	"""generate asteroids randomly distributed about the map, but none within a start area defined by start_radius"""
 	random.seed();
 	size_range = [200, 400]
 	pos_range = [-2000, 2000];
@@ -88,6 +94,7 @@ def generateAsteroids():
 	start_radius = 200;
 	for astero_id in xrange(5):
 		pos = [0, 0, 0];
+		#ensure that no asteroids are in the starting zone
 		while ((pos[0] <= start_radius) and (pos[1] <= start_radius) and (pos[2] <= start_radius)):
 			for size_iter in xrange(3):
 				pos[size_iter] = random.randint(pos_range[0], pos_range[1]);
@@ -143,6 +150,7 @@ def serverLoop():
 					serverDmgQueue.put(['asterCollide', player])
 
 class ServerConn(LineReceiver):
+	"""One ServerConn is made for every client that connects. """
 	def __init__(self, parent, id, addr):
 		self.parent = parent
 		self.id = int(id)
@@ -255,6 +263,7 @@ class ServerConn(LineReceiver):
 		self.parent = None
 
 class ServerConnFactory(Factory):
+	"""assigns IDs to players; the ID always increments by 1."""
 	def __init__(self):
 		self.currentID = 0;
 		self.conns = {}
