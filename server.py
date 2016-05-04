@@ -58,16 +58,23 @@ class Asteroid(object):
 		self.rotX = rotXYZ[0];
 		self.rotY = rotXYZ[1];
 		self.rotZ = rotXYZ[2];
+		self.cooldown = 0;
+
+	def tick(self):
+		if (self.cooldown > 0):
+			self.cooldown -= 1;
 	
 	def checkCollide(self, otherXYZ):
-		dx = self.x - otherXYZ[0];
-		dy = self.y - otherXYZ[1];
-		dz = self.z - otherXYZ[2];
-		dist_squared = dx*dx + dy*dy + dz*dz;
-		if (dist_squared < (self.size * self.size)):
-			return True;
-		else:
-			return False;
+		if not (self.cooldown > 0):
+			dx = self.x - otherXYZ[0];
+			dy = self.y - otherXYZ[1];
+			dz = self.z - otherXYZ[2];
+			dist_squared = dx*dx + dy*dy + dz*dz;
+			if (dist_squared < (self.radius * self.radius)):
+				self.cooldown = 60;
+				return True;
+			else:
+				return False;
 	def toList(self):
 		"""returns [a_id, radius, x, y, z, rotX, rotY, rotZ]"""
 		return [self.a_id, self.radius, self.x, self.y, self.z, self.rotX, self.rotY, self.rotZ]
@@ -75,11 +82,11 @@ class Asteroid(object):
 
 def generateAsteroids():
 	random.seed();
-	size_range = [100, 300]
+	size_range = [200, 400]
 	pos_range = [-2000, 2000];
 	rot_range = [0, 360];
 	start_radius = 200;
-	for astero_id in xrange(42):
+	for astero_id in xrange(10):
 		pos = [0, 0, 0];
 		while ((pos[0] <= start_radius) and (pos[1] <= start_radius) and (pos[2] <= start_radius)):
 			for size_iter in xrange(3):
@@ -123,9 +130,16 @@ def serverLoop():
 				if laser.checkCollide(posDict[player][:3], 50, player):
 				        #print 'You hit player', player;
 				        #print posDict[player][:3]
-					serverDmgQueue.put([player, laser.creator, laser.lid]);
+					serverDmgQueue.put(['playerShot',player, laser.creator, laser.lid]);
 					laser.remove();
 				
+
+	for asteroid in asteroidList:
+		asteroid.tick();
+		for player in posDict:
+			if not deathDict[player]:
+				if asteroid.checkCollide(posDict[player][:3]):
+					serverDmgQueue.put(['asterCollide', player])
 
 class ServerConn(LineReceiver):
 	def __init__(self, parent, id, addr):
@@ -246,13 +260,19 @@ class ServerConnFactory(Factory):
 		serverDmgQueue.get().addCallback(self.sendDamage);
 		generateAsteroids();
 	def sendDamage(self, data):
-		"""data is a list of [damaged_id, attacker_id, lid]"""
-		s = json.dumps( {
-				'type' : 'takeDmg',
-				'damaged' : data[0],
-				'attacker' : data[1],
-				'lid' : data[2]
-				}) + "\r\n"
+		"""data is a list of [damageType, damageArgs]. asterCollide has damaged_id, playerShot has damaged_id, attacker_id, lid"""
+		if (data[0] == 'playerShot'):
+			s = json.dumps( {
+					'type' : 'playerDmg',
+					'damaged' : data[1],
+					'attacker' : data[2],
+					'lid' : data[3]
+					}) + "\r\n"
+		elif (data[0] == 'asterCollide'):
+			s = json.dumps( {
+					'type' : 'colDmg',
+					'damaged' : data[1]
+					}) + "\r\n"
 		for conn in self.conns.values():
 			conn.transport.write(s)
 		serverDmgQueue.get().addCallback(self.sendDamage);

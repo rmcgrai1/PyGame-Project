@@ -62,16 +62,13 @@ class ClientConnection(LineReceiver):
 			print "invalid json: " + data
 			return
 		type = jso['type']
-		
 		gs = GameSpace.instance
 		
 		if type == 'init':
 			gs.id = int(jso['id'])
 			player_ids = jso['all_ids']
-			
+			temp_aster = jso['asteroids']
 			gs.addMessage("You are player " + str(gs.id) + ".")
-
-			#print "converted json:", jso;
 
 			for player_id in player_ids:
 				if not (player_id == gs.id):
@@ -81,7 +78,9 @@ class ClientConnection(LineReceiver):
 #				gs.arwingInsts.append(  gs.instanceAppend(Arwing(gs, 0,0,0))  )
 			gs.arwingInsts[gs.id] = gs.player;
 			
-			gs.instancePrepend(Asteroid(50, 100, 100, 100, 65, 242, 234));
+			for asteroid in temp_aster:
+				
+				gs.instancePrepend(Asteroid(asteroid[0], asteroid[1], asteroid[2], asteroid[3], asteroid[4], asteroid[5], asteroid[6], asteroid[7]));
 
 			self.transport.write(json.dumps({
 				"type": type,
@@ -143,7 +142,7 @@ class ClientConnection(LineReceiver):
 									oriSpeed[6]+oriSpeed[3],
 									oriSpeed[7],oriSpeed[8],oriSpeed[9]
 			))
-		elif type == 'takeDmg':
+		elif type == 'playerDmg':
 			damaged = int(jso['damaged'])
 			attacker = int(jso['attacker'])
 			lid = int(jso['lid'])
@@ -173,6 +172,9 @@ class ClientConnection(LineReceiver):
 				print "Rogue Shot Created, lid:", lid
 				self.rogue_shot = lid;
 			#print "Removed Laser"
+		elif type == "colDmg":
+			damaged = int(jso['damaged']);
+			gs.arwingInsts[damaged].hurt();
 
 	def connectionMade(self):
 		print 'new connection made to ' + str(self.addr)
