@@ -71,6 +71,9 @@ class ClientConnection(LineReceiver):
 		if type == 'init':
 			gs.id = int(jso['id'])
 			player_ids = jso['all_ids']
+			
+			gs.addMessage("You are player " + str(gs.id) + ".")
+
 			#print "converted json:", jso;
 
 			for player_id in player_ids:
@@ -96,10 +99,17 @@ class ClientConnection(LineReceiver):
 #				leA += 1
 			
 #			i = 0;
+			firstTime = (len(all_dict) == 0)
+
 			for player_id in all_dict:
 				if not(int(player_id) == gs.id):
 					if int(player_id) not in gs.arwingInsts.keys():
 						gs.arwingInsts[int(player_id)] = (gs.instanceAppend(Arwing(gs, 0,0,0)))
+						
+						if not firstTime:
+							gs.addMessage("Player " + player_id + " joined the game.")
+
+						
 						#print "APPEND: gs id:", gs.id, "player_id", player_id;
 						#print "pos json:", jso
 					
@@ -126,6 +136,8 @@ class ClientConnection(LineReceiver):
 			gs.instanceRemove(arw);
 			del gs.arwingInsts[pid];				  
 
+			gs.addMessage("Player " + str(pid) + " left the game.")
+			
 #			if id < len(gs.arwingInsts):				
 #				if id < gs.id:
 #					gs.id -= 1
@@ -183,6 +195,7 @@ class ClientConnection(LineReceiver):
 	def connectionMade(self):
 		print 'new connection made to ' + str(self.addr)
 		GameSpace.instance.isConnected = True
+		
 	def connectionLost(self, reason):
 		print 'lost connection to ' + str(self.addr)
 		GameSpace.instance.isConnected = False
@@ -408,7 +421,9 @@ class GameSpace:
 		self.hud.blitToScreen(self.screen)
 		
 		pygame.display.flip()
-			
+	
+	def addMessage(self, txt):
+		self.hud.addMessage(txt)
 			
 class Reticle:
         def __init__(self, centerX, centerY):
