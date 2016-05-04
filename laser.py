@@ -6,7 +6,6 @@ import time
 import random
 from pygame.locals	import *
 from math2			import *
-from sprite 		import Sprite
 from drawable		import *
 from mat			import *
 import canv3d
